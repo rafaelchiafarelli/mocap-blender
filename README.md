@@ -25,5 +25,8 @@ doesn't cap its Python version.
 
 Planned, no code yet. It's off the critical path to the camera decision.
 Retargeting to character rigs and links to a database are phase 2. Plan:
-[`initiatives/baseline/`](initiatives/baseline/baseline.md). Architecture:
+[`initiatives/baseline/`](initiatives/baseline/baseline.md).
+Tool integration (characters, sets, cameras, asset versioning, all driven by an
+AI agent through BlenderMCP):
+[`initiatives/integration/`](initiatives/integration/integration.md). Architecture:
 `mocap-studio/HANDOFF.md`.
