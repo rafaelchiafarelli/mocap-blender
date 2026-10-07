@@ -23,3 +23,4 @@ Rules specific to this repository:
 | Initiative | Status |
 |---|---|
 | [baseline](baseline/baseline.md) | Planned — not started |
+| [integration](integration/integration.md) | Planned — not started |
