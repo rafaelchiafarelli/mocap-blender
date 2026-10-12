@@ -18,8 +18,9 @@ data = Path(recording) / "output_data"
 body = np.load(data / "mediapipe_body_3d_xyz.npy")
 left = np.load(data / "mediapipe_left_hand_3d_xyz.npy")
 right = np.load(data / "mediapipe_right_hand_3d_xyz.npy")
-[toml_path] = list(Path(recording).glob("*_camera_calibration.toml"))
-ground_plane = bool(tomllib.loads(toml_path.read_text()).get("metadata", {}).get("groundplane_calibration", False))
+tomls = list(Path(recording).glob("*_camera_calibration.toml"))  # none for a single-camera (mono) take
+ground_plane = bool(tomls) and bool(
+    tomllib.loads(tomls[0].read_text()).get("metadata", {}).get("groundplane_calibration", False))
 source = retarget.normalise(body, left, right, ground_plane=ground_plane)
 frames = body.shape[0]
 
