@@ -75,6 +75,25 @@ removed.
    them, and rebuilds only what changed. Variants (A/B of one unit) can sit side
    by side until one is picked.
 
+## Who builds the assets (decided 2026-10-12)
+
+Rafael's team builds the assets, and AI is not the whole of it:
+
+- **Procedural first.** Bones/rigs, faces, eye movement and everything else that
+  existing tools already do procedurally (Rigify, MPFB2, Geometry Nodes, the
+  built-ins above) are made **with those tools**. AI only adjusts a few things
+  here and there.
+- **Specialised asset agents.** Creating new assets is done by AI agents
+  specialised per kind of asset. They **drive the procedural tools** (writing
+  recipes, layouts and generator code) to go faster, rather than producing the
+  asset themselves.
+- **No wasted AI effort.** An agent never spends its resources rebuilding what
+  a procedural tool already provides.
+
+This is the execution side the pre-production planners (`mocap-preprod`) hand
+specifications to. The roster of asset agents is defined when TicTac enters
+production.
+
 ## Worked example: the storyboard
 
 Argument (pre-script story) → storyboard with Grease Pencil, then
