@@ -24,6 +24,38 @@ basemesh = HumanService.create_human(macro_detail_dict=macros)
 basemesh.name = character["name"]
 rig = HumanService.add_builtin_rig(basemesh, "rigify.human")
 
+# MPFB's weights name a few bones of the generated Rigify rig (DEF-forearm.L.001, DEF-eye_master.L, ...),
+# which the metarig doesn't have: their vertices wouldn't move. Merge each into the metarig bone it stands for.
+bones = {b.name for b in rig.data.bones}
+
+
+def metarig_bone(name):
+    name = name.removeprefix("DEF-").replace("_master", "")
+    while name not in bones and name[-4:-3] == "." and name[-3:].isdigit():
+        name = name[:-4]
+    return name if name in bones else None
+
+
+merged = 0
+for group in [g for g in basemesh.vertex_groups if g.name not in bones and g.name.startswith("DEF-")]:
+    target_name = metarig_bone(group.name)
+    if target_name is None:
+        continue
+    target = basemesh.vertex_groups.get(target_name) or basemesh.vertex_groups.new(name=target_name)
+    for v in basemesh.data.vertices:
+        for g in v.groups:
+            if g.group == group.index and g.weight > 0:
+                target.add([v.index], g.weight, "ADD")
+    basemesh.vertex_groups.remove(group)
+    merged += 1
+deforming = {g.index for g in basemesh.vertex_groups if g.name in bones}
+body = basemesh.vertex_groups["body"].index
+unweighted = sum(1 for v in basemesh.data.vertices
+                 if any(g.group == body and g.weight > 0 for g in v.groups)
+                 and not any(g.group in deforming and g.weight > 0 for g in v.groups))
+bootstrap.result("merged_groups", merged)
+bootstrap.result("unweighted", unweighted)
+
 skin = bpy.data.materials.new(character["name"] + ".skin")
 skin.use_nodes = True
 bsdf = skin.node_tree.nodes["Principled BSDF"]

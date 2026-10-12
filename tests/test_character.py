@@ -17,6 +17,7 @@ def test_character_with_metarig(tmp_path):
     for key in ("gender", "age", "muscle", "weight", "height", "proportions"):
         assert float(found[f"macro.{key}"]) == pytest.approx(asked[key], abs=1e-3)
     assert found["facing"] == "-Y"
+    assert found["unweighted"] == "0"  # every body vertex follows a metarig bone
     assert 1.5 < float(found["height_m"]) < 2.0
     bones = inspect(out)["armatures"][found["rig"]]
     for name in ("upper_arm.L", "hand.R", "spine.006", "thigh.L", "f_index.01.L"):
