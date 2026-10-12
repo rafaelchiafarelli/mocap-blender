@@ -22,9 +22,13 @@ removed.
 
 ## Constraints (Rafael's, standing)
 
-1. **Free and/or open-source only.** No paid add-ons, asset packs or services.
-2. **No local AI compute.** Don't run AI models on the processing PC. The AI is
-   the hosted agent (Claude) only.
+1. **Free and/or open-source only, and usable commercially.** No paid add-ons,
+   asset packs or services. Decided 2026-10-12: the films aren't commercial
+   yet but must be sellable later, so no non-commercial or capped
+   "community" licenses, not even for tests.
+2. **No local AI for code, models or script analysis.** That work is done by
+   the hosted agent (Claude). Refined 2026-10-12: local audio clip generation
+   is allowed (`mocap-audio`), as are the mocap neural nets of P3.
 3. **Don't over-task the AI.** AI writes and maintains descriptions and code.
    Plain deterministic software builds the assets.
 4. **Change one thing without changing everything.** An edit touches only the
@@ -127,7 +131,7 @@ action: "The stranger appears behind them; neither notices."
 | Trees | Modular Tree (extension) | GPL/MIT, v5.5.2 (2026-05-13), Blender ≥ 4.3.1 |
 | Real places | Blosm, base version | GPL, active (commit 2026-04). OSM buildings without textures, terrain, roads, water |
 | Materials, HDRIs, models | ambientCG | CC0, free API, no key |
-| Materials, HDRIs, models | Poly Haven | CC0 assets. **API free for non-commercial use only** |
+| Materials, HDRIs, models | Poly Haven | CC0 assets (fine). **Its API is non-commercial only**, so download by hand, never through the API |
 | Models, materials, scenes | BlenderKit (GPL add-on) | Large free tier, commercial use OK. Automating it outside its UI is unverified |
 | Storyboard | Grease Pencil (+ Line Art), Storypencil / Storytools | Storypencil confirmed only up to 4.1. Storytools supports 5.0+ |
 | Characters | Rigify (built in), MPFB2 (CC0) | Sculpt → retopo → UV → texture → Rigify workflow from Blender Studio's "Stylized Character Workflow" video |
@@ -166,8 +170,9 @@ breakdown. Where the methodology fell short:
 
 ## Open questions for Rafael
 
-1. **Is the film commercial?** It decides Poly Haven API use. Fallback:
-   ambientCG + BlenderKit for automation, Poly Haven by hand.
+1. ~~**Is the film commercial?**~~ **Answered 2026-10-12:** treat every film as
+   commercial. ambientCG (+ BlenderKit, per-asset license checked) for
+   automation; Poly Haven by hand only.
 2. **Storyboard style:** is line art from 3D blocking good enough?
 3. **Where does this live?** The suggestion is a new film-toolbox repo
    (submodule of `mocap-studio`) so `mocap-blender` stays the P5 importer. The
