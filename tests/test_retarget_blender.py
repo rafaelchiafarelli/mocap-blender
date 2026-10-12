@@ -46,3 +46,21 @@ def test_feet_touch_the_floor(take_dir, tmp_path):
     rest_ankle = rest["foot.L"]["head"][0][2]
     lowest = np.minimum(np.array(posed["foot.L"]["head"])[:, 2], np.array(posed["foot.R"]["head"])[:, 2])
     assert np.percentile(lowest, 2) == pytest.approx(rest_ankle, abs=0.03)  # not hovering, not sinking
+
+
+def test_retarget_without_hands_or_calibration(take_dir, tmp_path):
+    data = take_dir / "extract" / "freemocap" / "output_data"
+    for side in ("left", "right"):
+        np.save(data / f"mediapipe_{side}_hand_3d_xyz.npy", np.full_like(np.load(data / f"mediapipe_{side}_hand_3d_xyz.npy"), np.nan))
+    for toml in (take_dir / "extract" / "freemocap").glob("*.toml"):
+        toml.unlink()
+    character = tmp_path / "character.blend"
+    make_character(CHARACTER, character)
+
+    report = retarget_take(take_dir, character)
+
+    assert report["ground_plane"] is False
+    samples = json.loads(blender.results(blender.run(
+        "sample_bones", "hand.L", "forearm.R", blend=take_dir / "blender" / "performance.blend"))["samples"])
+    for bone in ("hand.L", "forearm.R"):
+        assert not np.isnan(np.array(samples[bone]["tail"])).any()
