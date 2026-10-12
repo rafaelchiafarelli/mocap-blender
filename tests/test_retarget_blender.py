@@ -2,6 +2,7 @@ from pathlib import Path
 
 import json
 import numpy as np
+import pytest
 from conftest import FRAMES
 
 from mocap_blender import blender
@@ -32,3 +33,16 @@ def test_limbs_follow_the_actor(take_dir, tmp_path):
         cos = np.sum(character_dir * actor_dir, axis=1) / (
             np.linalg.norm(character_dir, axis=1) * np.linalg.norm(actor_dir, axis=1))
         assert np.median(cos) > 0.99, bone  # same direction, whatever the proportions
+
+
+def test_feet_touch_the_floor(take_dir, tmp_path):
+    character = tmp_path / "character.blend"
+    make_character(CHARACTER, character)
+    rest = json.loads(blender.results(blender.run("sample_bones", "foot.L", "foot.R", blend=character))["samples"])
+    retarget_take(take_dir, character)
+
+    blend = take_dir / "blender" / "performance.blend"
+    posed = json.loads(blender.results(blender.run("sample_bones", "foot.L", "foot.R", blend=blend))["samples"])
+    rest_ankle = rest["foot.L"]["head"][0][2]
+    lowest = np.minimum(np.array(posed["foot.L"]["head"])[:, 2], np.array(posed["foot.R"]["head"])[:, 2])
+    assert np.percentile(lowest, 2) == pytest.approx(rest_ankle, abs=0.03)  # not hovering, not sinking

@@ -73,3 +73,10 @@ def test_quaternions_match_and_stay_continuous():
     assert (np.sum(q[1:] * q[:-1], axis=1) > 0).all()
     w, x, y, z = q[10]
     assert 2 * np.arctan2(z, w) == pytest.approx(np.linspace(0, 6, 30)[10], abs=1e-9)
+
+
+def test_flat_foot_keeps_heading_only():
+    joints = {"a": np.zeros((1, 3)), "b": np.array([[0.0, -1.0, -1.0]]), "c": np.zeros((1, 3)), "d": np.ones((1, 3))}
+    f = bone_frame(joints, (("a", "b"), ("c", "d"), None), flat=True)[0]
+    np.testing.assert_allclose(f[:, 0], [0, -1, 0], atol=1e-12)  # pitch dropped, heading kept
+    np.testing.assert_allclose(f[:, 1], [0, 0, 1], atol=1e-12)  # twist from straight up
