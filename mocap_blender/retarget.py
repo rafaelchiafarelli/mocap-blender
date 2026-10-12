@@ -29,6 +29,7 @@ BODY = {"nose": 0, "ear.L": 7, "ear.R": 8, "sho.L": 11, "sho.R": 12, "elb.L": 13
         "wri.L": 15, "wri.R": 16, "hip.L": 23, "hip.R": 24, "knee.L": 25, "knee.R": 26,
         "ank.L": 27, "ank.R": 28, "heel.L": 29, "heel.R": 30, "toe.L": 31, "toe.R": 32}
 FINGERS = {"thumb": 1, "index": 5, "middle": 9, "ring": 13, "pinky": 17}  # MediaPipe hand: 4 joints each
+POSE_HAND = {"L": {"pinky": 17, "index": 19, "thumb": 21}, "R": {"pinky": 18, "index": 20, "thumb": 22}}
 FOOT_JOINTS = ("ank.L", "ank.R", "heel.L", "heel.R", "toe.L", "toe.R")
 CONTACT_PERCENTILE = 2
 EPS = 1e-6
@@ -91,7 +92,15 @@ def source_joints(body: np.ndarray, left_hand: np.ndarray, right_hand: np.ndarra
     for s, hand in (("L", left_hand), ("R", right_hand)):
         for finger, first in FINGERS.items():
             for k in range(4):
-                j[f"{finger}{k + 1}.{s}"] = hand[:, first + k]
+                j[f"{finger}{k + 1}.{s}"] = hand[:, first + k].copy()
+        # Frames without hand landmarks (one camera, or a hand FreeMoCap lost): MediaPipe Pose's own hand
+        # points orient the hand. They sit further out than the knuckles, which only the directions use.
+        pose = {f: body[:, i] for f, i in POSE_HAND[s].items()}
+        pose["middle"] = (pose["index"] + pose["pinky"]) / 2
+        for finger in ("index", "pinky", "middle"):
+            joint = j[f"{finger}1.{s}"]
+            lost = np.isnan(joint).any(axis=-1)
+            joint[lost] = pose[finger][lost]
     return _derived(j)
 
 
