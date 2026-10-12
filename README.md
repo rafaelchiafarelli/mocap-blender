@@ -21,9 +21,26 @@ mocap-adapt ──adapt/mocap_take.json──▶ mocap-blender (add-on inside Bl
 The add-on runs with Blender's bundled Python. That's why `mocap-contracts`
 doesn't cap its Python version.
 
+## MVP path (initiative `mvp`)
+
+For the MVP (`mocap-studio/MVP-plan.md`), a scripted path that skips `MocapTake`:
+FreeMoCap's 3D (`extract/freemocap/`) → MPFB character with a Rigify metarig →
+retarget → shot render. The `mocap_blender` package runs the pinned Windows
+Blender headless from WSL (`blender.run`); the scripts it runs inside Blender
+are in `mocap_blender/inblender/`.
+
+```bash
+make venv   # .venv with Python 3.12, numpy, pytest
+make test   # full suite (runs the pinned Blender; MOCAP_BLENDER overrides its path)
+```
+
+Blender 5.2.2 runs in portable mode (`portable/` next to `blender.exe`), with
+MPFB 2.0.18 installed there. Windows paths must stay under 260 characters, so
+the data root is short (`~/mocap-data`).
+
 ## Status
 
-Planned, no code yet. It's off the critical path to the camera decision.
+The `mvp` initiative is in progress; everything else is planned, no code yet. It's off the critical path to the camera decision.
 Retargeting to character rigs and links to a database are phase 2. Plan:
 [`initiatives/baseline/`](initiatives/baseline/baseline.md).
 Tool integration (characters, sets, cameras, asset versioning, all driven by an

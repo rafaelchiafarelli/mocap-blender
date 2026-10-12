@@ -1,0 +1,11 @@
+{
+  "name": "test_person",
+  "gender": 1.0,
+  "age": 0.875,
+  "muscle": 0.4,
+  "weight": 0.55,
+  "height": 0.45,
+  "proportions": 0.5,
+  "race": {"african": 0.2, "asian": 0.2, "caucasian": 0.6},
+  "skin_rgb": [0.62, 0.42, 0.33]
+}

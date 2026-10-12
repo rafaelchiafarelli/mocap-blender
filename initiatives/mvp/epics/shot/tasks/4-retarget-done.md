@@ -10,6 +10,7 @@
   - **Gaps:** each landmark is linearly interpolated over time; a landmark never seen keeps the rest pose.
   - **Per bone, two vectors between landmarks that both skeletons have** (e.g. forearm: elbow→wrist, then index knuckle→pinky knuckle) define a frame. The bone's world rotation is the one that takes its rest frame onto the actor's frame. That's independent of each rig's rest pose and bone roll, and it carries twist.
   - **Root:** the hips' position scaled by the ratio of leg lengths (character / actor), so feet stay near the floor.
+- **Found while implementing:** MPFB's weights name a few bones of the *generated* Rigify rig (`DEF-forearm.L.001`, `DEF-eye_master.L`, …). On the metarig, those vertices didn't move and stretched into spikes. The character step now merges each such group into its metarig bone and reports unweighted body vertices (task 3's test asserts 0), as a separate fix commit on this branch.
 - **Pre-work:** none
 - **Out of scope:** foot locking, IK, fingers beyond MediaPipe hand quality, the face
 - **Tests:** math: a frame rotated by a known rotation gives back that rotation; a straight limb falls back to its secondary reference. In Blender, on the fixture take: the character's wrists follow the actor's wrists (after normalisation and scale) within a tolerance
