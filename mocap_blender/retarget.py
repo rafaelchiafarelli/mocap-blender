@@ -11,7 +11,12 @@ frame onto the actor's frame: R = F_actor @ F_rest.T @ R_rest. It doesn't depend
 pose or bone roll.
 
 **Root:** the hips bone goes to the actor's hips, scaled by the ratio of leg lengths
-(character / actor). Every other bone stays attached to its parent.
+(character / actor). Every other bone stays attached to its parent. Then the whole body drops (or
+rises) so that the lower ankle each frame (2nd percentile over the take) is at its rest height: feet
+on the floor, not hovering.
+
+**Feet stay flat** (`FLAT`): they follow the actor's heading but not its pitch, because MediaPipe's toe
+landmark is noisy and often low (below the floor), which tipped the feet toes-down. Heel-toe roll is lost.
 """
 
 from __future__ import annotations
@@ -25,6 +30,7 @@ BODY = {"nose": 0, "ear.L": 7, "ear.R": 8, "sho.L": 11, "sho.R": 12, "elb.L": 13
         "ank.L": 27, "ank.R": 28, "heel.L": 29, "heel.R": 30, "toe.L": 31, "toe.R": 32}
 FINGERS = {"thumb": 1, "index": 5, "middle": 9, "ring": 13, "pinky": 17}  # MediaPipe hand: 4 joints each
 FOOT_JOINTS = ("ank.L", "ank.R", "heel.L", "heel.R", "toe.L", "toe.R")
+CONTACT_PERCENTILE = 2
 EPS = 1e-6
 PARALLEL = 0.05  # |sin| between primary and secondary below this: use the fallback secondary
 
@@ -60,6 +66,8 @@ BONES: dict[str, tuple] = {
     **_side_bones("L"), **_side_bones("R"),
 }
 ROOT = "spine"
+FLAT = {"foot.L", "foot.R"}
+UP = np.array([0.0, 0.0, 1.0])
 
 
 def target_joints(heads: dict[str, np.ndarray], tails: dict[str, np.ndarray]) -> dict[str, np.ndarray]:
@@ -159,10 +167,14 @@ def frame(primary: np.ndarray, secondary: np.ndarray, fallback: np.ndarray | Non
     return np.stack([x, y, z], axis=-1)
 
 
-def bone_frame(joints: dict[str, np.ndarray], spec: tuple) -> np.ndarray:
+def bone_frame(joints: dict[str, np.ndarray], spec: tuple, flat: bool = False) -> np.ndarray:
     (a, b), (c, d), fb = spec
+    primary = joints[b] - joints[a]
+    if flat:  # heading only: the primary vector in the floor plane, twist from straight up
+        primary = primary * np.array([1.0, 1.0, 0.0])
+        return frame(primary, np.broadcast_to(UP, primary.shape))
     fallback = None if fb is None else joints[fb[1]] - joints[fb[0]]
-    return frame(joints[b] - joints[a], joints[d] - joints[c], fallback)
+    return frame(primary, joints[d] - joints[c], fallback)
 
 
 def leg_length(joints: dict[str, np.ndarray]) -> float:
@@ -203,8 +215,9 @@ def solve(rest: list[RestBone], source: dict[str, np.ndarray], frames: int) -> t
             pose[bone.name] = attached
             continue
         spec = BONES[bone.name]
-        actor = bone_frame(source, spec)
-        rest_frame = bone_frame(target, spec)
+        flat = bone.name in FLAT
+        actor = bone_frame(source, spec, flat)
+        rest_frame = bone_frame(target, spec, flat)
         rotation = actor @ rest_frame.T @ bone.matrix[:3, :3]
         desired = attached.copy()
         ok = ~np.isnan(rotation).any(axis=(1, 2))
@@ -215,7 +228,16 @@ def solve(rest: list[RestBone], source: dict[str, np.ndarray], frames: int) -> t
             desired[seen, :3, 3] = hips[seen]
         pose[bone.name] = desired
         basis[bone.name] = np.linalg.inv(attached) @ desired
+    lift = foot_lift(pose, by_name)
+    # Moving the root by -lift in world z: its basis translation is in the root bone's rest frame.
+    basis[ROOT][:, :3, 3] -= np.linalg.inv(by_name[ROOT].matrix[:3, :3]) @ np.array([0.0, 0.0, lift])
     return basis, scale
+
+
+def foot_lift(pose: dict[str, np.ndarray], rest: dict[str, RestBone]) -> float:
+    """How far above their rest height the lower ankle is, at its lowest over the take (m)."""
+    left, right = (pose[f"foot.{s}"][:, 2, 3] - rest[f"foot.{s}"].matrix[2, 3] for s in ("L", "R"))
+    return float(np.nanpercentile(np.minimum(left, right), CONTACT_PERCENTILE))
 
 
 def quaternions(matrices: np.ndarray) -> np.ndarray:
