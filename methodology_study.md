@@ -147,6 +147,23 @@ action: "The stranger appears behind them; neither notices."
 **Gaps:** buildings and interiors. No maintained, free, 5.x generator. The idea
 is our own Geometry Nodes generators, written by the agent as tested code.
 
+## Findings from a first-try project
+
+An early test film (since removed) was taken from its argument to a sequence
+breakdown. Where the methodology fell short:
+
+| # | Friction | Decision |
+|---|---|---|
+| F1 | A film needs a **bible** (look, light, palette, materials, camera rules) above everything else | A "bible" unit. Generic change requests ("make it look 70s") go only into the bible, or are refused |
+| F2 | The agent finds story questions it can't resolve | The film's own work follows initiatives → epics → tasks. Story questions get their own file |
+| F3 | Story dependencies between sequences (setup/payoff) aren't file inputs | Declare the links explicitly. A continuity agent is probably needed |
+| F4 | A set appears in several sequences and its state changes over the film | Sets have a **state timeline**. Detect what can be captured once and assembled later |
+| F5 | A character can have no body (voice + a device) | A "voice/device" character type for now |
+| F6 | Actions with no floor contact (flying, falling) | The actor stands on an apple box, and each take records **what touches the ground and what the ground is** (apple box ≠ set floor) |
+| F7 | Film order ≠ capture order: actors perform better in continuous blocks | Separate the **capture plan** (continuous performance blocks) from the **film's shots** (which cut ranges out of takes) |
+| F8 | Future films may be hybrid (CG + live action) | Don't build it now, but each element of a shot declares **CG or filmed plate** |
+| F9 | The creator's original is a binary (slides, .docx) | It stays out of git, and a literal text transcription is the tracked source, redone when the original changes |
+
 ## Open questions for Rafael
 
 1. **Is the film commercial?** It decides Poly Haven API use. Fallback:
