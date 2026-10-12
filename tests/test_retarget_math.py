@@ -80,3 +80,15 @@ def test_flat_foot_keeps_heading_only():
     f = bone_frame(joints, (("a", "b"), ("c", "d"), None), flat=True)[0]
     np.testing.assert_allclose(f[:, 0], [0, -1, 0], atol=1e-12)  # pitch dropped, heading kept
     np.testing.assert_allclose(f[:, 1], [0, 0, 1], atol=1e-12)  # twist from straight up
+
+
+def test_hands_fall_back_to_the_pose_points():
+    from mocap_blender.retarget import source_joints
+    body, _, _ = standing_body(frames=2)
+    body[:, 19] = body[:, 15] + [0, -60, -40]  # left index, from the left wrist
+    body[:, 17] = body[:, 15] + [30, -50, -40]  # left pinky
+    hands = np.full((2, 21, 3), np.nan)
+    j = source_joints(body, hands, hands.copy())
+    np.testing.assert_allclose(j["index1.L"], body[:, 19])
+    np.testing.assert_allclose(j["middle1.L"], (body[:, 19] + body[:, 17]) / 2)
+    assert np.isnan(j["index2.L"]).all()  # fingers stay unposed
