@@ -27,8 +27,10 @@ removed.
    yet but must be sellable later, so no non-commercial or capped
    "community" licenses, not even for tests.
 2. **No local AI for code, models or script analysis.** That work is done by
-   the hosted agent (Claude). Refined 2026-10-12: local audio clip generation
-   is allowed (`mocap-audio`), as are the mocap neural nets of P3.
+   the hosted agent (Claude). Revised 2026-10-23: a model runs locally only if
+   it performs well on the current equipment (RTX 4080 16 GB), measured in a
+   task first; P3 mocap nets and local audio generation pass, and the models
+   good enough for code, models or script analysis don't.
 3. **Don't over-task the AI.** AI writes and maintains descriptions and code.
    Plain deterministic software builds the assets.
 4. **Change one thing without changing everything.** An edit touches only the
