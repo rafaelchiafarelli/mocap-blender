@@ -25,3 +25,6 @@ Rules specific to this repository:
 | [baseline](baseline/baseline.md) | Planned — not started |
 | [integration](integration/integration.md) | Planned — not started |
 | [mvp](mvp/mvp.md) | In progress (2026-10-12): the MVP's Blender half |
+| [environments](environments/environments.md) | Proposed — free library-and-rules set building for a free camera; not scoped, nothing tested |
+
+Study behind `integration` and `environments`, not a plan yet: [methodology_study.md](methodology_study.md).
