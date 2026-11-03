@@ -122,10 +122,9 @@ orbit it, and Rafael accepts the look.
 ## Open decisions for Rafael
 
 1. Approve scoping this into epics and tasks?
-2. Where does it live for good? It's here for now, beside `integration` and the
-   study (moved from `mocap-studio` on 2026-11-03). The study suggests a new
-   film-toolbox repository (submodule of `mocap-studio`), with `mocap-blender`
-   staying the P5 importer.
+2. The plan is here, beside `integration` and the study. Rafael decided on 2026-11-03
+   that film tools go in `mocap-studio`'s `human-model/` folder, not a separate
+   repository for now. Does that also cover set-building tools when they're built?
 3. Does this replace the `sets` epic of `integration` in `mocap-blender`?
 
 **Out of scope:** film-specific sets (they belong in the film root), the face
