@@ -91,7 +91,7 @@ Rafael's team builds the assets, and AI is not the whole of it:
   a procedural tool already provides.
 
 This is the execution side the pre-production planners (`mocap-preprod`) hand
-specifications to. The roster of asset agents is defined when TicTac enters
+specifications to. The roster of asset agents is defined when the first film enters
 production.
 
 ## Worked example: the storyboard
