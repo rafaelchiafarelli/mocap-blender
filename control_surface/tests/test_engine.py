@@ -12,12 +12,14 @@ MODES = ROOT / "mappings" / "blender_modes.json"
 # Test mapping: the bundled bindings plus mode LEDs on CUE A-D (A-D have no LED).
 CUE_LEDS = Path(__file__).resolve().parent / "data" / "modes_cue_leds.json"
 A_LED, B_LED = (0x90, 0x27), (0x90, 0x28)  # CUE A, CUE B
+BUNDLED_ACTIONS = {"camera_move", "view_move", "view_projection", "orbit_selection_toggle"}
+BUNDLED_STATES = {"object_mode", "view_axis", "view_perspective", "orbit_selection"}
 
 
 class FakeBlender:
     def __init__(self):
         self.mode = "OBJECT"
-        self.view = {"view_axis": "NONE", "view_perspective": "PERSP"}
+        self.view = {"view_axis": "NONE", "view_perspective": "PERSP", "orbit_selection": False}
         self.actions = []
         self.calls = []
         self.contexts = []
@@ -38,6 +40,8 @@ class FakeBlender:
 
     def act(self, name, args):
         self.actions.append((name, args))
+        if name == "orbit_selection_toggle":
+            self.view["orbit_selection"] = not self.view["orbit_selection"]
 
 
 def make():
@@ -54,7 +58,7 @@ def led_values(sent, addr):
 
 
 def test_bundled_mapping_is_valid():
-    Mapping.load(MODES).validate(PROFILE, {"object_mode", "view_axis", "view_perspective"}, {"camera_move", "view_move"})
+    Mapping.load(MODES).validate(PROFILE, BUNDLED_STATES, BUNDLED_ACTIONS)
     Mapping.load(CUE_LEDS).validate(PROFILE, {"object_mode"})
 
 
@@ -139,7 +143,7 @@ def make_bundled(mode="OBJECT"):
     fb.mode = mode
     sent = []
     m = Mapping.load(MODES)
-    m.validate(PROFILE, {"object_mode", "view_axis", "view_perspective"}, {"camera_move", "view_move"})
+    m.validate(PROFILE, BUNDLED_STATES, BUNDLED_ACTIONS)
     e = Engine(PROFILE, m, lambda *x: sent.append(x), fb.run, fb.read, lambda: fb.now, fb.act)
     return e, fb, sent
 
@@ -316,7 +320,7 @@ def test_intro_lights_every_led_then_clears_and_holds_indicators():
     assert meters[0][2] > 0 and meters[-1][2] == 0 and max(m[2] for m in meters) == 127
     assert not e.intro_running
     # indicators were held during the intro and come back after it
-    assert sent[-1][:2] in ((0x90, 0x22), (0x90, 0x23), (0x90, 0x1F))
+    assert sent[-1][:2] in {e.profile.led(i["control"]) for i in e.mapping.indicators}
 
 
 def test_intro_holds_indicators_while_running():
@@ -393,3 +397,56 @@ def test_bundled_encoder_led_is_on_in_camera_view():
     fb.now = 20
     e.update()
     assert led_values(sent, (0x90, 0x1F)) == [LED_OFF, LED_ON]
+
+
+@pytest.mark.parametrize("note, positive, negative", [
+    (0x26, "RIGHT", "LEFT"), (0x27, "FRONT", "BACK"), (0x28, "TOP", "BOTTOM"),
+])
+def test_bundled_cue_led_on_positive_side_blinks_on_negative_off_elsewhere(note, positive, negative):
+    e, fb, sent = make_bundled()
+    e.update()
+    assert led_values(sent, (0x90, note)) == [LED_OFF]
+    fb.view["view_axis"] = positive
+    fb.now = 20
+    e.update()
+    assert led_values(sent, (0x90, note))[-1] == LED_ON
+    fb.view["view_axis"] = negative
+    before = len(led_values(sent, (0x90, note)))
+    for t in range(40, 1000, 20):  # 200 ms on / 200 ms off
+        fb.now = t
+        e.update()
+    blink = led_values(sent, (0x90, note))[before:]
+    assert len(blink) >= 4 and all(a != b for a, b in zip(blink, blink[1:]))
+    fb.view["view_axis"] = "NONE"  # orbited away: off
+    fb.now = 1000
+    e.update()
+    assert led_values(sent, (0x90, note))[-1] == LED_OFF
+
+
+@pytest.mark.parametrize("note, kind, expected", [
+    (0x2A, "action", ("view_projection", {"type": "ORTHO"})),  # A
+    (0x2B, "action", ("view_projection", {"type": "PERSP"})),  # B
+    (0x2C, "operator", ("view3d.view_all", {})),               # C
+    (0x2D, "operator", ("view3d.view_selected", {})),          # D
+])
+def test_bundled_a_to_d_projection_and_framing(note, kind, expected):
+    e, fb, _ = make_bundled()
+    e.handle(0x90, note, 0x7F)
+    assert (fb.actions if kind == "action" else fb.calls) == [expected]
+
+
+@pytest.mark.parametrize("channel", [0x92, 0x94])  # right side, deck B or D
+def test_bundled_right_vinyl_toggles_orbit_around_selection_and_blinks(channel):
+    e, fb, sent = make_bundled()
+    e.handle(channel, 0x01, 0x7F)
+    assert fb.actions[-1] == ("orbit_selection_toggle", {})
+    assert fb.view["orbit_selection"] is True
+    for t in range(0, 600, 20):
+        fb.now = t
+        e.update()
+    assert led_values(sent, (channel, 0x01))[-3:] == [LED_ON, LED_OFF, LED_ON]
+    e.handle(channel, 0x01, 0x7F)
+    assert fb.view["orbit_selection"] is False
+    fb.now = 600
+    e.update()
+    assert led_values(sent, (channel, 0x01))[-1] == LED_OFF

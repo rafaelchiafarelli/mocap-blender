@@ -57,7 +57,15 @@ def _view_axis():
     return "NONE"
 
 
-STATES = {"object_mode": _object_mode, "view_perspective": _view_perspective, "view_axis": _view_axis}
+def _orbit_selection():
+    """Preferences → Navigation → Orbit Around Selection."""
+    return bool(bpy.context.preferences.inputs.use_rotate_around_active)
+
+
+STATES = {
+    "object_mode": _object_mode, "view_perspective": _view_perspective,
+    "view_axis": _view_axis, "orbit_selection": _orbit_selection,
+}
 
 
 def read_state(name):
@@ -85,7 +93,30 @@ def view_move(x=0.0, y=0.0):
     return {"FINISHED"}
 
 
-ACTIONS = {"camera_move": camera_move, "view_move": view_move}
+def view_projection(type):
+    """Set the first 3D View to ORTHO or PERSP (leaves camera view, like Numpad 5)."""
+    rv3d = _region_3d()
+    if rv3d is None:
+        raise RuntimeError("no 3D View")
+    rv3d.view_perspective = type
+    return {"FINISHED"}
+
+
+def orbit_selection_toggle():
+    """Toggle Preferences → Navigation → Orbit Around Selection.
+
+    wm.context_toggle does the same but always returns {'CANCELLED'}
+    (no undo step for preferences), which would show as an error.
+    """
+    inputs = bpy.context.preferences.inputs
+    inputs.use_rotate_around_active = not inputs.use_rotate_around_active
+    return {"FINISHED"}
+
+
+ACTIONS = {
+    "camera_move": camera_move, "view_move": view_move,
+    "view_projection": view_projection, "orbit_selection_toggle": orbit_selection_toggle,
+}
 
 
 def run_action(name, args):
