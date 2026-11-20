@@ -177,6 +177,9 @@ class CONTROLSURFACE_PT_panel(bpy.types.Panel):
             col.operator(CONTROLSURFACE_OT_connect.bl_idname, icon="PLUGIN")
         else:
             col.operator(CONTROLSURFACE_OT_disconnect.bl_idname, icon="CANCEL")
+            layers = _session.engine.layers
+            if layers:
+                col.label(text="  ".join(f"{k}: {v}" for k, v in layers.items()))
             if _session.engine.last_error:
                 col.label(text=_session.engine.last_error, icon="ERROR")
 

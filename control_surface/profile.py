@@ -45,6 +45,21 @@ class Profile:
                 raise ProfileError(f"control {cid!r}: unknown type {kind!r}")
             for pair in pairs:
                 self._by_pair.setdefault(pair, []).append((cid, spec))
+        # Layers: the controller's internal state, followed by the engine.
+        #   {"type": "select", "values": {value: control}} -> value of the last pressed control
+        #   {"type": "hold", "controls": [control, ...]}   -> true while any of them is held
+        self.layers = data.get("layers", {})
+        for name, layer in self.layers.items():
+            kind = layer.get("type")
+            if kind == "select":
+                used = list(layer["values"].values())
+            elif kind == "hold":
+                used = list(layer["controls"])
+            else:
+                raise ProfileError(f"layer {name!r}: unknown type {kind!r}")
+            for cid in used:
+                if self.controls.get(cid, {}).get("type") != "button":
+                    raise ProfileError(f"layer {name!r}: {cid!r} is not a button")
 
     @classmethod
     def load(cls, path):
