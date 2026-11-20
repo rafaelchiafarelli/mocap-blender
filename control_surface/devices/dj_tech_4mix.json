@@ -15,6 +15,16 @@
    "values": {
     "A": "DECK A/C to A",
     "C": "DECK A/C to C"
+   },
+   "channels": {
+    "A": [
+     145,
+     177
+    ],
+    "C": [
+     147,
+     179
+    ]
    }
   },
   "deck_right": {
@@ -22,6 +32,16 @@
    "values": {
     "B": "DECK B/D to B",
     "D": "DECK B/D to D"
+   },
+   "channels": {
+    "B": [
+     146,
+     178
+    ],
+    "D": [
+     148,
+     180
+    ]
    }
   },
   "shift_left": {

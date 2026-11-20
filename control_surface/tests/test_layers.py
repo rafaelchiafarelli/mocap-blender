@@ -132,3 +132,19 @@ def test_profile_rejects_bad_layers():
     with pytest.raises(ProfileError):
         Profile({**base, "layers": {"x": {"type": "hold", "controls": ["K"]}}})
     Profile({**base, "layers": {"x": {"type": "hold", "controls": ["S"]}}})
+
+
+def test_deck_known_from_the_channel_of_any_message():
+    e, *_ = make()
+    e.handle(0xB3, 0x0F, 0x41)  # left platter turned on deck C's channel
+    assert e.layers["deck_left"] == "C"
+    e.handle(0x92, 0x02, 0x7F)  # IN on deck B
+    assert e.layers["deck_right"] == "B"
+    e.handle(0x91, 0x02, 0x00)
+    assert e.layers["deck_left"] == "A"
+
+
+def test_profile_rejects_bad_channels():
+    base = {"controls": {"S": {"type": "button", "press": [0x91, 14, 127], "release": [0x91, 14, 0], "led": None}}}
+    with pytest.raises(ProfileError):
+        Profile({**base, "layers": {"d": {"type": "select", "values": {"A": "S"}, "channels": {"Z": [0x91]}}}})

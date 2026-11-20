@@ -6,9 +6,11 @@ behaviour is tested without either.
 Mapping JSON:
   {
     "device": "dj_tech_4mix",                  # devices/<device>.json
-    "bindings": [                              # control event -> Blender operator
+    "bindings": [                              # control event -> Blender operator or action
       {"control": "A", "event": "press",
        "operator": "object.mode_set", "args": {"mode": "EDIT"},
+                                               # or "action": "camera_move" (a named Python
+                                               # function given by the Blender side)
        "call": "EXEC_DEFAULT",                 # optional; INVOKE_DEFAULT for invoke-only
                                                # operators such as view3d.view_pan
        "when": {"shift_left": false}}          # optional: every state must match
@@ -20,8 +22,10 @@ Mapping JSON:
     ]
   }
 States are the profile's layers (deck_left, shift_left, ...) followed by the
-engine, or Blender states read through read_state. Indicators are arbitrated
-per physical LED: the first matching one (in file order) wins; none -> off.
+engine, or Blender states read through read_state. For one control event, only
+the first binding (in file order) whose `when` matches runs, so a later binding
+without `when` acts as "otherwise". Indicators are arbitrated per physical LED
+the same way: the first matching one wins; none -> off.
 """
 
 import json
@@ -50,10 +54,11 @@ class Mapping:
         with open(path, encoding="utf-8") as f:
             return cls(json.load(f))
 
-    def validate(self, profile, state_names):
+    def validate(self, profile, state_names, action_names=()):
         """Raise MappingError on anything that would fail silently at runtime.
 
         state_names: the Blender states available; the profile's layers are added.
+        action_names: the actions the Blender side provides.
         """
         known = set(state_names) | set(profile.layers)
 
@@ -70,7 +75,11 @@ class Mapping:
                 raise MappingError(f"binding: unknown control {b.get('control')!r}")
             if b.get("event") not in EVENTS:
                 raise MappingError(f"binding {b['control']!r}: event must be one of {EVENTS}")
-            if "." not in b.get("operator", ""):
+            if ("operator" in b) == ("action" in b):
+                raise MappingError(f"binding {b['control']!r}: give either operator or action")
+            if "action" in b and b["action"] not in action_names:
+                raise MappingError(f"binding {b['control']!r}: unknown action {b['action']!r}")
+            if "operator" in b and "." not in b["operator"]:
                 raise MappingError(f"binding {b['control']!r}: operator must look like 'object.mode_set'")
             if b.get("call", "EXEC_DEFAULT") not in CALLS:
                 raise MappingError(f"binding {b['control']!r}: call must be one of {CALLS}")
@@ -102,12 +111,14 @@ class Engine:
                                   INVOKE_DEFAULT); may raise
     read_state(name)            -> current value of a Blender state
     clock_ms()                  -> monotonic milliseconds
+    run_action(name, args)      -> runs a named action of the Blender side; may raise
     """
 
-    def __init__(self, profile, mapping, send, run_operator, read_state, clock_ms):
+    def __init__(self, profile, mapping, send, run_operator, read_state, clock_ms, run_action=None):
         self.profile = profile
         self.mapping = mapping
         self._run = run_operator
+        self._action = run_action
         self._read = read_state
         self._clock = clock_ms
         self.leds = LedDriver(send)
@@ -141,6 +152,16 @@ class Engine:
     def _when_ok(self, rule, cache=None):
         return all(self.state(n, cache) == v for n, v in rule.get("when", {}).items())
 
+    def _track_channels(self, status):
+        """Select layers with `channels`: a message on a value's channel selects it."""
+        changed = False
+        for name, layer in self.profile.layers.items():
+            for value, statuses in layer.get("channels", {}).items():
+                if status in statuses and self.layers[name] != value:
+                    self.layers[name] = value
+                    changed = True
+        return changed
+
     def _track_layers(self, cid, event):
         """Update the layers from one decoded event; True if any changed."""
         changed = False
@@ -162,22 +183,32 @@ class Engine:
         return changed
 
     def handle(self, b0, b1, b2):
-        """One incoming message -> follow the layers, run every binding it triggers."""
+        """One incoming message -> follow the layers, run the first binding that matches."""
+        if self._track_channels(b0):
+            self.leds.resend()
         for cid, event in self.profile.decode(b0, b1, b2):
             if self._track_layers(cid, event):
                 # The controller now shows another deck/layer: send every LED again.
                 self.leds.resend()
             for b in self.mapping.bindings:
                 if b["control"] == cid and b["event"] == event and self._when_ok(b):
-                    try:
-                        result = self._run(b["operator"], b.get("args", {}), b.get("call", "EXEC_DEFAULT"))
-                    except Exception as e:  # an operator that fails its poll, etc.
-                        self.last_error = f"{cid} {event} -> {b['operator']}: {e}"
-                        continue
-                    if result and "CANCELLED" in result:
-                        # Blender only logs some failures (e.g. "Invalid operator call")
-                        # and returns {'CANCELLED'}: show them too.
-                        self.last_error = f"{cid} {event} -> {b['operator']}: cancelled"
+                    self._fire(cid, event, b)
+                    break  # first match wins
+
+    def _fire(self, cid, event, b):
+        what = b.get("operator") or b["action"]
+        try:
+            if "action" in b:
+                result = self._action(b["action"], b.get("args", {}))
+            else:
+                result = self._run(b["operator"], b.get("args", {}), b.get("call", "EXEC_DEFAULT"))
+        except Exception as e:  # an operator that fails its poll, etc.
+            self.last_error = f"{cid} {event} -> {what}: {e}"
+            return
+        if result and "CANCELLED" in result:
+            # Blender only logs some failures (e.g. "Invalid operator call")
+            # and returns {'CANCELLED'}: show them too.
+            self.last_error = f"{cid} {event} -> {what}: cancelled"
 
     def update(self):
         """Read the states and drive the LEDs; call this often (e.g. every 20 ms)."""

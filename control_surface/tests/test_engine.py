@@ -193,3 +193,41 @@ def test_cancelled_operator_is_reported():
     e._run = lambda op, args, call="EXEC_DEFAULT": {"CANCELLED"}
     e.handle(0x90, 0x2A, 0x7F)
     assert e.last_error.endswith("cancelled")
+
+
+def test_first_matching_binding_wins_and_later_one_is_otherwise():
+    calls = []
+    m = Mapping({"device": "dj_tech_4mix", "bindings": [
+        {"control": "CUE C", "event": "press", "operator": "view3d.view_axis", "args": {"type": "LEFT"},
+         "when": {"view_axis": "RIGHT"}},
+        {"control": "CUE C", "event": "press", "operator": "view3d.view_axis", "args": {"type": "RIGHT"}},
+    ]})
+    m.validate(PROFILE, {"view_axis"})
+    view = {"axis": "NONE"}
+    e = Engine(PROFILE, m, lambda *x: None, lambda op, a, c: calls.append(a["type"]),
+               lambda n: view["axis"], lambda: 0)
+    e.handle(0x90, 0x26, 0x7F)
+    view["axis"] = "RIGHT"
+    e.handle(0x90, 0x26, 0x7F)
+    assert calls == ["RIGHT", "LEFT"]  # one call per press
+
+
+def test_action_binding_runs_the_named_action():
+    done = []
+    m = Mapping({"device": "dj_tech_4mix", "bindings": [
+        {"control": "A", "event": "press", "action": "camera_move", "args": {"y": 0.01}}]})
+    m.validate(PROFILE, set(), {"camera_move"})
+    e = Engine(PROFILE, m, lambda *x: None, None, None, lambda: 0,
+               lambda name, args: done.append((name, args)))
+    e.handle(0x90, 0x2A, 0x7F)
+    assert done == [("camera_move", {"y": 0.01})]
+
+
+@pytest.mark.parametrize("binding", [
+    {"control": "A", "event": "press", "action": "teleport"},
+    {"control": "A", "event": "press"},
+    {"control": "A", "event": "press", "action": "camera_move", "operator": "a.b"},
+])
+def test_validation_of_actions(binding):
+    with pytest.raises(MappingError):
+        Mapping({"device": "dj_tech_4mix", "bindings": [binding]}).validate(PROFILE, set(), {"camera_move"})

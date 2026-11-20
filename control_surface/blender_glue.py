@@ -10,6 +10,7 @@ import time
 from pathlib import Path
 
 import bpy
+from mathutils import Matrix, Vector
 
 from .engine import Engine, Mapping
 from .profile import Profile
@@ -25,11 +26,59 @@ def _object_mode():
     return obj.mode if obj else "NONE"
 
 
-STATES = {"object_mode": _object_mode}
+def _region_3d():
+    place = _view3d()
+    return place[1].spaces.active.region_3d if place else None
+
+
+def _view_perspective():
+    """PERSP / ORTHO / CAMERA of the first 3D View, or NONE."""
+    rv3d = _region_3d()
+    return rv3d.view_perspective if rv3d else "NONE"
+
+
+# Looking direction of each axis view (Numpad 1/3/7, with Ctrl for the opposite side).
+AXIS_VIEWS = {
+    "FRONT": (0, 1, 0), "BACK": (0, -1, 0),
+    "RIGHT": (-1, 0, 0), "LEFT": (1, 0, 0),
+    "TOP": (0, 0, -1), "BOTTOM": (0, 0, 1),
+}
+
+
+def _view_axis():
+    """Which axis view the first 3D View looks along, or NONE (also in camera view)."""
+    rv3d = _region_3d()
+    if rv3d is None or rv3d.view_perspective == "CAMERA":
+        return "NONE"
+    look = rv3d.view_rotation @ Vector((0.0, 0.0, -1.0))
+    for name, d in AXIS_VIEWS.items():
+        if look.dot(Vector(d)) > 0.9999:
+            return name
+    return "NONE"
+
+
+STATES = {"object_mode": _object_mode, "view_perspective": _view_perspective, "view_axis": _view_axis}
 
 
 def read_state(name):
     return STATES[name]()
+
+
+def camera_move(x=0.0, y=0.0):
+    """Move the scene camera by (x, y) metres along its own axes (x right, y up)."""
+    cam = bpy.context.scene.camera
+    if cam is None:
+        raise RuntimeError("the scene has no camera")
+    delta = cam.matrix_world.to_3x3().normalized() @ Vector((x, y, 0.0))
+    cam.matrix_world = Matrix.Translation(delta) @ cam.matrix_world
+    return {"FINISHED"}
+
+
+ACTIONS = {"camera_move": camera_move}
+
+
+def run_action(name, args):
+    return ACTIONS[name](**args)
 
 
 def _view3d():
@@ -67,7 +116,7 @@ class Session:
         self.queue = queue.SimpleQueue()
         mapping = Mapping.load(mapping_path)
         profile = Profile.load(HERE / "devices" / f"{mapping.device}.json")
-        mapping.validate(profile, set(STATES))
+        mapping.validate(profile, set(STATES), set(ACTIONS))
         self.port_names = ("", "")
         if midi_in is None or midi_out is None:
             from . import winmm
@@ -88,7 +137,7 @@ class Session:
         self.midi_in, self.midi_out = midi_in, midi_out
         self.engine = Engine(
             profile, mapping, midi_out.send, run_operator, read_state,
-            lambda: int(time.monotonic() * 1000),
+            lambda: int(time.monotonic() * 1000), run_action,
         )
         self.device = profile.device
 

@@ -47,12 +47,17 @@ class Profile:
                 self._by_pair.setdefault(pair, []).append((cid, spec))
         # Layers: the controller's internal state, followed by the engine.
         #   {"type": "select", "values": {value: control}} -> value of the last pressed control
+        #       optional "channels": {value: [status bytes]} -> any message with one of
+        #       these status bytes also selects the value (a deck known from its channel)
         #   {"type": "hold", "controls": [control, ...]}   -> true while any of them is held
         self.layers = data.get("layers", {})
         for name, layer in self.layers.items():
             kind = layer.get("type")
             if kind == "select":
                 used = list(layer["values"].values())
+                for value, statuses in layer.get("channels", {}).items():
+                    if value not in layer["values"] or not all(isinstance(x, int) for x in statuses):
+                        raise ProfileError(f"layer {name!r}: bad channels for {value!r}")
             elif kind == "hold":
                 used = list(layer["controls"])
             else:
