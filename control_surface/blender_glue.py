@@ -43,15 +43,21 @@ def _view3d():
     return None
 
 
-def run_operator(name, args):
+def run_operator(name, args, call="EXEC_DEFAULT"):
+    """Run bpy.ops.<name>(**args) in a 3D View context.
+
+    call is Blender's execution context: EXEC_DEFAULT, or INVOKE_DEFAULT for
+    operators that only have an invoke (e.g. view3d.view_pan), which otherwise
+    fail with "Invalid operator call".
+    """
     module, op_name = name.split(".", 1)
     op = getattr(getattr(bpy.ops, module), op_name)
     place = _view3d()
     if place:
         win, area, region = place
         with bpy.context.temp_override(window=win, area=area, region=region):
-            return op(**args)
-    return op(**args)  # background / no 3D View
+            return op(call, **args)
+    return op(call, **args)  # background / no 3D View
 
 
 class Session:

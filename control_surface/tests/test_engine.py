@@ -18,10 +18,12 @@ class FakeBlender:
     def __init__(self):
         self.mode = "OBJECT"
         self.calls = []
+        self.contexts = []
         self.now = 0
 
-    def run(self, op, args):
+    def run(self, op, args, call="EXEC_DEFAULT"):
         self.calls.append((op, args))
+        self.contexts.append(call)
         if op == "object.mode_set":
             if self.mode == "NONE":
                 raise RuntimeError("poll failed")
@@ -164,6 +166,19 @@ def test_bundled_platters_pan_the_view(cc, value, pan):
     e, fb, _ = make_bundled()
     e.handle(cc, 0x0F, value)
     assert fb.calls == [("view3d.view_pan", {"type": pan})]
+    assert fb.contexts == ["INVOKE_DEFAULT"]  # view_pan has no exec: "Invalid operator call"
+
+
+def test_mode_buttons_use_exec():
+    e, fb, _ = make_bundled()
+    e.handle(0x90, 0x22, 0x7F)
+    assert fb.contexts == ["EXEC_DEFAULT"]
+
+
+def test_validation_rejects_unknown_call_context():
+    with pytest.raises(MappingError):
+        Mapping({"device": "dj_tech_4mix", "bindings": [
+            {"control": "A", "event": "press", "operator": "a.b", "call": "INVOKE"}]}).validate(PROFILE, set())
 
 
 def test_bundled_platter_touch_and_shifted_turn_do_nothing():
@@ -171,3 +186,10 @@ def test_bundled_platter_touch_and_shifted_turn_do_nothing():
     e.handle(0x91, 0x0F, 0x7F)  # touch
     e.handle(0xB1, 0x4F, 0x41)  # turn with SHIFT
     assert fb.calls == []
+
+
+def test_cancelled_operator_is_reported():
+    e, fb, _ = make()
+    e._run = lambda op, args, call="EXEC_DEFAULT": {"CANCELLED"}
+    e.handle(0x90, 0x2A, 0x7F)
+    assert e.last_error.endswith("cancelled")

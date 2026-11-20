@@ -15,7 +15,7 @@ def make(bindings=(), indicators=(), mode="OBJECT"):
     calls, sent, now = [], [], [0]
     m = Mapping({"device": "dj_tech_4mix", "bindings": list(bindings), "indicators": list(indicators)})
     m.validate(DJ, {"object_mode"})
-    e = Engine(DJ, m, lambda *x: sent.append(x), lambda op, a: calls.append((op, a)),
+    e = Engine(DJ, m, lambda *x: sent.append(x), lambda op, a, call: calls.append((op, a)),
                lambda name: mode, lambda: now[0])
     return e, calls, sent, now
 

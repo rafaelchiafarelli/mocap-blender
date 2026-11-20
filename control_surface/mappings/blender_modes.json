@@ -55,7 +55,8 @@
    "operator": "view3d.view_pan",
    "args": {
     "type": "PANUP"
-   }
+   },
+   "call": "INVOKE_DEFAULT"
   },
   {
    "control": "PLATTER L/A",
@@ -63,7 +64,8 @@
    "operator": "view3d.view_pan",
    "args": {
     "type": "PANDOWN"
-   }
+   },
+   "call": "INVOKE_DEFAULT"
   },
   {
    "control": "PLATTER L/C",
@@ -71,7 +73,8 @@
    "operator": "view3d.view_pan",
    "args": {
     "type": "PANUP"
-   }
+   },
+   "call": "INVOKE_DEFAULT"
   },
   {
    "control": "PLATTER L/C",
@@ -79,7 +82,8 @@
    "operator": "view3d.view_pan",
    "args": {
     "type": "PANDOWN"
-   }
+   },
+   "call": "INVOKE_DEFAULT"
   },
   {
    "control": "PLATTER R/B",
@@ -87,7 +91,8 @@
    "operator": "view3d.view_pan",
    "args": {
     "type": "PANRIGHT"
-   }
+   },
+   "call": "INVOKE_DEFAULT"
   },
   {
    "control": "PLATTER R/B",
@@ -95,7 +100,8 @@
    "operator": "view3d.view_pan",
    "args": {
     "type": "PANLEFT"
-   }
+   },
+   "call": "INVOKE_DEFAULT"
   },
   {
    "control": "PLATTER R/D",
@@ -103,7 +109,8 @@
    "operator": "view3d.view_pan",
    "args": {
     "type": "PANRIGHT"
-   }
+   },
+   "call": "INVOKE_DEFAULT"
   },
   {
    "control": "PLATTER R/D",
@@ -111,7 +118,8 @@
    "operator": "view3d.view_pan",
    "args": {
     "type": "PANLEFT"
-   }
+   },
+   "call": "INVOKE_DEFAULT"
   }
  ],
  "indicators": [
