@@ -54,7 +54,7 @@ def led_values(sent, addr):
 
 
 def test_bundled_mapping_is_valid():
-    Mapping.load(MODES).validate(PROFILE, {"object_mode", "view_axis", "view_perspective"}, {"camera_move"})
+    Mapping.load(MODES).validate(PROFILE, {"object_mode", "view_axis", "view_perspective"}, {"camera_move", "view_move"})
     Mapping.load(CUE_LEDS).validate(PROFILE, {"object_mode"})
 
 
@@ -139,7 +139,7 @@ def make_bundled(mode="OBJECT"):
     fb.mode = mode
     sent = []
     m = Mapping.load(MODES)
-    m.validate(PROFILE, {"object_mode", "view_axis", "view_perspective"}, {"camera_move"})
+    m.validate(PROFILE, {"object_mode", "view_axis", "view_perspective"}, {"camera_move", "view_move"})
     e = Engine(PROFILE, m, lambda *x: sent.append(x), fb.run, fb.read, lambda: fb.now, fb.act)
     return e, fb, sent
 
@@ -166,19 +166,18 @@ def cb(e):
 
 
 @pytest.mark.parametrize(
-    "cc, value, pan",
+    "cc, value, move",
     [
-        (0xB3, 0x41, "PANUP"), (0xB3, 0x3F, "PANDOWN"),      # left platter, deck C
-        (0xB3, 0x45, "PANUP"),                               # fast turn
-        (0xB2, 0x41, "PANRIGHT"), (0xB2, 0x3F, "PANLEFT"),   # right platter, deck B
+        (0xB3, 0x41, {"y": 0.01}), (0xB3, 0x3F, {"y": -0.01}),   # left platter, deck C
+        (0xB3, 0x45, {"y": 0.01}),                               # fast turn: same step
+        (0xB2, 0x41, {"x": 0.01}), (0xB2, 0x3F, {"x": -0.01}),   # right platter, deck B
     ],
 )
-def test_bundled_platters_pan_the_view_with_decks_c_and_b(cc, value, pan):
+def test_bundled_platters_move_the_view_with_decks_c_and_b(cc, value, move):
     e, fb, _ = make_bundled()
     cb(e)
     e.handle(cc, 0x0F, value)
-    assert fb.calls == [("view3d.view_pan", {"type": pan})]
-    assert fb.contexts == ["INVOKE_DEFAULT"]  # view_pan has no exec: "Invalid operator call"
+    assert fb.actions == [("view_move", move)] and fb.calls == []
 
 
 @pytest.mark.parametrize("left, right", [(0xB1, 0xB2), (0xB1, 0xB4), (0xB3, 0xB4)])
@@ -193,10 +192,10 @@ def test_bundled_platters_do_nothing_with_other_deck_pairs(left, right):
 def test_bundled_platter_needs_the_other_side_known():
     e, fb, _ = make_bundled()
     e.handle(0xB3, 0x0F, 0x41)  # left on deck C, right side still UNKNOWN
-    assert fb.calls == []
+    assert fb.actions == []
     e.handle(0x92, 0x02, 0x00)  # anything on deck B's channel
     e.handle(0xB3, 0x0F, 0x41)
-    assert fb.calls == [("view3d.view_pan", {"type": "PANUP"})]
+    assert fb.actions == [("view_move", {"y": 0.01})]
 
 
 @pytest.mark.parametrize("cc, value, move", [
@@ -343,5 +342,44 @@ def test_bundled_encoder_dollies_the_camera_in_camera_view():
     fb.view["view_perspective"] = "CAMERA"
     e.handle(0xB0, 0x1F, 0x41)
     e.handle(0xB0, 0x1F, 0x3F)
-    assert fb.actions == [("camera_move", {"forward": 0.05}), ("camera_move", {"forward": -0.05})]
+    assert fb.actions == [("camera_move", {"forward": 0.01}), ("camera_move", {"forward": -0.01})]
     assert fb.calls == []
+
+
+def approx_actions(actions):
+    return [(n, {k: round(v, 6) for k, v in a.items()}) for n, a in actions]
+
+
+def test_s1_vol_scales_the_step_from_1_to_10_cm():
+    e, fb, _ = make_bundled()
+    cb(e)
+    assert e.scales == {"step": 0.01}  # default until the fader moves
+    e.handle(0xB0, 0x01, 127)  # S1 VOL at the top
+    e.handle(0xB3, 0x0F, 0x41)
+    e.handle(0xB0, 0x01, 0)    # at the bottom
+    e.handle(0xB2, 0x0F, 0x3F)
+    e.handle(0xB0, 0x01, 64)   # about half way
+    fb.view["view_perspective"] = "CAMERA"
+    e.handle(0xB0, 0x1F, 0x41)  # encoder dolly
+    assert approx_actions(fb.actions) == [
+        ("view_move", {"y": 0.1}), ("view_move", {"x": -0.01}),
+        ("camera_move", {"forward": round(0.01 + 0.09 * 64 / 127, 6)}),
+    ]
+
+
+def test_scale_does_not_touch_other_args():
+    e, fb, _ = make_bundled()
+    e.handle(0xB0, 0x01, 127)
+    e.handle(0xB0, 0x1F, 0x41)  # zoom: no scale
+    assert fb.calls == [("view3d.zoom", {"delta": 1})]
+
+
+@pytest.mark.parametrize("scales, binding", [
+    ({"s": {"control": "A", "min": 0, "max": 1, "default": 0}}, None),          # not a fader
+    ({"s": {"control": "S1 VOL", "min": 0, "max": "x", "default": 0}}, None),   # bad number
+    ({}, {"control": "A", "event": "press", "action": "camera_move", "scale": "nope"}),
+])
+def test_scale_validation(scales, binding):
+    data = {"device": "dj_tech_4mix", "scales": scales, "bindings": [binding] if binding else []}
+    with pytest.raises(MappingError):
+        Mapping(data).validate(PROFILE, set(), {"camera_move"})

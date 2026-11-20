@@ -1,5 +1,13 @@
 {
  "device": "dj_tech_4mix",
+ "scales": {
+  "step": {
+   "control": "S1 VOL",
+   "min": 0.01,
+   "max": 0.1,
+   "default": 0.01
+  }
+ },
  "bindings": [
   {
    "control": "A",
@@ -111,22 +119,24 @@
    "event": "cw",
    "action": "camera_move",
    "args": {
-    "forward": 0.05
+    "forward": 1
    },
    "when": {
     "view_perspective": "CAMERA"
-   }
+   },
+   "scale": "step"
   },
   {
    "control": "NAVIGATION",
    "event": "ccw",
    "action": "camera_move",
    "args": {
-    "forward": -0.05
+    "forward": -1
    },
    "when": {
     "view_perspective": "CAMERA"
-   }
+   },
+   "scale": "step"
   },
   {
    "control": "NAVIGATION",
@@ -154,61 +164,65 @@
    "event": "cw",
    "action": "camera_move",
    "args": {
-    "y": 0.01
+    "y": 1
    },
    "when": {
     "deck_left": "C",
     "deck_right": "B",
     "view_perspective": "CAMERA"
-   }
+   },
+   "scale": "step"
   },
   {
    "control": "PLATTER L/C",
    "event": "ccw",
    "action": "camera_move",
    "args": {
-    "y": -0.01
+    "y": -1
    },
    "when": {
     "deck_left": "C",
     "deck_right": "B",
     "view_perspective": "CAMERA"
-   }
+   },
+   "scale": "step"
   },
   {
    "control": "PLATTER R/B",
    "event": "cw",
    "action": "camera_move",
    "args": {
-    "x": 0.01
+    "x": 1
    },
    "when": {
     "deck_left": "C",
     "deck_right": "B",
     "view_perspective": "CAMERA"
-   }
+   },
+   "scale": "step"
   },
   {
    "control": "PLATTER R/B",
    "event": "ccw",
    "action": "camera_move",
    "args": {
-    "x": -0.01
+    "x": -1
    },
    "when": {
     "deck_left": "C",
     "deck_right": "B",
     "view_perspective": "CAMERA"
-   }
+   },
+   "scale": "step"
   },
   {
    "control": "PLATTER L/C",
    "event": "cw",
-   "operator": "view3d.view_pan",
+   "action": "view_move",
    "args": {
-    "type": "PANUP"
+    "y": 1
    },
-   "call": "INVOKE_DEFAULT",
+   "scale": "step",
    "when": {
     "deck_left": "C",
     "deck_right": "B"
@@ -217,11 +231,11 @@
   {
    "control": "PLATTER L/C",
    "event": "ccw",
-   "operator": "view3d.view_pan",
+   "action": "view_move",
    "args": {
-    "type": "PANDOWN"
+    "y": -1
    },
-   "call": "INVOKE_DEFAULT",
+   "scale": "step",
    "when": {
     "deck_left": "C",
     "deck_right": "B"
@@ -230,11 +244,11 @@
   {
    "control": "PLATTER R/B",
    "event": "cw",
-   "operator": "view3d.view_pan",
+   "action": "view_move",
    "args": {
-    "type": "PANRIGHT"
+    "x": 1
    },
-   "call": "INVOKE_DEFAULT",
+   "scale": "step",
    "when": {
     "deck_left": "C",
     "deck_right": "B"
@@ -243,11 +257,11 @@
   {
    "control": "PLATTER R/B",
    "event": "ccw",
-   "operator": "view3d.view_pan",
+   "action": "view_move",
    "args": {
-    "type": "PANLEFT"
+    "x": -1
    },
-   "call": "INVOKE_DEFAULT",
+   "scale": "step",
    "when": {
     "deck_left": "C",
     "deck_right": "B"

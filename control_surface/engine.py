@@ -15,6 +15,10 @@ Mapping JSON:
                                                # operators such as view3d.view_pan
        "when": {"shift_left": false}}          # optional: every state must match
     ],
+    "scales": {                                # optional: a fader sets a size
+      "step": {"control": "S1 VOL", "min": 0.01, "max": 0.10, "default": 0.01}
+    },                                         # a binding's "scale": "step" multiplies
+                                               # its numeric args by the current value
     "indicators": [                            # state -> LED look
       {"control": "CUE A", "state": "object_mode", "equals": "EDIT",
        "led": "blink", "on_ms": 200, "off_ms": 200,
@@ -31,7 +35,7 @@ the same way: the first matching one wins; none -> off.
 import json
 
 from .leds import LedDriver
-from .profile import CCW, CW, PRESS, RELEASE
+from .profile import CCW, CW, PRESS, RELEASE, VALUE
 
 EVENTS = (PRESS, RELEASE, CW, CCW)
 LOOKS = ("on", "blink")
@@ -50,6 +54,7 @@ class Mapping:
         self.device = data["device"]
         self.bindings = list(data.get("bindings", []))
         self.indicators = list(data.get("indicators", []))
+        self.scales = dict(data.get("scales", {}))
 
     @classmethod
     def load(cls, path):
@@ -72,6 +77,12 @@ class Mapping:
                 if name not in known:
                     raise MappingError(f"{who}: unknown state {name!r} in when")
 
+        for name, sc in self.scales.items():
+            if profile.controls.get(sc.get("control"), {}).get("type") != "absolute":
+                raise MappingError(f"scale {name!r}: control must be an absolute control (fader/knob)")
+            for k in ("min", "max", "default"):
+                if not isinstance(sc.get(k), (int, float)):
+                    raise MappingError(f"scale {name!r}: {k} must be a number")
         for b in self.bindings:
             if b.get("control") not in profile.controls:
                 raise MappingError(f"binding: unknown control {b.get('control')!r}")
@@ -85,6 +96,8 @@ class Mapping:
                 raise MappingError(f"binding {b['control']!r}: operator must look like 'object.mode_set'")
             if b.get("call", "EXEC_DEFAULT") not in CALLS:
                 raise MappingError(f"binding {b['control']!r}: call must be one of {CALLS}")
+            if "scale" in b and b["scale"] not in self.scales:
+                raise MappingError(f"binding {b['control']!r}: unknown scale {b['scale']!r}")
             check_when(b, f"binding {b['control']!r}")
         for ind in self.indicators:
             cid = ind.get("control")
@@ -123,6 +136,8 @@ class Engine:
         self._action = run_action
         self._send = send
         self._intro = None  # [(time_ms, [messages])] while the intro runs
+        # Scale values: the default until their control moves.
+        self.scales = {name: float(sc["default"]) for name, sc in mapping.scales.items()}
         self._intro_next = 0
         self._read = read_state
         self._clock = clock_ms
@@ -192,6 +207,10 @@ class Engine:
         if self._track_channels(b0):
             self.leds.resend()
         for cid, event in self.profile.decode(b0, b1, b2):
+            if isinstance(event, tuple) and event[0] == VALUE:
+                for name, sc in self.mapping.scales.items():
+                    if sc["control"] == cid:
+                        self.scales[name] = sc["min"] + (sc["max"] - sc["min"]) * event[1] / 127
             if self._track_layers(cid, event):
                 # The controller now shows another deck/layer: send every LED again.
                 self.leds.resend()
@@ -200,13 +219,22 @@ class Engine:
                     self._fire(cid, event, b)
                     break  # first match wins
 
+    def _args(self, b):
+        """The binding's args, numeric ones multiplied by its scale's current value."""
+        args = dict(b.get("args", {}))
+        if "scale" in b:
+            k = self.scales[b["scale"]]
+            args = {n: (v * k if isinstance(v, (int, float)) and not isinstance(v, bool) else v)
+                    for n, v in args.items()}
+        return args
+
     def _fire(self, cid, event, b):
         what = b.get("operator") or b["action"]
         try:
             if "action" in b:
-                result = self._action(b["action"], b.get("args", {}))
+                result = self._action(b["action"], self._args(b))
             else:
-                result = self._run(b["operator"], b.get("args", {}), b.get("call", "EXEC_DEFAULT"))
+                result = self._run(b["operator"], self._args(b), b.get("call", "EXEC_DEFAULT"))
         except Exception as e:  # an operator that fails its poll, etc.
             self.last_error = f"{cid} {event} -> {what}: {e}"
             return

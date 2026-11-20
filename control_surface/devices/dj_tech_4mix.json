@@ -9,6 +9,7 @@
   "LEVEL meters: CC value 00-20 all off, 21-41 1 LED, 42-62 2, 63-83 3, ..., 105-119 5, 126-127 all.",
   "Hardware check 2026-11-20: every top-row LED and every deck button LED (all four decks, on the selected deck) lights on its own button; A-D have no LED, not even at power-on.",
   "The deck switches cannot be set from the computer: 90 3A/3B with 7F, with 00, and as the pair the 4-Mix sends itself changed nothing and got no answer (2026-11-20). The host can only learn the decks.",
+  "SysEx Device Inquiry (F0 7E 7F 06 01 F7) answered on 2026-11-20: F0 7E 7F 06 02 00 20 79 20 0C 10 21 00 00 00 01 F7 -> manufacturer 00 20 79 (Hanpin Electron Co., Ltd., per Wireshark's SysEx ID table), family 20 0C, model 10 21, version 00 00 00 01. Addressed to device 00 it gets no answer.",
   "CUE MIX (CC 1D) is noisy: at rest it keeps sending values jittering by +-1 (34-36 seen on 2026-11-20); filter it before binding it."
  ],
  "layers": {
