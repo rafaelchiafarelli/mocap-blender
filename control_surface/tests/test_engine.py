@@ -424,7 +424,6 @@ def test_bundled_cue_led_on_positive_side_blinks_on_negative_off_elsewhere(note,
 
 
 @pytest.mark.parametrize("note, kind, expected", [
-    (0x2A, "action", ("view_projection", {"type": "ORTHO"})),  # A
     (0x2B, "action", ("view_projection", {"type": "PERSP"})),  # B
     (0x2C, "operator", ("view3d.view_all", {})),               # C
     (0x2D, "operator", ("view3d.view_selected", {})),          # D
@@ -450,3 +449,52 @@ def test_bundled_right_vinyl_toggles_orbit_around_selection_and_blinks(channel):
     fb.now = 600
     e.update()
     assert led_values(sent, (channel, 0x01))[-1] == LED_OFF
+
+
+@pytest.mark.parametrize("now, then", [("PERSP", "ORTHO"), ("ORTHO", "PERSP"), ("CAMERA", "ORTHO")])
+def test_bundled_a_toggles_the_projection(now, then):
+    e, fb, _ = make_bundled()
+    fb.view["view_perspective"] = now
+    e.handle(0x90, 0x2A, 0x7F)
+    assert fb.actions == [("view_projection", {"type": then})]
+
+
+def tap_engine():
+    """A scale on C FILTER (CC 08, centre tap 64), range 0..1."""
+    m = Mapping({"device": "dj_tech_4mix",
+                 "scales": {"f": {"control": "C FILTER", "min": 0, "max": 1, "default": 0.5}}})
+    m.validate(PROFILE, set())
+    return Engine(PROFILE, m, lambda *x: None, None, lambda n: None, lambda: 0)
+
+
+def test_center_tap_knob_is_ignored_until_it_reaches_the_centre():
+    e = tap_engine()
+    for v in (10, 20, 30, 63):
+        e.handle(0xB0, 0x08, v)
+    assert e.scales["f"] == 0.5 and "C FILTER" not in e.armed
+    e.handle(0xB0, 0x08, 64)
+    assert "C FILTER" in e.armed and e.scales["f"] == 64 / 127
+    e.handle(0xB0, 0x08, 0)
+    assert e.scales["f"] == 0
+
+
+def test_center_tap_knob_arms_when_a_fast_turn_jumps_over_the_centre():
+    e = tap_engine()
+    e.handle(0xB0, 0x08, 100)
+    e.handle(0xB0, 0x08, 90)
+    assert e.scales["f"] == 0.5
+    e.handle(0xB0, 0x08, 50)  # skipped 64
+    assert e.scales["f"] == 50 / 127
+
+
+def test_knob_without_center_tap_works_at_once():
+    m = Mapping({"device": "dj_tech_4mix",
+                 "scales": {"s": {"control": "S1 VOL", "min": 0, "max": 1, "default": 0.5}}})
+    e = Engine(PROFILE, m, lambda *x: None, None, lambda n: None, lambda: 0)
+    e.handle(0xB0, 0x01, 0)
+    assert e.scales["s"] == 0
+
+
+def test_profile_filters_have_a_center_tap():
+    assert {c for c, s in PROFILE.controls.items() if "center_tap" in s} == {
+        "A FILTER", "B FILTER", "C FILTER", "D FILTER"}

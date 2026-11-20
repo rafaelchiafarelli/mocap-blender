@@ -142,6 +142,10 @@ class Engine:
         self._read = read_state
         self._clock = clock_ms
         self.leds = LedDriver(send)
+        # Centre-tap knobs stay ignored until they reach their centre after Connect
+        # (their position is unknown until then). control -> last value seen.
+        self._tap_last = {}
+        self.armed = set()
         self.last_error = ""
         # Layer states: select -> UNKNOWN until its first press; hold -> False.
         self.layers = {}
@@ -207,6 +211,8 @@ class Engine:
         if self._track_channels(b0):
             self.leds.resend()
         for cid, event in self.profile.decode(b0, b1, b2):
+            if isinstance(event, tuple) and event[0] == VALUE and not self._tap_ok(cid, event[1]):
+                continue
             if isinstance(event, tuple) and event[0] == VALUE:
                 for name, sc in self.mapping.scales.items():
                     if sc["control"] == cid:
@@ -218,6 +224,18 @@ class Engine:
                 if b["control"] == cid and b["event"] == event and self._when_ok(b):
                     self._fire(cid, event, b)
                     break  # first match wins
+
+    def _tap_ok(self, cid, value):
+        """A centre-tap knob counts only once it has reached or crossed its centre."""
+        tap = self.profile.controls[cid].get("center_tap")
+        if tap is None or cid in self.armed:
+            return True
+        last = self._tap_last.get(cid)
+        self._tap_last[cid] = value
+        if value == tap or (last is not None and (last - tap) * (value - tap) < 0):
+            self.armed.add(cid)
+            return True
+        return False
 
     def _args(self, b):
         """The binding's args, numeric ones multiplied by its scale's current value."""

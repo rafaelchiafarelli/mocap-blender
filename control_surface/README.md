@@ -3,7 +3,7 @@
 The DJ-Tech 4-Mix as an extension of Blender's interface: its controls run
 Blender commands, its LEDs show Blender's state. The add-on code is described
 file by file in [`CLAUDE.md`](CLAUDE.md); this page is the quick start for the
-next change. State on 2026-11-20: version 0.1.9, installed in the portable
+next change. State on 2026-11-20: version 0.1.10, installed in the portable
 Blender on G:.
 
 ## Use it
@@ -29,7 +29,7 @@ All of this comes from [`mappings/blender_modes.json`](mappings/blender_modes.js
 |---|---|---|
 | S1 PLAY | Object Mode | blinks while in Object Mode |
 | S2 PLAY | Edit Mode | blinks while in Edit Mode |
-| A | orthographic projection | (no LED on A–D) |
+| A | toggles orthographic ↔ perspective (from camera view: ortho) | (no LED on A–D) |
 | B | perspective projection | — |
 | C | Frame All (Home) | — |
 | D | Frame Selected (Numpad .) | — |
@@ -104,6 +104,11 @@ cannot.
 
 `default` holds until the fader moves, because the 4-Mix never reports a
 position before that.
+
+**Centre-tap knobs:** a knob with a centre detent gets `"center_tap": 64`
+in the device profile (today the four FILTERs). After Connect it is ignored
+until it reaches the centre (value 64, or a turn that jumps over it); from
+then on it works normally. This avoids a jump to an unknown position.
 
 **A new Blender state or action:** add a function to `STATES` or `ACTIONS` in
 [`blender_glue.py`](blender_glue.py). The mapping is validated against those
