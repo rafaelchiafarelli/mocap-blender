@@ -1,0 +1,15 @@
+schema_version = "1.0.0"
+
+id = "control_surface"
+version = "0.1.0"
+name = "Control Surface"
+tagline = "MIDI controllers as an extension of Blender's interface"
+maintainer = "Rafael Toschi Chiafarelli"
+type = "add-on"
+
+blender_version_min = "4.2.0"
+license = ["SPDX:GPL-3.0-or-later"]
+platforms = ["windows-x64"]
+
+[build]
+paths_exclude_pattern = ["__pycache__/", "/tests/", "CLAUDE.md"]
