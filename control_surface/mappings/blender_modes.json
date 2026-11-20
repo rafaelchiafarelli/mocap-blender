@@ -109,6 +109,28 @@
   {
    "control": "NAVIGATION",
    "event": "cw",
+   "action": "camera_move",
+   "args": {
+    "forward": 0.05
+   },
+   "when": {
+    "view_perspective": "CAMERA"
+   }
+  },
+  {
+   "control": "NAVIGATION",
+   "event": "ccw",
+   "action": "camera_move",
+   "args": {
+    "forward": -0.05
+   },
+   "when": {
+    "view_perspective": "CAMERA"
+   }
+  },
+  {
+   "control": "NAVIGATION",
+   "event": "cw",
    "operator": "view3d.zoom",
    "args": {
     "delta": 1

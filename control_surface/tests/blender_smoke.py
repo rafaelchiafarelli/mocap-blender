@@ -53,7 +53,7 @@ cube = bpy.context.view_layer.objects.active
 assert cube.mode == "OBJECT"
 
 fin, fout = FakeIn(), FakeOut()
-s = blender_glue.connect(mapping_path=CUE, midi_in=fin, midi_out=fout)
+s = blender_glue.connect(mapping_path=CUE, midi_in=fin, midi_out=fout, intro=False)
 press(s, 0x2A)  # A
 assert cube.mode == "EDIT", cube.mode
 assert (0x90, CUE_A, 127) in fout.sent, fout.sent

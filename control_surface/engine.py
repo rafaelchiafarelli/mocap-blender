@@ -37,6 +37,8 @@ EVENTS = (PRESS, RELEASE, CW, CCW)
 LOOKS = ("on", "blink")
 CALLS = ("EXEC_DEFAULT", "INVOKE_DEFAULT")  # how an operator is called (Blender execution context)
 UNKNOWN = "UNKNOWN"  # a select layer before its first press
+INTRO_STEP_MS = 15   # intro: one more LED lights every step
+INTRO_HOLD_MS = 400  # intro: all LEDs stay lit this long before going off
 
 
 class MappingError(ValueError):
@@ -119,6 +121,9 @@ class Engine:
         self.mapping = mapping
         self._run = run_operator
         self._action = run_action
+        self._send = send
+        self._intro = None  # [(time_ms, [messages])] while the intro runs
+        self._intro_next = 0
         self._read = read_state
         self._clock = clock_ms
         self.leds = LedDriver(send)
@@ -210,9 +215,43 @@ class Engine:
             # and returns {'CANCELLED'}: show them too.
             self.last_error = f"{cid} {event} -> {what}: cancelled"
 
+    def start_intro(self):
+        """Light every LED one by one (level meters rising), hold, then all off.
+
+        Indicators wait until it ends; then every LED is sent again.
+        """
+        now = self._clock()
+        leds, meters = self.profile.all_leds(), self.profile.meters()
+        frames = []
+        for i, (b0, b1) in enumerate(leds):
+            level = round(127 * (i + 1) / len(leds))
+            frames.append((now + i * INTRO_STEP_MS, [(b0, b1, 0x7F)] + [(c0, c1, level) for c0, c1 in meters]))
+        end = now + len(leds) * INTRO_STEP_MS + INTRO_HOLD_MS
+        frames.append((end, [(b0, b1, 0) for b0, b1 in leds] + [(c0, c1, 0) for c0, c1 in meters]))
+        self._intro, self._intro_next = frames, 0
+
+    @property
+    def intro_running(self):
+        return self._intro is not None
+
+    def _play_intro(self, now):
+        """Send the intro frames that are due; True while the intro still runs."""
+        frames = self._intro
+        while self._intro_next < len(frames) and frames[self._intro_next][0] <= now:
+            for m in frames[self._intro_next][1]:
+                self._send(*m)
+            self._intro_next += 1
+        if self._intro_next < len(frames):
+            return True
+        self._intro = None
+        self.leds.resend()
+        return False
+
     def update(self):
         """Read the states and drive the LEDs; call this often (e.g. every 20 ms)."""
         now = self._clock()
+        if self._intro is not None and self._play_intro(now):
+            return
         cache = {}
         for addr in self._leds:
             look = None
@@ -226,4 +265,8 @@ class Engine:
         self.leds.tick(now)
 
     def shutdown(self):
+        if self._intro is not None:  # interrupted intro: clear what it lit
+            for m in self._intro[-1][1]:
+                self._send(*m)
+            self._intro = None
         self.leds.all_off()

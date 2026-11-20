@@ -64,12 +64,13 @@ def read_state(name):
     return STATES[name]()
 
 
-def camera_move(x=0.0, y=0.0):
-    """Move the scene camera by (x, y) metres along its own axes (x right, y up)."""
+def camera_move(x=0.0, y=0.0, forward=0.0):
+    """Move the scene camera in metres along its own axes: x right, y up,
+    forward along its view direction (a dolly; the lens is not touched)."""
     cam = bpy.context.scene.camera
     if cam is None:
         raise RuntimeError("the scene has no camera")
-    delta = cam.matrix_world.to_3x3().normalized() @ Vector((x, y, 0.0))
+    delta = cam.matrix_world.to_3x3().normalized() @ Vector((x, y, -forward))
     cam.matrix_world = Matrix.Translation(delta) @ cam.matrix_world
     return {"FINISHED"}
 
@@ -112,7 +113,7 @@ def run_operator(name, args, call="EXEC_DEFAULT"):
 class Session:
     """One open controller. midi_in/midi_out are injectable for tests."""
 
-    def __init__(self, mapping_path=DEFAULT_MAPPING, midi_in=None, midi_out=None):
+    def __init__(self, mapping_path=DEFAULT_MAPPING, midi_in=None, midi_out=None, intro=True):
         self.queue = queue.SimpleQueue()
         mapping = Mapping.load(mapping_path)
         profile = Profile.load(HERE / "devices" / f"{mapping.device}.json")
@@ -139,6 +140,8 @@ class Session:
             profile, mapping, midi_out.send, run_operator, read_state,
             lambda: int(time.monotonic() * 1000), run_action,
         )
+        if intro:
+            self.engine.start_intro()
         self.device = profile.device
 
     def tick(self):
