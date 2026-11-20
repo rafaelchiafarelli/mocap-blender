@@ -12,10 +12,21 @@
   {
    "control": "A",
    "event": "press",
+   "action": "view_projection",
+   "args": {
+    "type": "PERSP"
+   },
+   "when": {
+    "view_perspective": "ORTHO"
+   }
+  },
+  {
+   "control": "A",
+   "event": "press",
+   "action": "view_projection",
    "args": {
     "type": "ORTHO"
-   },
-   "action": "view_projection"
+   }
   },
   {
    "control": "B",

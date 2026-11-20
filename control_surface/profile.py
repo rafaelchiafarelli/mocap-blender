@@ -39,6 +39,9 @@ class Profile:
                 pairs = {tuple(spec["press"][:2]), tuple(spec["release"][:2])}
             elif kind in ("absolute", "relative"):
                 pairs = {tuple(spec["cc"])}
+                tap = spec.get("center_tap")
+                if tap is not None and (kind != "absolute" or not isinstance(tap, int) or not 0 <= tap <= 127):
+                    raise ProfileError(f"control {cid!r}: center_tap must be 0..127 on an absolute control")
             elif kind in ("light", "meter"):
                 continue  # output only: nothing to decode
             else:

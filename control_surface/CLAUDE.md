@@ -59,6 +59,10 @@ Blender state → LED messages to the controller.
     changes (`engine.py:208`, `engine.py:216`). Then, for each decoded event,
     it runs **only the first** binding whose control, event and optional
     `when` match (`engine.py:220`).
+  - **Centre tap** (task 15): an absolute control with `center_tap` in the
+    profile is ignored after Connect until its value equals the centre or
+    two messages fall on opposite sides of it (`Engine._tap_ok`); then it is
+    in `Engine.armed` for the rest of the session. Today: A/B/C/D FILTER, 64.
   - **`_fire()`** (`engine.py:231`) runs the operator or action and reports a
     raised error, or a `{'CANCELLED'}` result (`engine.py:241`), in
     `last_error`.
@@ -135,7 +139,8 @@ Blender state → LED messages to the controller.
     - S1 PLAY → `OBJECT` and S2 PLAY → `EDIT`; the LED of the current
       mode's PLAY button blinks 200 ms on / 200 ms off.
   - **A–D** (task 14, replacing the old mode buttons): A →
-    `view_projection` `ORTHO`, B → `PERSP`, C → `view3d.view_all`, D →
+    `view_projection` toggle (`when` ORTHO → `PERSP`, otherwise → `ORTHO`;
+    task 15), B → `PERSP`, C → `view3d.view_all`, D →
     `view3d.view_selected`.
   - **Axis views** (`view3d.view_axis`), pressed again in that view → the
     opposite side (a `when` on `view_axis`, then a binding without):
@@ -252,7 +257,8 @@ Blender state → LED messages to the controller.
 - **Relative controls** (NAVIGATION, platters) send 40H − N (left, `ccw`) or
   40H + N (right, `cw`); N grows with speed, and the size of a step is not
   passed on.
-- **Knob centre notes are not decoded:** the knobs send a note when they pass
+- **Knob centre notes are not decoded** (the centre tap uses the CC value,
+  not the note; the note seems to be `90 <the knob's CC number> 7F`): the knobs send a note when they pass
   their centre. `90 08 7F` (C FILTER) was seen in the echo test on
   2026-11-20; the others in the JSON's `unverified` come from the
   spreadsheet. The manual doesn't list them.
