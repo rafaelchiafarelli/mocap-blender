@@ -17,6 +17,8 @@ A_LED, B_LED = (0x90, 0x27), (0x90, 0x28)  # CUE A, CUE B
 class FakeBlender:
     def __init__(self):
         self.mode = "OBJECT"
+        self.view = {"view_axis": "NONE", "view_perspective": "PERSP"}
+        self.actions = []
         self.calls = []
         self.contexts = []
         self.now = 0
@@ -30,8 +32,12 @@ class FakeBlender:
             self.mode = args["mode"]
 
     def read(self, name):
-        assert name == "object_mode"
-        return self.mode
+        if name == "object_mode":
+            return self.mode
+        return self.view[name]
+
+    def act(self, name, args):
+        self.actions.append((name, args))
 
 
 def make():
@@ -48,7 +54,7 @@ def led_values(sent, addr):
 
 
 def test_bundled_mapping_is_valid():
-    Mapping.load(MODES).validate(PROFILE, {"object_mode"})
+    Mapping.load(MODES).validate(PROFILE, {"object_mode", "view_axis", "view_perspective"}, {"camera_move"})
     Mapping.load(CUE_LEDS).validate(PROFILE, {"object_mode"})
 
 
@@ -133,8 +139,8 @@ def make_bundled(mode="OBJECT"):
     fb.mode = mode
     sent = []
     m = Mapping.load(MODES)
-    m.validate(PROFILE, {"object_mode"})
-    e = Engine(PROFILE, m, lambda *x: sent.append(x), fb.run, fb.read, lambda: fb.now)
+    m.validate(PROFILE, {"object_mode", "view_axis", "view_perspective"}, {"camera_move"})
+    e = Engine(PROFILE, m, lambda *x: sent.append(x), fb.run, fb.read, lambda: fb.now, fb.act)
     return e, fb, sent
 
 
@@ -153,20 +159,81 @@ def test_bundled_s1_object_s2_edit_and_their_leds_blink():
     assert fb.calls[-1] == ("object.mode_set", {"mode": "OBJECT"})
 
 
+def cb(e):
+    """Decks C + B known (the switches, or any message on their channels)."""
+    e.handle(0x90, 0x3B, 0x7F)  # DECK A/C to C
+    e.handle(0x90, 0x3C, 0x7F)  # DECK B/D to B
+
+
 @pytest.mark.parametrize(
     "cc, value, pan",
     [
-        (0xB1, 0x41, "PANUP"), (0xB1, 0x3F, "PANDOWN"),      # left platter, deck A
-        (0xB3, 0x45, "PANUP"), (0xB3, 0x3D, "PANDOWN"),      # left platter, deck C, fast turn
+        (0xB3, 0x41, "PANUP"), (0xB3, 0x3F, "PANDOWN"),      # left platter, deck C
+        (0xB3, 0x45, "PANUP"),                               # fast turn
         (0xB2, 0x41, "PANRIGHT"), (0xB2, 0x3F, "PANLEFT"),   # right platter, deck B
-        (0xB4, 0x41, "PANRIGHT"), (0xB4, 0x3F, "PANLEFT"),   # right platter, deck D
     ],
 )
-def test_bundled_platters_pan_the_view(cc, value, pan):
+def test_bundled_platters_pan_the_view_with_decks_c_and_b(cc, value, pan):
     e, fb, _ = make_bundled()
+    cb(e)
     e.handle(cc, 0x0F, value)
     assert fb.calls == [("view3d.view_pan", {"type": pan})]
     assert fb.contexts == ["INVOKE_DEFAULT"]  # view_pan has no exec: "Invalid operator call"
+
+
+@pytest.mark.parametrize("left, right", [(0xB1, 0xB2), (0xB1, 0xB4), (0xB3, 0xB4)])
+def test_bundled_platters_do_nothing_with_other_deck_pairs(left, right):
+    e, fb, _ = make_bundled()
+    e.handle(left, 0x0F, 0x41)
+    e.handle(right, 0x0F, 0x41)
+    e.handle(left, 0x0F, 0x41)
+    assert fb.calls == [] and fb.actions == []
+
+
+def test_bundled_platter_needs_the_other_side_known():
+    e, fb, _ = make_bundled()
+    e.handle(0xB3, 0x0F, 0x41)  # left on deck C, right side still UNKNOWN
+    assert fb.calls == []
+    e.handle(0x92, 0x02, 0x00)  # anything on deck B's channel
+    e.handle(0xB3, 0x0F, 0x41)
+    assert fb.calls == [("view3d.view_pan", {"type": "PANUP"})]
+
+
+@pytest.mark.parametrize("cc, value, move", [
+    (0xB3, 0x41, {"y": 0.01}), (0xB3, 0x3F, {"y": -0.01}),
+    (0xB2, 0x41, {"x": 0.01}), (0xB2, 0x3F, {"x": -0.01}),
+])
+def test_bundled_platters_move_the_camera_in_camera_view(cc, value, move):
+    e, fb, _ = make_bundled()
+    cb(e)
+    fb.view["view_perspective"] = "CAMERA"
+    e.handle(cc, 0x0F, value)
+    assert fb.actions == [("camera_move", move)] and fb.calls == []
+
+
+@pytest.mark.parametrize("note, first, second", [
+    (0x26, "RIGHT", "LEFT"), (0x27, "FRONT", "BACK"), (0x28, "TOP", "BOTTOM"),
+])
+def test_bundled_cue_buttons_toggle_axis_views(note, first, second):
+    e, fb, _ = make_bundled()
+    e.handle(0x90, note, 0x7F)
+    assert fb.calls[-1] == ("view3d.view_axis", {"type": first})
+    fb.view["view_axis"] = first
+    e.handle(0x90, note, 0x7F)
+    assert fb.calls[-1] == ("view3d.view_axis", {"type": second})
+    fb.view["view_axis"] = second
+    e.handle(0x90, note, 0x7F)
+    assert fb.calls[-1] == ("view3d.view_axis", {"type": first})
+    assert len(fb.calls) == 3
+
+
+def test_bundled_encoder_zooms_and_its_press_toggles_camera_view():
+    e, fb, _ = make_bundled()
+    e.handle(0xB0, 0x1F, 0x41)
+    e.handle(0xB0, 0x1F, 0x3F)
+    e.handle(0x90, 0x1F, 0x7F)
+    assert fb.calls == [("view3d.zoom", {"delta": 1}), ("view3d.zoom", {"delta": -1}),
+                        ("view3d.view_camera", {})]
 
 
 def test_mode_buttons_use_exec():

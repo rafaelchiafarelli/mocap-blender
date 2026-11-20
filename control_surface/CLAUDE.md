@@ -103,12 +103,22 @@ Blender state → LED messages to the controller.
       mode's PLAY button blinks 200 ms on / 200 ms off.
     - A → `EDIT`, B → `OBJECT`, C → `VERTEX_PAINT`, D → `POSE` (no LED;
       C and D were picked by Claude, Rafael had no preference).
-  - **Platters pan the 3D View**, one `view3d.view_pan` step per message,
-    whatever the turning speed, called with `INVOKE_DEFAULT` (view_pan has no
-    exec):
-    - left platter (decks A and C): turned right → `PANUP`, left → `PANDOWN`;
-    - right platter (decks B and D): turned right → `PANRIGHT`, left →
-      `PANLEFT`.
+  - **Axis views** (`view3d.view_axis`), pressed again in that view → the
+    opposite side (a `when` on `view_axis`, then a binding without):
+    - CUE C → `RIGHT` / `LEFT` (Numpad 3 / Ctrl+Numpad 3);
+    - CUE A → `FRONT` / `BACK` (Numpad 1);
+    - CUE B → `TOP` / `BOTTOM` (Numpad 7).
+  - **PRESS TO ENTER encoder** (`NAVIGATION`): turned right → `view3d.zoom`
+    `delta=1` (in), left → `delta=-1` (out); press → `view3d.view_camera`,
+    which toggles the camera view.
+  - **Platters, only with decks C + B** (`when` on `deck_left`/`deck_right`;
+    A+B, A+D and C+D do nothing yet, Rafael defines them later). One step per
+    message, whatever the turning speed:
+    - in camera view: `camera_move` 0.01 m, left platter right/left → up/down,
+      right platter right/left → right/left;
+    - otherwise: `view3d.view_pan` with `INVOKE_DEFAULT` (view_pan has no
+      exec), left platter right/left → `PANUP`/`PANDOWN`, right platter
+      right/left → `PANRIGHT`/`PANLEFT`.
 - `tests/` — pytest:
   - `test_profile.py`, `test_leds.py`, `test_engine.py` and `test_layers.py`
     are pure, with fakes.

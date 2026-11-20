@@ -50,22 +50,134 @@
    }
   },
   {
-   "control": "PLATTER L/A",
-   "event": "cw",
-   "operator": "view3d.view_pan",
+   "control": "CUE C",
+   "event": "press",
+   "operator": "view3d.view_axis",
    "args": {
-    "type": "PANUP"
+    "type": "LEFT"
    },
-   "call": "INVOKE_DEFAULT"
+   "when": {
+    "view_axis": "RIGHT"
+   }
   },
   {
-   "control": "PLATTER L/A",
-   "event": "ccw",
-   "operator": "view3d.view_pan",
+   "control": "CUE C",
+   "event": "press",
+   "operator": "view3d.view_axis",
    "args": {
-    "type": "PANDOWN"
+    "type": "RIGHT"
+   }
+  },
+  {
+   "control": "CUE A",
+   "event": "press",
+   "operator": "view3d.view_axis",
+   "args": {
+    "type": "BACK"
    },
-   "call": "INVOKE_DEFAULT"
+   "when": {
+    "view_axis": "FRONT"
+   }
+  },
+  {
+   "control": "CUE A",
+   "event": "press",
+   "operator": "view3d.view_axis",
+   "args": {
+    "type": "FRONT"
+   }
+  },
+  {
+   "control": "CUE B",
+   "event": "press",
+   "operator": "view3d.view_axis",
+   "args": {
+    "type": "BOTTOM"
+   },
+   "when": {
+    "view_axis": "TOP"
+   }
+  },
+  {
+   "control": "CUE B",
+   "event": "press",
+   "operator": "view3d.view_axis",
+   "args": {
+    "type": "TOP"
+   }
+  },
+  {
+   "control": "NAVIGATION",
+   "event": "cw",
+   "operator": "view3d.zoom",
+   "args": {
+    "delta": 1
+   }
+  },
+  {
+   "control": "NAVIGATION",
+   "event": "ccw",
+   "operator": "view3d.zoom",
+   "args": {
+    "delta": -1
+   }
+  },
+  {
+   "control": "NAVIGATION push",
+   "event": "press",
+   "operator": "view3d.view_camera"
+  },
+  {
+   "control": "PLATTER L/C",
+   "event": "cw",
+   "action": "camera_move",
+   "args": {
+    "y": 0.01
+   },
+   "when": {
+    "deck_left": "C",
+    "deck_right": "B",
+    "view_perspective": "CAMERA"
+   }
+  },
+  {
+   "control": "PLATTER L/C",
+   "event": "ccw",
+   "action": "camera_move",
+   "args": {
+    "y": -0.01
+   },
+   "when": {
+    "deck_left": "C",
+    "deck_right": "B",
+    "view_perspective": "CAMERA"
+   }
+  },
+  {
+   "control": "PLATTER R/B",
+   "event": "cw",
+   "action": "camera_move",
+   "args": {
+    "x": 0.01
+   },
+   "when": {
+    "deck_left": "C",
+    "deck_right": "B",
+    "view_perspective": "CAMERA"
+   }
+  },
+  {
+   "control": "PLATTER R/B",
+   "event": "ccw",
+   "action": "camera_move",
+   "args": {
+    "x": -0.01
+   },
+   "when": {
+    "deck_left": "C",
+    "deck_right": "B",
+    "view_perspective": "CAMERA"
+   }
   },
   {
    "control": "PLATTER L/C",
@@ -74,7 +186,11 @@
    "args": {
     "type": "PANUP"
    },
-   "call": "INVOKE_DEFAULT"
+   "call": "INVOKE_DEFAULT",
+   "when": {
+    "deck_left": "C",
+    "deck_right": "B"
+   }
   },
   {
    "control": "PLATTER L/C",
@@ -83,7 +199,11 @@
    "args": {
     "type": "PANDOWN"
    },
-   "call": "INVOKE_DEFAULT"
+   "call": "INVOKE_DEFAULT",
+   "when": {
+    "deck_left": "C",
+    "deck_right": "B"
+   }
   },
   {
    "control": "PLATTER R/B",
@@ -92,7 +212,11 @@
    "args": {
     "type": "PANRIGHT"
    },
-   "call": "INVOKE_DEFAULT"
+   "call": "INVOKE_DEFAULT",
+   "when": {
+    "deck_left": "C",
+    "deck_right": "B"
+   }
   },
   {
    "control": "PLATTER R/B",
@@ -101,25 +225,11 @@
    "args": {
     "type": "PANLEFT"
    },
-   "call": "INVOKE_DEFAULT"
-  },
-  {
-   "control": "PLATTER R/D",
-   "event": "cw",
-   "operator": "view3d.view_pan",
-   "args": {
-    "type": "PANRIGHT"
-   },
-   "call": "INVOKE_DEFAULT"
-  },
-  {
-   "control": "PLATTER R/D",
-   "event": "ccw",
-   "operator": "view3d.view_pan",
-   "args": {
-    "type": "PANLEFT"
-   },
-   "call": "INVOKE_DEFAULT"
+   "call": "INVOKE_DEFAULT",
+   "when": {
+    "deck_left": "C",
+    "deck_right": "B"
+   }
   }
  ],
  "indicators": [
