@@ -1,0 +1,71 @@
+{
+ "device": "dj_tech_4mix",
+ "bindings": [
+  {
+   "control": "A",
+   "event": "press",
+   "operator": "object.mode_set",
+   "args": {
+    "mode": "EDIT"
+   }
+  },
+  {
+   "control": "B",
+   "event": "press",
+   "operator": "object.mode_set",
+   "args": {
+    "mode": "OBJECT"
+   }
+  },
+  {
+   "control": "C",
+   "event": "press",
+   "operator": "object.mode_set",
+   "args": {
+    "mode": "VERTEX_PAINT"
+   }
+  },
+  {
+   "control": "D",
+   "event": "press",
+   "operator": "object.mode_set",
+   "args": {
+    "mode": "POSE"
+   }
+  }
+ ],
+ "indicators": [
+  {
+   "control": "CUE A",
+   "state": "object_mode",
+   "equals": "EDIT",
+   "led": "blink",
+   "on_ms": 200,
+   "off_ms": 200
+  },
+  {
+   "control": "CUE B",
+   "state": "object_mode",
+   "equals": "OBJECT",
+   "led": "blink",
+   "on_ms": 200,
+   "off_ms": 200
+  },
+  {
+   "control": "CUE C",
+   "state": "object_mode",
+   "equals": "VERTEX_PAINT",
+   "led": "blink",
+   "on_ms": 200,
+   "off_ms": 200
+  },
+  {
+   "control": "CUE D",
+   "state": "object_mode",
+   "equals": "POSE",
+   "led": "blink",
+   "on_ms": 200,
+   "off_ms": 200
+  }
+ ]
+}

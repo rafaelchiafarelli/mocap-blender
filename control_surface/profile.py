@@ -5,7 +5,10 @@ Pure Python (no bpy, no MIDI port), so it is tested outside Blender.
 A profile JSON holds ``controls``: id -> one of
   {"type": "button",   "press": [b0,b1,b2], "release": [b0,b1,b2], "led": [b0,b1] | null}
   {"type": "absolute", "cc": [b0,b1]}                  -> event ("value", b2)
-  {"type": "relative", "cc": [b0,b1], "cw": n, "ccw": m} -> event "cw" / "ccw"
+  {"type": "relative", "cc": [b0,b1], "center": 64}   -> "cw" above center, "ccw" below
+  {"type": "relative", "cc": [b0,b1], "cw": n, "ccw": m} -> "cw" / "ccw" on exact values
+  {"type": "light",    "led": [b0,b1]}                -> output only (e.g. a PEAK LED)
+  {"type": "meter",    "cc": [b0,b1]}                 -> output only (a level bar, value 0-127)
 Extra keys (``row``) are ignored.
 """
 
@@ -36,6 +39,8 @@ class Profile:
                 pairs = {tuple(spec["press"][:2]), tuple(spec["release"][:2])}
             elif kind in ("absolute", "relative"):
                 pairs = {tuple(spec["cc"])}
+            elif kind in ("light", "meter"):
+                continue  # output only: nothing to decode
             else:
                 raise ProfileError(f"control {cid!r}: unknown type {kind!r}")
             for pair in pairs:
@@ -77,6 +82,10 @@ class Profile:
             return None
         if kind == "absolute":
             return (VALUE, b2)
+        if "center" in spec:
+            if b2 == spec["center"]:
+                return None
+            return CW if b2 > spec["center"] else CCW
         if b2 == spec.get("cw"):
             return CW
         if b2 == spec.get("ccw"):
@@ -88,5 +97,5 @@ class Profile:
         spec = self.controls.get(control)
         if spec is None:
             raise ProfileError(f"unknown control {control!r}")
-        led = spec.get("led") if spec["type"] == "button" else None
+        led = spec.get("led") if spec["type"] in ("button", "light") else None
         return tuple(led) if led else None
