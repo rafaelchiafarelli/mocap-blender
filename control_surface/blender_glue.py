@@ -171,8 +171,21 @@ ACTIONS = {
 }
 
 
+def _redraw():
+    """Tag every area for redraw: changes made from a timer (selection,
+    preferences) send no notifier, so the screen would only update when the
+    mouse moves over it."""
+    wm = bpy.context.window_manager
+    for win in (wm.windows if wm else ()):
+        for area in win.screen.areas:
+            area.tag_redraw()
+
+
 def run_action(name, args):
-    return ACTIONS[name](**args)
+    try:
+        return ACTIONS[name](**args)
+    finally:
+        _redraw()
 
 
 def _view3d():
