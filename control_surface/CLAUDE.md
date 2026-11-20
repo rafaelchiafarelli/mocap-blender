@@ -51,15 +51,18 @@ state → LED messages to the controller.
   Transcribed once on 2026-11-20 from Rafael's spreadsheet
   `G:\mocap-studio-downloads\DJTech 4Mix MIDI mapping.xlsx` (each control keeps
   its spreadsheet `row`); edited by hand from now on.
-- `mappings/blender_modes.json` — the bundled (and default) mapping:
-  A → `object.mode_set(EDIT)`, B → `object.mode_set(OBJECT)`. The LED of the
-  current mode blinks 200 ms on / 200 ms off.
+- `mappings/blender_modes.json` — the bundled (and default) mapping, one
+  Blender mode per top-row button through `object.mode_set`: A → `EDIT`,
+  B → `OBJECT`, C → `VERTEX_PAINT`, D → `POSE`. The LED of the current mode
+  blinks 200 ms on / 200 ms off. C and D were picked by Claude from Blender's
+  mode menu (Rafael had no preference, 2026-11-20); change them here.
 - `tests/` — pytest:
   - `test_profile.py`, `test_leds.py` and `test_engine.py` are pure, with fakes.
   - `test_blender_smoke.py` runs `blender_smoke.py` inside the pinned
     Blender 5.2.2 on G: (skipped if absent; `CONTROL_SURFACE_BLENDER`
-    overrides the path). The smoke test registers the add-on, runs the A/B
-    round trip on a cube with fake ports, checks that unregister releases the
+    overrides the path). The smoke test registers the add-on, runs A/B/C on a
+    cube and D on an armature with fake ports (D on a mesh must fail into
+    `last_error`), checks that unregister releases the
     ports and turns the LEDs off, and checks the real WinMM's port listing
     and its "not found" error.
 
@@ -74,7 +77,8 @@ state → LED messages to the controller.
 - **Exclusive ports:** a Windows MIDI port opens in one program at a time.
   Disconnect (or disabling the add-on, `blender_glue.py:192`) releases it.
   While another program holds it, Connect reports "port in use".
-- **Operator failures** (e.g. Edit Mode with no active object) don't raise.
+- **Operator failures** (e.g. Edit Mode with no active object, Pose Mode on
+  a mesh) don't raise.
   They go to `Engine.last_error` and show in the panel.
 - **Timers don't run in background mode** (`blender -b`). The smoke test calls
   `Session.tick()` itself.

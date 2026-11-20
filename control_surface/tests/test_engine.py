@@ -88,7 +88,23 @@ def test_shutdown_turns_leds_off():
     e.update()
     sent.clear()
     e.shutdown()
-    assert sorted(sent) == [(0x90, 0x2A, LED_OFF), (0x90, 0x2B, LED_OFF)]
+    assert sorted(sent) == [(0x90, n, LED_OFF) for n in (0x2A, 0x2B, 0x2C, 0x2D)]
+
+
+@pytest.mark.parametrize(
+    "note, mode",
+    [(0x2A, "EDIT"), (0x2B, "OBJECT"), (0x2C, "VERTEX_PAINT"), (0x2D, "POSE")],
+)
+def test_each_mode_button_sets_its_mode_and_only_its_led_blinks(note, mode):
+    e, fb, sent = make()
+    fb.mode = "SCULPT"  # none of the four: every LED off
+    e.update()
+    sent.clear()
+    e.handle(0x90, note, 0x7F)
+    assert fb.calls == [("object.mode_set", {"mode": mode})]
+    fb.now = 20
+    e.update()
+    assert sent == [(0x90, note, LED_ON)]
 
 
 @pytest.mark.parametrize(

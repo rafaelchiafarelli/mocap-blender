@@ -56,9 +56,26 @@ bpy.ops.object.mode_set(mode="EDIT")  # changed outside the controller
 s.tick()
 assert fout.sent[-2:] in ([(0x90, 0x2A, 127), (0x90, 0x2B, 0)], [(0x90, 0x2B, 0), (0x90, 0x2A, 127)]), fout.sent
 
+bpy.ops.object.mode_set(mode="OBJECT")
+s.queue.put((0x90, 0x2C, 0x7F))  # C
+s.tick()
+assert cube.mode == "VERTEX_PAINT", cube.mode
+s.queue.put((0x90, 0x2B, 0x7F))  # B
+s.tick()
+assert cube.mode == "OBJECT", cube.mode
+s.queue.put((0x90, 0x2D, 0x7F))  # D on a mesh: Pose fails, kept as an error
+s.tick()
+assert cube.mode == "OBJECT" and "D press" in s.engine.last_error, s.engine.last_error
+bpy.ops.object.armature_add()
+rig = bpy.context.view_layer.objects.active
+s.queue.put((0x90, 0x2D, 0x7F))  # D on an armature
+s.tick()
+assert rig.mode == "POSE", rig.mode
+assert (0x90, 0x2D, 127) in fout.sent[-4:], fout.sent
+
 control_surface.unregister()  # must release the ports and turn LEDs off
 assert fin.closed and fout.closed
-assert set(fout.sent[-2:]) == {(0x90, 0x2A, 0), (0x90, 0x2B, 0)}, fout.sent
+assert set(fout.sent[-4:]) == {(0x90, n, 0) for n in (0x2A, 0x2B, 0x2C, 0x2D)}, fout.sent
 
 ins, outs = winmm.list_ports()
 print("WinMM ports:", ins, outs)
