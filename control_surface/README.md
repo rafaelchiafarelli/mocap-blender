@@ -3,7 +3,7 @@
 The DJ-Tech 4-Mix as an extension of Blender's interface: its controls run
 Blender commands, its LEDs show Blender's state. The add-on code is described
 file by file in [`CLAUDE.md`](CLAUDE.md); this page is the quick start for the
-next change. State on 2026-11-20: version 0.1.8, installed in the portable
+next change. State on 2026-11-20: version 0.1.9, installed in the portable
 Blender on G:.
 
 ## Use it
@@ -29,10 +29,15 @@ All of this comes from [`mappings/blender_modes.json`](mappings/blender_modes.js
 |---|---|---|
 | S1 PLAY | Object Mode | blinks while in Object Mode |
 | S2 PLAY | Edit Mode | blinks while in Edit Mode |
-| A / B / C / D | Edit / Object / Vertex Paint / Pose Mode | (no LED on A–D) |
-| CUE C | Right view; pressed again in Right → Left | — |
-| CUE A | Front view; again → Back | — |
-| CUE B | Top view; again → Bottom | — |
+| A | orthographic projection | (no LED on A–D) |
+| B | perspective projection | — |
+| C | Frame All (Home) | — |
+| D | Frame Selected (Numpad .) | — |
+| CUE C | Right view; pressed again in Right → Left | on in Right, blinks in Left, off in any other view |
+| CUE A | Front view; again → Back | on in Front, blinks in Back, off otherwise |
+| CUE B | Top view; again → Bottom | on in Top, blinks in Bottom, off otherwise |
+| CUE D | nothing (the Properties editor rule was cancelled) | — |
+| VINYL MODE, right deck (B or D) | toggles Preferences → Navigation → Orbit Around Selection | blinks while it is on |
 | Encoder (PRESS TO ENTER), turn | zoom in (right) / out (left); in camera view: dolly the camera forward/back by `step` | — |
 | Encoder, press | toggle the camera view | on while in camera view |
 | S1 VOL | sets `step`: 1 cm (bottom) to 10 cm (top); 1 cm until moved | — |
@@ -60,8 +65,12 @@ All of this comes from [`mappings/blender_modes.json`](mappings/blender_modes.js
     `args`. If Blender logs `Invalid operator call`, the operator only has an
     invoke: add `"call": "INVOKE_DEFAULT"`.
   - `action` instead of `operator`: one of the add-on's own actions,
-    `camera_move` (`x`, `y`, `forward`, in metres) or `view_move` (`x`, `y`,
-    in metres).
+    `camera_move` (`x`, `y`, `forward`, in metres), `view_move` (`x`, `y`,
+    in metres), `view_projection` (`type`: `ORTHO`/`PERSP`) or
+    `orbit_selection_toggle`.
+  - Avoid `wm.context_set_enum` / `wm.context_toggle` on non-undo data
+    (view, preferences): they work but always return `{'CANCELLED'}`, which
+    shows as an error. Add an action instead.
 - `when` (optional): every listed state must match. **The first matching
   binding wins** for one control event, so put the conditional one first and
   the "otherwise" one (without `when`) after it.
@@ -71,7 +80,8 @@ All of this comes from [`mappings/blender_modes.json`](mappings/blender_modes.js
 **States for `when` and indicators:**
 - from Blender: `object_mode` (`OBJECT`, `EDIT`, `POSE`, …),
   `view_perspective` (`PERSP`, `ORTHO`, `CAMERA`), `view_axis` (`FRONT`,
-  `BACK`, `RIGHT`, `LEFT`, `TOP`, `BOTTOM`, `NONE`);
+  `BACK`, `RIGHT`, `LEFT`, `TOP`, `BOTTOM`, `NONE`), `orbit_selection`
+  (`true`/`false`);
 - from the controller: `deck_left` (`A`/`C`), `deck_right` (`B`/`D`),
   `shift_left`, `shift_right` (`true`/`false`).
 
@@ -144,6 +154,8 @@ Blender must be restarted to load a reinstalled version.
   VirtualDJ map; Rafael said to treat it as working.
 - **Open question:** does the 4-Mix pause its input for a few seconds after a
   manufacturer SysEx? A button-press test with `probe_sysex.py` would tell.
+- **Idea (Rafael, 2026-11-20):** a way to step through the Properties
+  editor's tabs (the column of icons on its left) from the controller.
 - **To define:** the platters for decks A+B, A+D and C+D; Rafael is drawing a
   new set of actions.
 - **Mapping file:** it lives inside the add-on, so changing it means rebuild

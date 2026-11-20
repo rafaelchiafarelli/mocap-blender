@@ -98,14 +98,21 @@ Blender state → LED messages to the controller.
       `CAMERA` of the first 3D View, or `NONE`;
     - `view_axis` (`blender_glue.py:48`): which of `AXIS_VIEWS`
       (`blender_glue.py:41`) the first 3D View looks along, else `NONE`
-      (also `NONE` in camera view).
+      (also `NONE` in camera view);
+    - `orbit_selection`: Preferences → Navigation → Orbit Around
+      Selection (`True`/`False`).
   - **`ACTIONS`** (`blender_glue.py:88`):
     - `camera_move(x, y, forward)` (`blender_glue.py:67`) moves the scene
       camera in metres along its own right/up axes and its view direction (a
       dolly; the lens is not touched);
     - `view_move(x, y)` (`blender_glue.py:78`) moves the first 3D View's
       centre in metres along the view's right/up (the same directions as
-      `view_pan` PANRIGHT/PANUP).
+      `view_pan` PANRIGHT/PANUP);
+    - `view_projection(type)` sets the first 3D View to `ORTHO`/`PERSP`
+      (leaves camera view);
+    - `orbit_selection_toggle()` flips Orbit Around Selection. Actions, not
+      `wm.context_set_enum`/`wm.context_toggle`: those return
+      `{'CANCELLED'}` for non-undo data and would show as an error.
   - **`run_operator()`** (`blender_glue.py:106`) runs an operator with a
     3D View context override and the `call` execution context.
   - **Operators and panel:** the panel also shows the layer states
@@ -127,13 +134,20 @@ Blender state → LED messages to the controller.
   - **Modes**, through `object.mode_set`:
     - S1 PLAY → `OBJECT` and S2 PLAY → `EDIT`; the LED of the current
       mode's PLAY button blinks 200 ms on / 200 ms off.
-    - A → `EDIT`, B → `OBJECT`, C → `VERTEX_PAINT`, D → `POSE` (no LED;
-      C and D were picked by Claude, Rafael had no preference).
+  - **A–D** (task 14, replacing the old mode buttons): A →
+    `view_projection` `ORTHO`, B → `PERSP`, C → `view3d.view_all`, D →
+    `view3d.view_selected`.
   - **Axis views** (`view3d.view_axis`), pressed again in that view → the
     opposite side (a `when` on `view_axis`, then a binding without):
     - CUE C → `RIGHT` / `LEFT` (Numpad 3 / Ctrl+Numpad 3);
     - CUE A → `FRONT` / `BACK` (Numpad 1);
-    - CUE B → `TOP` / `BOTTOM` (Numpad 7).
+    - CUE B → `TOP` / `BOTTOM` (Numpad 7);
+    - their LEDs follow `view_axis`: on in the first-press side (Right,
+      Front, Top), blinking 200/200 ms on the opposite side, off in any
+      other view, so they go off once the view is orbited away.
+  - **CUE D:** unbound (the Properties editor rule was cancelled).
+  - **VINYL MODE R/B and R/D** → `orbit_selection_toggle`; their LED blinks
+    200/200 ms while Orbit Around Selection is on.
   - **Step scale** `step`: S1 VOL sets 0.01–0.10 m (1–10 cm), 0.01 until
     it moves. It sizes every platter step and the encoder's dolly.
   - **PRESS TO ENTER encoder** (`NAVIGATION`): in camera view, turned

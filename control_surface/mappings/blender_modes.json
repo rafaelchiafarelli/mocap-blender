@@ -12,34 +12,38 @@
   {
    "control": "A",
    "event": "press",
-   "operator": "object.mode_set",
    "args": {
-    "mode": "EDIT"
-   }
+    "type": "ORTHO"
+   },
+   "action": "view_projection"
   },
   {
    "control": "B",
    "event": "press",
-   "operator": "object.mode_set",
    "args": {
-    "mode": "OBJECT"
-   }
+    "type": "PERSP"
+   },
+   "action": "view_projection"
   },
   {
    "control": "C",
    "event": "press",
-   "operator": "object.mode_set",
-   "args": {
-    "mode": "VERTEX_PAINT"
-   }
+   "operator": "view3d.view_all"
   },
   {
    "control": "D",
    "event": "press",
-   "operator": "object.mode_set",
-   "args": {
-    "mode": "POSE"
-   }
+   "operator": "view3d.view_selected"
+  },
+  {
+   "control": "VINYL MODE R/B",
+   "event": "press",
+   "action": "orbit_selection_toggle"
+  },
+  {
+   "control": "VINYL MODE R/D",
+   "event": "press",
+   "action": "orbit_selection_toggle"
   },
   {
    "control": "S1 PLAY",
@@ -290,6 +294,64 @@
    "state": "view_perspective",
    "equals": "CAMERA",
    "led": "on"
+  },
+  {
+   "control": "CUE A",
+   "state": "view_axis",
+   "equals": "FRONT",
+   "led": "on"
+  },
+  {
+   "control": "CUE A",
+   "state": "view_axis",
+   "equals": "BACK",
+   "led": "blink",
+   "on_ms": 200,
+   "off_ms": 200
+  },
+  {
+   "control": "CUE B",
+   "state": "view_axis",
+   "equals": "TOP",
+   "led": "on"
+  },
+  {
+   "control": "CUE B",
+   "state": "view_axis",
+   "equals": "BOTTOM",
+   "led": "blink",
+   "on_ms": 200,
+   "off_ms": 200
+  },
+  {
+   "control": "CUE C",
+   "state": "view_axis",
+   "equals": "RIGHT",
+   "led": "on"
+  },
+  {
+   "control": "CUE C",
+   "state": "view_axis",
+   "equals": "LEFT",
+   "led": "blink",
+   "on_ms": 200,
+   "off_ms": 200
+  },
+  {
+   "control": "VINYL MODE R/B",
+   "state": "orbit_selection",
+   "equals": true,
+   "led": "blink",
+   "on_ms": 200,
+   "off_ms": 200
+  },
+  {
+   "control": "VINYL MODE R/D",
+   "state": "orbit_selection",
+   "equals": true,
+   "led": "blink",
+   "on_ms": 200,
+   "off_ms": 200
   }
  ]
 }
