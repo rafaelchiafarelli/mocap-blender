@@ -22,8 +22,10 @@ platforms other than Windows.
   inside Blender 5.2.2 on 2026-11-20).
 - The add-on lives in this repository.
 
-**Initiative gate:** With the 4-Mix plugged into the Windows PC, Rafael presses
-A and B in Blender 5.2.2: the mode changes, and the LED of the current mode
-blinks, also when the mode is changed from the keyboard.
+**Initiative gate** (revised 2026-11-20, because A–D have no LED): with the
+4-Mix plugged into the Windows PC, Rafael uses the bundled mapping in Blender
+5.2.2. S1/S2 PLAY change the mode, and their LED blinks for the current mode,
+also when the mode is changed from the keyboard. The platters and the encoder
+move the view and the camera.
 
 Added 2026-11-20 by Claude, at Rafael's request.

@@ -1,0 +1,157 @@
+# control_surface — how it works today and where to change it
+
+The DJ-Tech 4-Mix as an extension of Blender's interface: its controls run
+Blender commands, its LEDs show Blender's state. The add-on code is described
+file by file in [`CLAUDE.md`](CLAUDE.md); this page is the quick start for the
+next change. State on 2026-11-20: version 0.1.8, installed in the portable
+Blender on G:.
+
+## Use it
+
+1. Plug in the 4-Mix. Close any other program that uses it (VirtualDJ, a test
+   script): a Windows MIDI port opens in one program at a time.
+2. Open Blender with `G:\mocap-studio-downloads\review\2026-11-20\abrir_blender_5.2.2.bat`.
+3. In the 3D View press N, open the **DJ-Tech** tab and click **Connect**.
+   The LEDs play the intro, about 1.3 s.
+4. The panel shows:
+   - the status;
+   - `deck_left`/`deck_right` (`UNKNOWN` until a deck switch or any control
+     on that side is used);
+   - `shift_left`/`shift_right`;
+   - the `step` size;
+   - the last error.
+
+## What the controls do now
+
+All of this comes from [`mappings/blender_modes.json`](mappings/blender_modes.json).
+
+| Control | Does | LED |
+|---|---|---|
+| S1 PLAY | Object Mode | blinks while in Object Mode |
+| S2 PLAY | Edit Mode | blinks while in Edit Mode |
+| A / B / C / D | Edit / Object / Vertex Paint / Pose Mode | (no LED on A–D) |
+| CUE C | Right view; pressed again in Right → Left | — |
+| CUE A | Front view; again → Back | — |
+| CUE B | Top view; again → Bottom | — |
+| Encoder (PRESS TO ENTER), turn | zoom in (right) / out (left); in camera view: dolly the camera forward/back by `step` | — |
+| Encoder, press | toggle the camera view | on while in camera view |
+| S1 VOL | sets `step`: 1 cm (bottom) to 10 cm (top); 1 cm until moved | — |
+| Left platter, decks C + B | view up/down by `step`; in camera view: camera up/down | — |
+| Right platter, decks C + B | view right/left by `step`; in camera view: camera right/left | — |
+| Platters, decks A+B, A+D, C+D | nothing yet (to be defined) | — |
+
+## Where to change what
+
+**A control's behaviour** lives in `mappings/blender_modes.json`, under
+`bindings`. One entry per control event:
+
+```json
+{"control": "CUE C", "event": "press",
+ "operator": "view3d.view_axis", "args": {"type": "RIGHT"},
+ "when": {"view_axis": "LEFT"}}
+```
+
+- `control`: an id from [`devices/dj_tech_4mix.json`](devices/dj_tech_4mix.json),
+  e.g. `S1 PLAY`, `CUE A`, `IN L/A`, `IN L/A+SHIFT`, `PLATTER L/C`,
+  `NAVIGATION`, `S1 VOL`. The naming rules are in `CLAUDE.md` → Control ids.
+- `event`: `press`, `release`, `cw` (turned right), `ccw` (turned left).
+- **What it runs:**
+  - `operator`: any Blender operator, as in `bpy.ops.<operator>`, with its
+    `args`. If Blender logs `Invalid operator call`, the operator only has an
+    invoke: add `"call": "INVOKE_DEFAULT"`.
+  - `action` instead of `operator`: one of the add-on's own actions,
+    `camera_move` (`x`, `y`, `forward`, in metres) or `view_move` (`x`, `y`,
+    in metres).
+- `when` (optional): every listed state must match. **The first matching
+  binding wins** for one control event, so put the conditional one first and
+  the "otherwise" one (without `when`) after it.
+- `scale` (optional): the name of a `scales` entry. It multiplies the numeric
+  `args` (use `1`/`-1` as directions).
+
+**States for `when` and indicators:**
+- from Blender: `object_mode` (`OBJECT`, `EDIT`, `POSE`, …),
+  `view_perspective` (`PERSP`, `ORTHO`, `CAMERA`), `view_axis` (`FRONT`,
+  `BACK`, `RIGHT`, `LEFT`, `TOP`, `BOTTOM`, `NONE`);
+- from the controller: `deck_left` (`A`/`C`), `deck_right` (`B`/`D`),
+  `shift_left`, `shift_right` (`true`/`false`).
+
+**An LED** goes under `indicators`:
+
+```json
+{"control": "CUE A", "state": "object_mode", "equals": "EDIT",
+ "led": "blink", "on_ms": 200, "off_ms": 200}
+```
+
+`led` is `on` or `blink`, and `when` is allowed. The first matching indicator
+per physical LED wins; none → off. Only controls with an LED can have one; A–D
+cannot.
+
+**A size set by a fader** goes under `scales`:
+
+```json
+"step": {"control": "S1 VOL", "min": 0.01, "max": 0.10, "default": 0.01}
+```
+
+`default` holds until the fader moves, because the 4-Mix never reports a
+position before that.
+
+**A new Blender state or action:** add a function to `STATES` or `ACTIONS` in
+[`blender_glue.py`](blender_glue.py). The mapping is validated against those
+names at Connect, so a typo fails there, not silently.
+
+**The controller's bytes:** edit `devices/dj_tech_4mix.json` by hand (ids,
+LEDs, layers). It records its sources and hardware findings in `notes`.
+
+## Build, install, test
+
+From WSL, in the repository root:
+
+```bash
+B=/mnt/g/mocap-studio-downloads/apps/blender/5.2.2/blender-5.2.2-windows-x64/blender.exe
+pytest -q                                   # pure tests + the headless Blender smoke test
+# bump version in control_surface/blender_manifest.toml, then:
+"$B" --command extension build --source-dir "$(wslpath -w control_surface)" \
+     --output-dir 'G:\mocap-studio-downloads\review\<date>'
+"$B" --command extension install-file -r user_default -e 'G:\mocap-studio-downloads\review\<date>\control_surface-<version>.zip'
+```
+
+Blender must be restarted to load a reinstalled version.
+
+- **Operators, view states and actions need a window:** a quick check is a
+  script started with `blender.exe --factory-startup --python <script>` (no
+  `-b`). It registers a `bpy.app.timers` callback that calls `blender_glue`
+  functions, writes the result to a file and quits Blender. A window opens on
+  Rafael's screen for a few seconds.
+- **Hardware tests** (the add-on disconnected, nothing else holding the port):
+  - [`tools/probe_echo.py`](tools/probe_echo.py) echoes every message back and
+    logs it, which is how the LEDs were checked;
+  - [`tools/probe_sysex.py`](tools/probe_sysex.py) sends one SysEx message and
+    logs the answer, with a Device Inquiry as a health check.
+
+  Usage is at the top of each file.
+
+## Known limits and open items
+
+- **The decks cannot be set from the computer** (deck switch notes are
+  ignored; VirtualDJ also only reads them). They are learned from the
+  switches or from any control on that side.
+- **Positions of knobs and faders are unknown until they move.** For
+  continuous Blender values (shape keys, MPFB sliders), use pickup ("soft
+  takeover") or relative changes. Not built yet.
+- **Noisy knobs:** CUE MIX and S4 VOL jitter ±1 at rest. Filter them before
+  binding them.
+- **Not seen on the hardware yet:** the encoder LED (note 1F), taken from the
+  VirtualDJ map; Rafael said to treat it as working.
+- **Open question:** does the 4-Mix pause its input for a few seconds after a
+  manufacturer SysEx? A button-press test with `probe_sysex.py` would tell.
+- **To define:** the platters for decks A+B, A+D and C+D; Rafael is drawing a
+  new set of actions.
+- **Mapping file:** it lives inside the add-on, so changing it means rebuild
+  and reinstall. Choosing an external file plus a Reload button is the next
+  convenience.
+- **Git:** every task branch is pushed (`1-device-profile` …
+  `13-handoff-guide`; the last one contains all the work), and so is `dev`
+  with the plan. The chain's container branches (`features`, `epics`,
+  `tasks`) are not pushed, because on the remote those names belong to the
+  on-hold mvp chain. Merging `tasks` → `dj-tech` waits for the epic gate
+  (Rafael's hardware check).

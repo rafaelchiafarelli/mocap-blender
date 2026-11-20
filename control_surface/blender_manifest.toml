@@ -12,4 +12,4 @@ license = ["SPDX:GPL-3.0-or-later"]
 platforms = ["windows-x64"]
 
 [build]
-paths_exclude_pattern = ["__pycache__/", "/tests/", "CLAUDE.md"]
+paths_exclude_pattern = ["__pycache__/", "/tests/", "/tools/", "CLAUDE.md", "README.md"]
