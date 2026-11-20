@@ -25,3 +25,4 @@ Rules specific to this repository:
 | [baseline](baseline/baseline.md) | Planned — not started |
 | [integration](integration/integration.md) | Planned — not started |
 | [mvp](mvp/mvp.md) | In progress (2026-10-12): the MVP's Blender half |
+| [control-surface](control-surface/control-surface.md) | In progress (2026-11-20): DJ-Tech 4-Mix as a Blender interface extension |
