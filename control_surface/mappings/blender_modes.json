@@ -10,6 +10,14 @@
  },
  "bindings": [
   {
+   "control": "C FILTER",
+   "event": "value",
+   "action": "select_by_knob",
+   "args": {
+    "knob": "C FILTER"
+   }
+  },
+  {
    "control": "A",
    "event": "press",
    "action": "view_projection",

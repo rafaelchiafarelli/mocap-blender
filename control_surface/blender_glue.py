@@ -12,6 +12,7 @@ from pathlib import Path
 import bpy
 from mathutils import Matrix, Vector
 
+from . import knob_select
 from .engine import Engine, Mapping
 from .profile import Profile
 
@@ -113,7 +114,58 @@ def orbit_selection_toggle():
     return {"FINISHED"}
 
 
+def outliner_objects():
+    """Selectable, visible objects of the view layer in Outliner order:
+    collections depth first (child collections before objects), objects by name."""
+    vl = bpy.context.view_layer
+    out, seen = [], set()
+
+    def walk(lc):
+        if lc.exclude:
+            return
+        for child in lc.children:
+            walk(child)
+        for obj in sorted(lc.collection.objects, key=lambda o: o.name):
+            if obj.name not in seen and obj.visible_get(view_layer=vl) and not obj.hide_select:
+                seen.add(obj.name)
+                out.append(obj)
+
+    walk(vl.layer_collection)
+    return out
+
+
+_knob_anchor = {}  # knob control -> anchor index, set when the knob leaves its centre
+
+
+def select_by_knob(value, knob="", center=knob_select.CENTER):
+    """Select one object (and make it active) by a centre-tap knob's position.
+
+    Leaving the centre anchors on the active selected object (or none); see
+    knob_select.pick. Object Mode only.
+    """
+    if value == center:
+        _knob_anchor.pop(knob, None)
+        return {"FINISHED"}
+    if _object_mode() not in ("OBJECT", "NONE"):
+        raise RuntimeError("object selection works in Object Mode only")
+    objs = outliner_objects()
+    if knob not in _knob_anchor:
+        active = bpy.context.view_layer.objects.active
+        _knob_anchor[knob] = objs.index(active) if active in objs and active.select_get() else None
+    i = knob_select.pick(len(objs), _knob_anchor[knob], value, center)
+    if i is None:
+        return {"FINISHED"}
+    target = objs[i]
+    if bpy.context.view_layer.objects.active is not target or len(bpy.context.selected_objects) != 1:
+        for o in bpy.context.selected_objects:
+            o.select_set(False)
+        target.select_set(True)
+        bpy.context.view_layer.objects.active = target
+    return {"FINISHED"}
+
+
 ACTIONS = {
+    "select_by_knob": select_by_knob,
     "camera_move": camera_move, "view_move": view_move,
     "view_projection": view_projection, "orbit_selection_toggle": orbit_selection_toggle,
 }
@@ -220,6 +272,7 @@ def _timer():
 def connect(**kwargs):
     global _session, _status
     disconnect()
+    _knob_anchor.clear()
     _session = Session(**kwargs)
     _status = f"Connected: {_session.device}"
     if not bpy.app.timers.is_registered(_timer):

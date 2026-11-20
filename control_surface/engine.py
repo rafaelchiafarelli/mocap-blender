@@ -37,7 +37,7 @@ import json
 from .leds import LedDriver
 from .profile import CCW, CW, PRESS, RELEASE, VALUE
 
-EVENTS = (PRESS, RELEASE, CW, CCW)
+EVENTS = (PRESS, RELEASE, CW, CCW, VALUE)  # "value": absolute controls, the action gets value=
 LOOKS = ("on", "blink")
 CALLS = ("EXEC_DEFAULT", "INVOKE_DEFAULT")  # how an operator is called (Blender execution context)
 UNKNOWN = "UNKNOWN"  # a select layer before its first press
@@ -96,6 +96,8 @@ class Mapping:
                 raise MappingError(f"binding {b['control']!r}: operator must look like 'object.mode_set'")
             if b.get("call", "EXEC_DEFAULT") not in CALLS:
                 raise MappingError(f"binding {b['control']!r}: call must be one of {CALLS}")
+            if b["event"] == VALUE and ("action" not in b or profile.controls[b["control"]]["type"] != "absolute"):
+                raise MappingError(f"binding {b['control']!r}: event 'value' needs an absolute control and an action")
             if "scale" in b and b["scale"] not in self.scales:
                 raise MappingError(f"binding {b['control']!r}: unknown scale {b['scale']!r}")
             check_when(b, f"binding {b['control']!r}")
@@ -220,9 +222,12 @@ class Engine:
             if self._track_layers(cid, event):
                 # The controller now shows another deck/layer: send every LED again.
                 self.leds.resend()
+            value = None
+            if isinstance(event, tuple) and event[0] == VALUE:
+                event, value = VALUE, event[1]
             for b in self.mapping.bindings:
                 if b["control"] == cid and b["event"] == event and self._when_ok(b):
-                    self._fire(cid, event, b)
+                    self._fire(cid, event, b, value)
                     break  # first match wins
 
     def _tap_ok(self, cid, value):
@@ -246,11 +251,14 @@ class Engine:
                     for n, v in args.items()}
         return args
 
-    def _fire(self, cid, event, b):
+    def _fire(self, cid, event, b, value=None):
         what = b.get("operator") or b["action"]
         try:
             if "action" in b:
-                result = self._action(b["action"], self._args(b))
+                args = self._args(b)
+                if value is not None:
+                    args["value"] = value
+                result = self._action(b["action"], args)
             else:
                 result = self._run(b["operator"], self._args(b), b.get("call", "EXEC_DEFAULT"))
         except Exception as e:  # an operator that fails its poll, etc.

@@ -62,7 +62,10 @@ Blender state → LED messages to the controller.
   - **Centre tap** (task 15): an absolute control with `center_tap` in the
     profile is ignored after Connect until its value equals the centre or
     two messages fall on opposite sides of it (`Engine._tap_ok`); then it is
-    in `Engine.armed` for the rest of the session. Today: A/B/C/D FILTER, 64.
+    in `Engine.armed` for the rest of the session. Today: A/B/C/D FILTER
+    and HI/MID/LOW (task 16), 64.
+  - **`value` bindings** (task 16): an absolute control's value goes to an
+    action as `value=` (validated: absolute control + action).
   - **`_fire()`** (`engine.py:231`) runs the operator or action and reports a
     raised error, or a `{'CANCELLED'}` result (`engine.py:241`), in
     `last_error`.
@@ -85,6 +88,9 @@ Blender state → LED messages to the controller.
   - A blink's phase restarts only when its look changes (`leds.py:18`).
   - `resend()` (`leds.py:40`) forgets what was sent, so the next tick sends
     every LED again.
+- `knob_select.py` — `pick(n, anchor, value)`: the object index for a
+  centre-tap knob's position (one per step while they fit, otherwise jumps;
+  the ends land on the last/first). Pure.
 - `winmm.py` — Windows MIDI through `winmm.dll` + `ctypes`: `list_ports()`
   (`winmm.py:78`), `find_port()` (`winmm.py:93`), `MidiIn` (`winmm.py:102`,
   callback on a WinMM thread) and `MidiOut` (`winmm.py:125`). Short messages
@@ -114,6 +120,11 @@ Blender state → LED messages to the controller.
       `view_pan` PANRIGHT/PANUP);
     - `view_projection(type)` sets the first 3D View to `ORTHO`/`PERSP`
       (leaves camera view);
+    - `select_by_knob(value, knob)` (task 16) selects one object of
+      `outliner_objects()` (visible, selectable, Outliner order) through
+      `knob_select.pick`; the anchor (active selected object or none) is
+      taken when the knob leaves the centre and dropped at the centre and
+      at Connect;
     - `orbit_selection_toggle()` flips Orbit Around Selection. Actions, not
       `wm.context_set_enum`/`wm.context_toggle`: those return
       `{'CANCELLED'}` for non-undo data and would show as an error.
@@ -150,6 +161,7 @@ Blender state → LED messages to the controller.
     - their LEDs follow `view_axis`: on in the first-press side (Right,
       Front, Top), blinking 200/200 ms on the opposite side, off in any
       other view, so they go off once the view is orbited away.
+  - **C FILTER** (`value`) → `select_by_knob`.
   - **CUE D:** unbound (the Properties editor rule was cancelled).
   - **VINYL MODE R/B and R/D** → `orbit_selection_toggle`; their LED blinks
     200/200 ms while Orbit Around Selection is on.
