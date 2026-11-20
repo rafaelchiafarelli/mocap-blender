@@ -9,6 +9,8 @@ Mapping JSON:
     "bindings": [                              # control event -> Blender operator
       {"control": "A", "event": "press",
        "operator": "object.mode_set", "args": {"mode": "EDIT"},
+       "call": "EXEC_DEFAULT",                 # optional; INVOKE_DEFAULT for invoke-only
+                                               # operators such as view3d.view_pan
        "when": {"shift_left": false}}          # optional: every state must match
     ],
     "indicators": [                            # state -> LED look
@@ -29,6 +31,7 @@ from .profile import CCW, CW, PRESS, RELEASE
 
 EVENTS = (PRESS, RELEASE, CW, CCW)
 LOOKS = ("on", "blink")
+CALLS = ("EXEC_DEFAULT", "INVOKE_DEFAULT")  # how an operator is called (Blender execution context)
 UNKNOWN = "UNKNOWN"  # a select layer before its first press
 
 
@@ -69,6 +72,8 @@ class Mapping:
                 raise MappingError(f"binding {b['control']!r}: event must be one of {EVENTS}")
             if "." not in b.get("operator", ""):
                 raise MappingError(f"binding {b['control']!r}: operator must look like 'object.mode_set'")
+            if b.get("call", "EXEC_DEFAULT") not in CALLS:
+                raise MappingError(f"binding {b['control']!r}: call must be one of {CALLS}")
             check_when(b, f"binding {b['control']!r}")
         for ind in self.indicators:
             cid = ind.get("control")
@@ -93,7 +98,8 @@ class Engine:
     """Applies a mapping.
 
     send(b0, b1, b2)            -> MIDI out
-    run_operator(name, args)    -> runs a Blender operator; may raise
+    run_operator(name, args, call) -> runs a Blender operator (call: EXEC_DEFAULT or
+                                  INVOKE_DEFAULT); may raise
     read_state(name)            -> current value of a Blender state
     clock_ms()                  -> monotonic milliseconds
     """
@@ -164,9 +170,14 @@ class Engine:
             for b in self.mapping.bindings:
                 if b["control"] == cid and b["event"] == event and self._when_ok(b):
                     try:
-                        self._run(b["operator"], b.get("args", {}))
+                        result = self._run(b["operator"], b.get("args", {}), b.get("call", "EXEC_DEFAULT"))
                     except Exception as e:  # an operator that fails its poll, etc.
                         self.last_error = f"{cid} {event} -> {b['operator']}: {e}"
+                        continue
+                    if result and "CANCELLED" in result:
+                        # Blender only logs some failures (e.g. "Invalid operator call")
+                        # and returns {'CANCELLED'}: show them too.
+                        self.last_error = f"{cid} {event} -> {b['operator']}: cancelled"
 
     def update(self):
         """Read the states and drive the LEDs; call this often (e.g. every 20 ms)."""

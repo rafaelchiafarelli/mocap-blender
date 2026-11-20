@@ -7,10 +7,10 @@ Blender's state, whoever changed it. Plan:
 
 **Entry points:**
 - In Blender: the **DJ-Tech** tab in the 3D View sidebar (N panel), with
-  Connect / Disconnect (`blender_glue.py:167`).
+  Connect / Disconnect (`blender_glue.py:173`).
 - `register()` / `unregister()` in `__init__.py`.
 - Pure Python: `Profile.load` (`profile.py:65`), `Mapping.load`
-  (`engine.py:46`), `Engine` (`engine.py:92`).
+  (`engine.py:49`), `Engine` (`engine.py:97`).
 
 **Inputs → Outputs:** a mapping (`mappings/*.json`) naming a device profile
 (`devices/<device>.json`) + incoming MIDI → Blender operators run; Blender
@@ -33,19 +33,22 @@ state → LED messages to the controller.
   `None`. `Profile.layers` (`profile.py:51`) holds the controller's layers:
   `select` (value of the last pressed control) and `hold` (true while any of
   its controls is held).
-- `engine.py` — the mapping format and its `validate()` (`engine.py:50`), and
+- `engine.py` — the mapping format and its `validate()` (`engine.py:53`), and
   the `Engine`:
   - `Engine.layers` holds the layer states: a select layer is `UNKNOWN`
     until its first press, and a hold layer is `False`.
-  - `handle()` (`engine.py:158`) updates the layers (`_track_layers`,
-    `engine.py:138`), resends every LED when a layer changes
-    (`engine.py:163`), and runs the bindings whose control, event and optional
-    `when` match.
-  - `update()` (`engine.py:171`) picks, for each physical LED, the first
+  - `handle()` (`engine.py:164`) updates the layers (`_track_layers`,
+    `engine.py:144`), resends every LED when a layer changes
+    (`engine.py:169`), and runs the bindings whose control, event and optional
+    `when` match. A binding's optional `call` (`EXEC_DEFAULT` by default, or
+    `INVOKE_DEFAULT`, `engine.py:34`) is passed to `run_operator`. An
+    operator that returns `{'CANCELLED'}` is reported in `last_error` too
+    (`engine.py:177`).
+  - `update()` (`engine.py:182`) picks, for each physical LED, the first
     indicator whose `when` and `state`/`equals` match, then drives the LEDs.
-  - `state()` (`engine.py:125`) answers layer states itself and asks Blender
+  - `state()` (`engine.py:131`) answers layer states itself and asks Blender
     for the rest.
-  - `shutdown()` (`engine.py:186`) turns the LEDs off.
+  - `shutdown()` (`engine.py:197`) turns the LEDs off.
 - `leds.py` — `LedDriver` (`leds.py:11`): looks are off / `("on",)` /
   `("blink", on_ms, off_ms)`. It sends a message only when an LED's value
   changes (`leds.py:24`). A blink's phase restarts only when its look changes
@@ -55,14 +58,15 @@ state → LED messages to the controller.
   (`winmm.py:78`), `find_port()` (`winmm.py:93`), `MidiIn` (`winmm.py:102`,
   callback on a WinMM thread) and `MidiOut` (`winmm.py:125`). Short messages
   only.
-- `blender_glue.py` — the Blender side. `Session` (`blender_glue.py:57`)
+- `blender_glue.py` — the Blender side. `Session` (`blender_glue.py:63`)
   loads mapping + profile, finds and opens the ports by
   `port_name_contains`, and builds the `Engine`. A `bpy.app.timers` tick
-  every 20 ms (`blender_glue.py:110`) drains the input queue and updates the
+  every 20 ms (`blender_glue.py:116`) drains the input queue and updates the
   LEDs. Also holds the states that indicators can read (`STATES`, today only
   `object_mode`, `blender_glue.py:23`), `run_operator()` with a 3D View
-  context override (`blender_glue.py:46`), and the operators and panel. The
-  panel also shows the layer states (`blender_glue.py:180`).
+  context override and the `call` execution context (`blender_glue.py:46`),
+  and the operators and panel. The
+  panel also shows the layer states (`blender_glue.py:186`).
 - `devices/dj_tech_4mix.json` — DJ-Tech 4-Mix profile: 169 controls
   (125 buttons, 29 absolute CCs, 9 relative controls, 4 lights, 2 meters),
   plus `notes` and an `unverified` list. Transcribed on 2026-11-20 from the
@@ -78,7 +82,8 @@ state → LED messages to the controller.
     - A → `EDIT`, B → `OBJECT`, C → `VERTEX_PAINT`, D → `POSE` (no LED;
       C and D were picked by Claude, Rafael had no preference).
   - **Platters pan the 3D View**, one `view3d.view_pan` step per message,
-    whatever the turning speed:
+    whatever the turning speed, called with `INVOKE_DEFAULT` (view_pan has no
+    exec):
     - left platter (decks A and C): turned right → `PANUP`, left → `PANDOWN`;
     - right platter (decks B and D): turned right → `PANRIGHT`, left →
       `PANLEFT`.
@@ -100,7 +105,7 @@ state → LED messages to the controller.
 
 - **Threads:** WinMM calls `MidiIn`'s callback on its own thread. The callback
   only puts the message on a queue. `bpy` is touched only from the timer, on
-  the main thread (`blender_glue.py:89`).
+  the main thread (`blender_glue.py:95`).
 - **Layers (deck switches, SHIFT) are followed by the add-on**, not read
   from the 4-Mix (Rafael, 2026-11-20: the host application keeps these
   states, as in the conboard):
@@ -112,10 +117,14 @@ state → LED messages to the controller.
     `shift_left` and `shift_right`.
 - **LEDs show state, not presses:** a button press only runs its operator.
   The LED changes because the state changed, so pressing Tab on the keyboard
-  moves the blinking LED too (`engine.py:171`).
+  moves the blinking LED too (`engine.py:182`).
 - **Exclusive ports:** a Windows MIDI port opens in one program at a time.
-  Disconnect (or disabling the add-on, `blender_glue.py:195`) releases it.
+  Disconnect (or disabling the add-on, `blender_glue.py:201`) releases it.
   While another program holds it, Connect reports "port in use".
+- **Invoke-only operators:** some operators (e.g. `view3d.view_pan`) have no
+  exec. Called with `EXEC_DEFAULT`, Blender only logs
+  `Invalid operator call` and returns `{'CANCELLED'}`. Their bindings need
+  `"call": "INVOKE_DEFAULT"`.
 - **Operator failures** (e.g. Edit Mode with no active object, Pose Mode on
   a mesh) don't raise.
   They go to `Engine.last_error` and show in the panel.
