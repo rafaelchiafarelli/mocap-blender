@@ -112,6 +112,19 @@ class Profile:
             return CCW
         return None
 
+    def all_leds(self):
+        """Every LED address of the profile (buttons and lights), in file order, no repeats."""
+        out = []
+        for spec in self.controls.values():
+            led = spec.get("led") if spec["type"] in ("button", "light") else None
+            if led and tuple(led) not in out:
+                out.append(tuple(led))
+        return out
+
+    def meters(self):
+        """(b0, b1) of every level meter."""
+        return [tuple(s["cc"]) for s in self.controls.values() if s["type"] == "meter"]
+
     def led(self, control):
         """(b0, b1) to light this control's LED, or None if it has none."""
         spec = self.controls.get(control)

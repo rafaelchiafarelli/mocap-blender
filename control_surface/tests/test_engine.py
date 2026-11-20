@@ -298,3 +298,50 @@ def test_action_binding_runs_the_named_action():
 def test_validation_of_actions(binding):
     with pytest.raises(MappingError):
         Mapping({"device": "dj_tech_4mix", "bindings": [binding]}).validate(PROFILE, set(), {"camera_move"})
+
+
+def test_intro_lights_every_led_then_clears_and_holds_indicators():
+    e, fb, sent = make_bundled()
+    e.start_intro()
+    leds = PROFILE.all_leds()
+    assert len(leds) == 60  # top row 8, PEAK 4, 4 decks x 12
+    e.update()  # t=0: first LED
+    assert sent[0] == leds[0] + (0x7F,)
+    fb.now = 10_000  # well past the end
+    e.update()
+    ons = [m for m in sent if m[2] == 0x7F and m[:2] in leds]
+    assert [m[:2] for m in ons[:60]] == leds  # after them: the S1 PLAY indicator again
+    offs = [m for m in sent if m[2] == 0 and m[:2] in leds]
+    assert sorted(m[:2] for m in offs[:60]) == sorted(leds)
+    meters = [m for m in sent if m[:2] == (0xB0, 0x20)]
+    assert meters[0][2] > 0 and meters[-1][2] == 0 and max(m[2] for m in meters) == 127
+    assert not e.intro_running
+    # indicators were held during the intro and come back after it
+    assert sent[-1][:2] in ((0x90, 0x22), (0x90, 0x23))
+
+
+def test_intro_holds_indicators_while_running():
+    e, fb, sent = make_bundled()
+    e.start_intro()
+    fb.now = 50
+    e.update()
+    assert all(m[2] == 0x7F or m[:2] == (0xB0, 0x20) or m[:2] == (0xB0, 0x21) for m in sent)
+    assert e.intro_running
+
+
+def test_shutdown_during_intro_clears_everything():
+    e, fb, sent = make_bundled()
+    e.start_intro()
+    e.update()
+    sent.clear()
+    e.shutdown()
+    assert {m[:2] for m in sent if m[2] == 0} >= set(PROFILE.all_leds())
+
+
+def test_bundled_encoder_dollies_the_camera_in_camera_view():
+    e, fb, _ = make_bundled()
+    fb.view["view_perspective"] = "CAMERA"
+    e.handle(0xB0, 0x1F, 0x41)
+    e.handle(0xB0, 0x1F, 0x3F)
+    assert fb.actions == [("camera_move", {"forward": 0.05}), ("camera_move", {"forward": -0.05})]
+    assert fb.calls == []
