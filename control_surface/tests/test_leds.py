@@ -46,3 +46,12 @@ def test_all_off():
     sent.clear()
     d.all_off()
     assert sorted(sent) == [(0x90, 1, LED_OFF), (0x90, 2, LED_OFF)]
+
+
+def test_resend_sends_everything_again():
+    d, sent = make()
+    d.set((0x90, 1), ("on",), 0)
+    d.tick(0)
+    d.resend()
+    d.tick(10)
+    assert sent == [(0x90, 1, LED_ON), (0x90, 1, LED_ON)]

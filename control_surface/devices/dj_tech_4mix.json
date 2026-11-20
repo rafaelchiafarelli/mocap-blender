@@ -9,6 +9,36 @@
   "LEVEL meters: CC value 00-20 all off, 21-41 1 LED, 42-62 2, 63-83 3, ..., 105-119 5, 126-127 all.",
   "Hardware check 2026-11-20 (Rafael, deck A and B selected): every top-row LED and every deck A/B button LED lights on its own button; deck C/D not checked."
  ],
+ "layers": {
+  "deck_left": {
+   "type": "select",
+   "values": {
+    "A": "DECK A/C to A",
+    "C": "DECK A/C to C"
+   }
+  },
+  "deck_right": {
+   "type": "select",
+   "values": {
+    "B": "DECK B/D to B",
+    "D": "DECK B/D to D"
+   }
+  },
+  "shift_left": {
+   "type": "hold",
+   "controls": [
+    "SHIFT L/A",
+    "SHIFT L/C"
+   ]
+  },
+  "shift_right": {
+   "type": "hold",
+   "controls": [
+    "SHIFT R/B",
+    "SHIFT R/D"
+   ]
+  }
+ },
  "controls": {
   "S1 PLAY": {
    "type": "button",

@@ -37,6 +37,10 @@ class LedDriver:
         on_ms, off_ms = look[1], look[2]
         return LED_ON if elapsed_ms % (on_ms + off_ms) < on_ms else LED_OFF
 
+    def resend(self):
+        """Forget what was sent: the next tick sends every LED again."""
+        self._sent.clear()
+
     def all_off(self):
         for addr in self._look:
             self._send(addr[0], addr[1], LED_OFF)
