@@ -303,20 +303,20 @@ def test_intro_lights_every_led_then_clears_and_holds_indicators():
     e, fb, sent = make_bundled()
     e.start_intro()
     leds = PROFILE.all_leds()
-    assert len(leds) == 60  # top row 8, PEAK 4, 4 decks x 12
+    assert len(leds) == 61  # top row 8, encoder 1, PEAK 4, 4 decks x 12
     e.update()  # t=0: first LED
     assert sent[0] == leds[0] + (0x7F,)
     fb.now = 10_000  # well past the end
     e.update()
     ons = [m for m in sent if m[2] == 0x7F and m[:2] in leds]
-    assert [m[:2] for m in ons[:60]] == leds  # after them: the S1 PLAY indicator again
+    assert [m[:2] for m in ons[:61]] == leds  # after them: the indicators again
     offs = [m for m in sent if m[2] == 0 and m[:2] in leds]
-    assert sorted(m[:2] for m in offs[:60]) == sorted(leds)
+    assert sorted(m[:2] for m in offs[:61]) == sorted(leds)
     meters = [m for m in sent if m[:2] == (0xB0, 0x20)]
     assert meters[0][2] > 0 and meters[-1][2] == 0 and max(m[2] for m in meters) == 127
     assert not e.intro_running
     # indicators were held during the intro and come back after it
-    assert sent[-1][:2] in ((0x90, 0x22), (0x90, 0x23))
+    assert sent[-1][:2] in ((0x90, 0x22), (0x90, 0x23), (0x90, 0x1F))
 
 
 def test_intro_holds_indicators_while_running():
@@ -383,3 +383,13 @@ def test_scale_validation(scales, binding):
     data = {"device": "dj_tech_4mix", "scales": scales, "bindings": [binding] if binding else []}
     with pytest.raises(MappingError):
         Mapping(data).validate(PROFILE, set(), {"camera_move"})
+
+
+def test_bundled_encoder_led_is_on_in_camera_view():
+    e, fb, sent = make_bundled()
+    e.update()
+    assert led_values(sent, (0x90, 0x1F)) == [LED_OFF]
+    fb.view["view_perspective"] = "CAMERA"
+    fb.now = 20
+    e.update()
+    assert led_values(sent, (0x90, 0x1F)) == [LED_OFF, LED_ON]

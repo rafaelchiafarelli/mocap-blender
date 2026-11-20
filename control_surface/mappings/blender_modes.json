@@ -284,6 +284,12 @@
    "led": "blink",
    "on_ms": 200,
    "off_ms": 200
+  },
+  {
+   "control": "NAVIGATION push",
+   "state": "view_perspective",
+   "equals": "CAMERA",
+   "led": "on"
   }
  ]
 }
