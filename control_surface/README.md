@@ -3,7 +3,7 @@
 The DJ-Tech 4-Mix as an extension of Blender's interface: its controls run
 Blender commands, its LEDs show Blender's state. The add-on code is described
 file by file in [`CLAUDE.md`](CLAUDE.md); this page is the quick start for the
-next change. State on 2026-11-20: version 0.1.10, installed in the portable
+next change. State on 2026-11-20: version 0.1.11, installed in the portable
 Blender on G:.
 
 ## Use it
@@ -37,6 +37,7 @@ All of this comes from [`mappings/blender_modes.json`](mappings/blender_modes.js
 | CUE A | Front view; again → Back | on in Front, blinks in Back, off otherwise |
 | CUE B | Top view; again → Bottom | on in Top, blinks in Bottom, off otherwise |
 | CUE D | nothing (the Properties editor rule was cancelled) | — |
+| C FILTER (after reaching its centre) | selects one object (and makes it active), see below | — |
 | VINYL MODE, right deck (B or D) | toggles Preferences → Navigation → Orbit Around Selection | blinks while it is on |
 | Encoder (PRESS TO ENTER), turn | zoom in (right) / out (left); in camera view: dolly the camera forward/back by `step` | — |
 | Encoder, press | toggle the camera view | on while in camera view |
@@ -59,7 +60,8 @@ All of this comes from [`mappings/blender_modes.json`](mappings/blender_modes.js
 - `control`: an id from [`devices/dj_tech_4mix.json`](devices/dj_tech_4mix.json),
   e.g. `S1 PLAY`, `CUE A`, `IN L/A`, `IN L/A+SHIFT`, `PLATTER L/C`,
   `NAVIGATION`, `S1 VOL`. The naming rules are in `CLAUDE.md` → Control ids.
-- `event`: `press`, `release`, `cw` (turned right), `ccw` (turned left).
+- `event`: `press`, `release`, `cw` (turned right), `ccw` (turned left),
+  `value` (an absolute knob/fader; action only, which gets `value=`).
 - **What it runs:**
   - `operator`: any Blender operator, as in `bpy.ops.<operator>`, with its
     `args`. If Blender logs `Invalid operator call`, the operator only has an
@@ -106,9 +108,22 @@ cannot.
 position before that.
 
 **Centre-tap knobs:** a knob with a centre detent gets `"center_tap": 64`
-in the device profile (today the four FILTERs). After Connect it is ignored
+in the device profile (today the four FILTERs and the twelve EQ knobs). After Connect it is ignored
 until it reaches the centre (value 64, or a turn that jumps over it); from
 then on it works normally. This avoids a jump to an unknown position.
+
+**C FILTER selects objects** (`select_by_knob`, Object Mode only):
+- the list is the view layer's visible, selectable objects in Outliner
+  order (collections depth first, child collections before objects, objects
+  by name);
+- each time the knob leaves its centre it anchors on the active selected
+  object, or on nothing: CW then starts at the first object, CCW at the last;
+- one object per knob step while they fit; with more objects than steps to
+  the end it jumps, and the end (127 / 0) always lands on the last / first.
+  The rule is `knob_select.pick`.
+
+A binding with `"event": "value"` passes an absolute control's value to an
+action as `value=`.
 
 **A new Blender state or action:** add a function to `STATES` or `ACTIONS` in
 [`blender_glue.py`](blender_glue.py). The mapping is validated against those

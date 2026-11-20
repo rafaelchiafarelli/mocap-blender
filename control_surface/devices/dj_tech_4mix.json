@@ -14,7 +14,7 @@
   "CUE MIX (CC 1D) and S4 VOL (CC 04) are noisy: at rest they keep sending values jittering by +-1 (CUE MIX 34-36, S4 VOL 4D-4E seen on 2026-11-20); filter them before binding them.",
   "Manufacturer SysEx tried on 2026-11-20, all ignored (no answer; Device Inquiry still answered after each): F0 00 20 79 20 0C 01 F7, ... 20 0C 03 01 F7, ... 20 0C 10 21 01 F7, ... 20 0C 10 21 03 01 F7, ... 20 0C 10 21 00 01 F7, ... 03 01 F7, ... 00 01 F7, ... 01 01 F7. The Device Inquiry addressed to 00 or 7E, or with FE inside, gets no answer. Possible but unconfirmed: the knob noise stopped for a few seconds after a manufacturer SysEx three times (never after a Device Inquiry); a button-press test would tell.",
   "Knob CCs sent to the 4-Mix (B0 01/05/1A/1D with 00 and 7F) get no answer, and reconnecting the USB cable sends nothing: knob and fader positions are unknown until they move (2026-11-20).",
-  "Centre tap measured 2026-11-20 (log review/2026-11-20/teste-filtros-4mix.csv): C FILTER, A FILTER, C HI, C MID and C LOW all go from 0 to 127. Entering the detent they send CC 64 and right after it note-on 90 <their CC number> 7F; leaving it, 90 <CC> 00 and then the next CC value. So the centre is exactly 64, and the centre note is the CC number on channel 0x90 (also on the EQ knobs, not only the filters). `center_tap` (64) is set on the four FILTERs: the engine ignores them after Connect until they reach the centre. B/D FILTER were not in the log (same build assumed)."
+  "Centre tap measured 2026-11-20 (log review/2026-11-20/teste-filtros-4mix.csv): C FILTER, A FILTER, C HI, C MID and C LOW all go from 0 to 127. Entering the detent they send CC 64 and right after it note-on 90 <their CC number> 7F; leaving it, 90 <CC> 00 and then the next CC value. So the centre is exactly 64, and the centre note is the CC number on channel 0x90 (also on the EQ knobs, not only the filters). `center_tap` (64) is set on the four FILTERs and, since task 16, on the twelve EQ knobs (HI/MID/LOW): the engine ignores them after Connect until they reach the centre. B/D FILTER were not in the log (same build assumed)."
  ],
  "layers": {
   "deck_left": {
@@ -2237,21 +2237,24 @@
    "cc": [
     176,
     5
-   ]
+   ],
+   "center_tap": 64
   },
   "C MID": {
    "type": "absolute",
    "cc": [
     176,
     6
-   ]
+   ],
+   "center_tap": 64
   },
   "C LOW": {
    "type": "absolute",
    "cc": [
     176,
     7
-   ]
+   ],
+   "center_tap": 64
   },
   "C FILTER": {
    "type": "absolute",
@@ -2273,21 +2276,24 @@
    "cc": [
     176,
     10
-   ]
+   ],
+   "center_tap": 64
   },
   "A MID": {
    "type": "absolute",
    "cc": [
     176,
     11
-   ]
+   ],
+   "center_tap": 64
   },
   "A LOW": {
    "type": "absolute",
    "cc": [
     176,
     12
-   ]
+   ],
+   "center_tap": 64
   },
   "A FILTER": {
    "type": "absolute",
@@ -2309,21 +2315,24 @@
    "cc": [
     176,
     15
-   ]
+   ],
+   "center_tap": 64
   },
   "B MID": {
    "type": "absolute",
    "cc": [
     176,
     16
-   ]
+   ],
+   "center_tap": 64
   },
   "B LOW": {
    "type": "absolute",
    "cc": [
     176,
     17
-   ]
+   ],
+   "center_tap": 64
   },
   "B FILTER": {
    "type": "absolute",
@@ -2345,21 +2354,24 @@
    "cc": [
     176,
     20
-   ]
+   ],
+   "center_tap": 64
   },
   "D MID": {
    "type": "absolute",
    "cc": [
     176,
     21
-   ]
+   ],
+   "center_tap": 64
   },
   "D LOW": {
    "type": "absolute",
    "cc": [
     176,
     22
-   ]
+   ],
+   "center_tap": 64
   },
   "D FILTER": {
    "type": "absolute",

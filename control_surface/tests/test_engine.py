@@ -12,7 +12,7 @@ MODES = ROOT / "mappings" / "blender_modes.json"
 # Test mapping: the bundled bindings plus mode LEDs on CUE A-D (A-D have no LED).
 CUE_LEDS = Path(__file__).resolve().parent / "data" / "modes_cue_leds.json"
 A_LED, B_LED = (0x90, 0x27), (0x90, 0x28)  # CUE A, CUE B
-BUNDLED_ACTIONS = {"camera_move", "view_move", "view_projection", "orbit_selection_toggle"}
+BUNDLED_ACTIONS = {"select_by_knob", "camera_move", "view_move", "view_projection", "orbit_selection_toggle"}
 BUNDLED_STATES = {"object_mode", "view_axis", "view_perspective", "orbit_selection"}
 
 
@@ -495,6 +495,23 @@ def test_knob_without_center_tap_works_at_once():
     assert e.scales["s"] == 0
 
 
-def test_profile_filters_have_a_center_tap():
+def test_profile_filters_and_eq_knobs_have_a_center_tap():
     assert {c for c, s in PROFILE.controls.items() if "center_tap" in s} == {
-        "A FILTER", "B FILTER", "C FILTER", "D FILTER"}
+        f"{d} {k}" for d in "ABCD" for k in ("FILTER", "HI", "MID", "LOW")}
+
+
+def test_bundled_c_filter_sends_its_value_to_select_by_knob_after_the_centre():
+    e, fb, _ = make_bundled()
+    e.handle(0xB0, 0x08, 70)  # not armed yet
+    assert fb.actions == []
+    e.handle(0xB0, 0x08, 64)
+    e.handle(0xB0, 0x08, 65)
+    assert fb.actions == [("select_by_knob", {"knob": "C FILTER", "value": 64}),
+                          ("select_by_knob", {"knob": "C FILTER", "value": 65})]
+
+
+def test_value_event_needs_an_absolute_control_and_an_action():
+    for b in ({"control": "A", "event": "value", "action": "camera_move"},
+              {"control": "C FILTER", "event": "value", "operator": "a.b"}):
+        with pytest.raises(MappingError):
+            Mapping({"device": "dj_tech_4mix", "bindings": [b]}).validate(PROFILE, set(), {"camera_move"})
