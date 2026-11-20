@@ -107,16 +107,18 @@ Blender state → LED messages to the controller.
     3D View context override and the `call` execution context.
   - **Operators and panel:** the panel also shows the layer states
     (`blender_glue.py:248`) and the scales in cm (`blender_glue.py:251`).
-- `devices/dj_tech_4mix.json` — DJ-Tech 4-Mix profile: 169 controls
-  (125 buttons, 29 absolute CCs, 9 relative controls, 4 lights, 2 meters),
+- `devices/dj_tech_4mix.json` — DJ-Tech 4-Mix profile: 170 controls
+  (125 buttons, 30 absolute CCs, 9 relative controls, 4 lights, 2 meters),
   plus `layers`, `notes` and an `unverified` list.
   - Transcribed on 2026-11-20 from the manual's MIDI map (4 pages scanned to
     `G:\mocap-studio-downloads\manual-djtech\`, not committed). Rafael's
     spreadsheet `G:\mocap-studio-downloads\DJTech 4Mix MIDI mapping.xlsx` was
-    the first source. Edited by hand from now on.
+    the first source. Atomix Virtual DJ's 4-Mix map (2012, uploaded by
+    Rafael, not committed) added `PH VOL` (CC 1C) and the LED on
+    `NAVIGATION push` (note 1F). Edited by hand from now on.
   - The deck layers list the deck channels (notes and CCs) as `channels`.
   - Its `notes` keep the hardware findings (LED checks, decks not settable,
-    the SysEx Device Inquiry answer, CUE MIX noise).
+    the SysEx Device Inquiry answer, the Virtual DJ findings, CUE MIX noise).
 - `mappings/blender_modes.json` — the bundled (and default) mapping
   (Rafael, 2026-11-20):
   - **Modes**, through `object.mode_set`:
@@ -134,7 +136,8 @@ Blender state → LED messages to the controller.
   - **PRESS TO ENTER encoder** (`NAVIGATION`): in camera view, turned
     right/left → `camera_move` `forward` ±1 × `step` (dolly); otherwise
     `view3d.zoom` `delta=1` (in) / `delta=-1` (out). Press →
-    `view3d.view_camera`, which toggles the camera view.
+    `view3d.view_camera`, which toggles the camera view. The encoder's LED
+    is on while the camera view is on.
   - **Platters, only with decks C + B** (`when` on `deck_left`/`deck_right`;
     A+B, A+D and C+D do nothing yet, Rafael defines them later). One step of
     `step` metres per message, whatever the turning speed:
@@ -178,6 +181,8 @@ Blender state → LED messages to the controller.
     Connect and again on each layer change, so the visible deck shows right;
   - the profile's layers are `deck_left` (A/C), `deck_right` (B/D),
     `shift_left` and `shift_right`.
+- **Virtual DJ also only reads the deck switches** (its 2012 map has no
+  SysEx and no init), so learning them is the usual way.
 - **The decks cannot be forced from the computer:** the 4-Mix ignores
   `90 3A…3D` (with `7F`, with `00`, and as the pair it sends itself; tested
   2026-11-20, no LED change and no answer). The add-on only learns them.
@@ -212,10 +217,11 @@ Blender state → LED messages to the controller.
   - SHIFT, while held, makes deck buttons send note + 40H;
   - a `+SHIFT` control shares the LED of its unshifted button;
   - the top row has no SHIFT notes.
-- **LEDs exist only where the manual lists them:** the top row's PLAY and
-  CUE buttons, every deck button, and the PEAK lights. A–D, SHIFT, the deck
-  switches and PRESS TO ENTER have none. Checked on the hardware on
-  2026-11-20 for the top row and all four decks.
+- **LEDs:** the top row's PLAY and CUE buttons, every deck button and the
+  PEAK lights (manual; checked on the hardware on 2026-11-20 for the top row
+  and all four decks), plus the encoder button `NAVIGATION push` (note 1F,
+  only in the Virtual DJ map; not seen on the hardware, Rafael: consider it
+  works). A–D, SHIFT and the deck switches have none.
 - **Release:** a note-on with velocity 0 and a note-off (0x8n) both decode as
   `release` (`profile.py:83`, `profile.py:93`).
 - **Relative controls** (NAVIGATION, platters) send 40H − N (left, `ccw`) or

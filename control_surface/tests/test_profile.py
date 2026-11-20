@@ -80,8 +80,9 @@ def test_dj_tech_profile_loads_and_has_the_mode_buttons():
 
 def test_dj_tech_a_to_d_have_no_led_but_cue_and_play_do():
     p = Profile.load(DJ)
-    for c in ("A", "B", "C", "D", "SHIFT L/A", "DECK A/C to A", "NAVIGATION push"):
+    for c in ("A", "B", "C", "D", "SHIFT L/A", "DECK A/C to A"):
         assert p.led(c) is None, c
+    assert p.led("NAVIGATION push") == (0x90, 0x1F)  # from the Virtual DJ map
     assert p.led("CUE A") == (0x90, 0x27)
     assert p.led("S1 PLAY") == (0x90, 0x22)
 
@@ -103,6 +104,7 @@ def test_dj_tech_knobs_per_deck_from_the_manual():
     assert p.decode(0xB0, 0x0A, 10) == [("A HI", (VALUE, 10))]
     assert p.decode(0xB0, 0x03, 10) == [("S3 VOL", (VALUE, 10))]
     assert p.decode(0xB0, 0x19, 10) == [("CROSSFADER", (VALUE, 10))]
+    assert p.decode(0xB0, 0x1C, 10) == [("PH VOL", (VALUE, 10))]  # from the Virtual DJ map
     assert p.decode(0xB0, 0x1F, 0x41) == [("NAVIGATION", CW)]  # right = 40H + N
     assert p.decode(0xB3, 0x0F, 0x3E) == [("PLATTER L/C", CCW)]
 
