@@ -70,12 +70,18 @@ state → LED messages to the controller.
   `G:\mocap-studio-downloads\manual-djtech\`, not committed). Rafael's
   spreadsheet `G:\mocap-studio-downloads\DJTech 4Mix MIDI mapping.xlsx` was
   the first source. Edited by hand from now on.
-- `mappings/blender_modes.json` — the bundled (and default) mapping, one
-  Blender mode per top-row button through `object.mode_set`: A → `EDIT`,
-  B → `OBJECT`, C → `VERTEX_PAINT`, D → `POSE`. C and D were picked by Claude
-  from Blender's mode menu (Rafael had no preference, 2026-11-20); change them
-  here. No `indicators`: A–D have no LED, and Rafael decides later where the
-  mode is shown.
+- `mappings/blender_modes.json` — the bundled (and default) mapping
+  (Rafael, 2026-11-20):
+  - **Modes**, through `object.mode_set`:
+    - S1 PLAY → `OBJECT` and S2 PLAY → `EDIT`; the LED of the current
+      mode's PLAY button blinks 200 ms on / 200 ms off.
+    - A → `EDIT`, B → `OBJECT`, C → `VERTEX_PAINT`, D → `POSE` (no LED;
+      C and D were picked by Claude, Rafael had no preference).
+  - **Platters pan the 3D View**, one `view3d.view_pan` step per message,
+    whatever the turning speed:
+    - left platter (decks A and C): turned right → `PANUP`, left → `PANDOWN`;
+    - right platter (decks B and D): turned right → `PANRIGHT`, left →
+      `PANLEFT`.
 - `tests/` — pytest:
   - `test_profile.py`, `test_leds.py`, `test_engine.py` and `test_layers.py`
     are pure, with fakes.

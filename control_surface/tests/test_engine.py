@@ -124,3 +124,50 @@ def test_each_mode_button_sets_its_mode_and_only_its_led_blinks(note, led, mode)
 def test_validation_rejects(bad):
     with pytest.raises(MappingError):
         Mapping({"device": "dj_tech_4mix", **bad}).validate(PROFILE, {"object_mode"})
+
+
+def make_bundled(mode="OBJECT"):
+    fb = FakeBlender()
+    fb.mode = mode
+    sent = []
+    m = Mapping.load(MODES)
+    m.validate(PROFILE, {"object_mode"})
+    e = Engine(PROFILE, m, lambda *x: sent.append(x), fb.run, fb.read, lambda: fb.now)
+    return e, fb, sent
+
+
+def test_bundled_s1_object_s2_edit_and_their_leds_blink():
+    e, fb, sent = make_bundled()
+    e.update()
+    assert led_values(sent, (0x90, 0x22)) == [LED_ON]  # S1 PLAY: Object Mode now
+    assert led_values(sent, (0x90, 0x23)) == [LED_OFF]
+    e.handle(0x90, 0x23, 0x7F)  # S2 PLAY
+    assert fb.calls[-1] == ("object.mode_set", {"mode": "EDIT"})
+    fb.now = 20
+    e.update()
+    assert led_values(sent, (0x90, 0x23))[-1] == LED_ON
+    assert led_values(sent, (0x90, 0x22))[-1] == LED_OFF
+    e.handle(0x90, 0x22, 0x7F)  # S1 PLAY
+    assert fb.calls[-1] == ("object.mode_set", {"mode": "OBJECT"})
+
+
+@pytest.mark.parametrize(
+    "cc, value, pan",
+    [
+        (0xB1, 0x41, "PANUP"), (0xB1, 0x3F, "PANDOWN"),      # left platter, deck A
+        (0xB3, 0x45, "PANUP"), (0xB3, 0x3D, "PANDOWN"),      # left platter, deck C, fast turn
+        (0xB2, 0x41, "PANRIGHT"), (0xB2, 0x3F, "PANLEFT"),   # right platter, deck B
+        (0xB4, 0x41, "PANRIGHT"), (0xB4, 0x3F, "PANLEFT"),   # right platter, deck D
+    ],
+)
+def test_bundled_platters_pan_the_view(cc, value, pan):
+    e, fb, _ = make_bundled()
+    e.handle(cc, 0x0F, value)
+    assert fb.calls == [("view3d.view_pan", {"type": pan})]
+
+
+def test_bundled_platter_touch_and_shifted_turn_do_nothing():
+    e, fb, _ = make_bundled()
+    e.handle(0x91, 0x0F, 0x7F)  # touch
+    e.handle(0xB1, 0x4F, 0x41)  # turn with SHIFT
+    assert fb.calls == []
