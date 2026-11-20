@@ -7,10 +7,10 @@ actions, and LEDs show Blender's state, whoever changed it. Plan:
 
 **Entry points:**
 - In Blender: the **DJ-Tech** tab in the 3D View sidebar (N panel), with
-  Connect / Disconnect (`blender_glue.py:225`).
+  Connect / Disconnect (`blender_glue.py:235`).
 - `register()` / `unregister()` in `__init__.py`.
 - Pure Python: `Profile.load` (`profile.py:70`), `Mapping.load`
-  (`engine.py:55`), `Engine` (`engine.py:108`).
+  (`engine.py:60`), `Engine` (`engine.py:121`).
 
 **Inputs → Outputs:** a mapping (`mappings/*.json`) naming a device profile
 (`devices/<device>.json`) + incoming MIDI → Blender operators and actions run;
@@ -39,34 +39,38 @@ Blender state → LED messages to the controller.
     optional `channels` per value let any message on those status bytes select
     it (checked at `profile.py:60`). A `hold` layer is true while any of its
     controls is held.
-- `engine.py` — the mapping format and its `validate()` (`engine.py:59`), and
+- `engine.py` — the mapping format and its `validate()` (`engine.py:64`), and
   the `Engine`:
+  - **Scales** (`scales` in the mapping): an absolute control (fader/knob)
+    sets a size between `min` and `max` (`engine.py:213`), `default` until it
+    moves; `Engine.scales` holds the current values. A binding's optional
+    `scale` multiplies its numeric `args` (`_args`, `engine.py:222`).
   - **Bindings** have either an `operator` (with optional `call`:
-    `EXEC_DEFAULT` by default, or `INVOKE_DEFAULT`, `engine.py:38`) or an
+    `EXEC_DEFAULT` by default, or `INVOKE_DEFAULT`, `engine.py:42`) or an
     `action` named by the Blender side.
   - **Layer states** are in `Engine.layers`: a select layer is `UNKNOWN`
     until it is first set, and a hold layer is `False`.
-  - **`handle()`** (`engine.py:190`) sets select layers from the message's
-    channel (`_track_channels`, `engine.py:160`) and from presses
-    (`_track_layers`, `engine.py:170`), and resends every LED when a layer
-    changes (`engine.py:193`, `engine.py:197`). Then, for each decoded event,
+  - **`handle()`** (`engine.py:205`) sets select layers from the message's
+    channel (`_track_channels`, `engine.py:175`) and from presses
+    (`_track_layers`, `engine.py:185`), and resends every LED when a layer
+    changes (`engine.py:208`, `engine.py:216`). Then, for each decoded event,
     it runs **only the first** binding whose control, event and optional
-    `when` match (`engine.py:201`).
-  - **`_fire()`** (`engine.py:203`) runs the operator or action and reports a
-    raised error, or a `{'CANCELLED'}` result (`engine.py:213`), in
+    `when` match (`engine.py:220`).
+  - **`_fire()`** (`engine.py:231`) runs the operator or action and reports a
+    raised error, or a `{'CANCELLED'}` result (`engine.py:241`), in
     `last_error`.
-  - **`start_intro()`** (`engine.py:218`) plans the intro: every LED of the
+  - **`start_intro()`** (`engine.py:246`) plans the intro: every LED of the
     profile lights one by one, one every `INTRO_STEP_MS` (15 ms,
-    `engine.py:40`), with the level meters rising; all stay lit
+    `engine.py:44`), with the level meters rising; all stay lit
     `INTRO_HOLD_MS` (400 ms); then all go off. `_play_intro()`
-    (`engine.py:237`) sends the due frames; when it ends, every LED is resent
-    (`engine.py:247`).
-  - **`update()`** (`engine.py:250`) plays the intro while it runs, and
+    (`engine.py:265`) sends the due frames; when it ends, every LED is resent
+    (`engine.py:275`).
+  - **`update()`** (`engine.py:278`) plays the intro while it runs, and
     otherwise picks, for each physical LED, the first indicator whose `when`
     and `state`/`equals` match, then drives the LEDs.
-  - **`state()`** (`engine.py:147`) answers layer states itself and asks
+  - **`state()`** (`engine.py:162`) answers layer states itself and asks
     Blender for the rest.
-  - **`shutdown()`** (`engine.py:267`) turns the LEDs off, and clears what
+  - **`shutdown()`** (`engine.py:295`) turns the LEDs off, and clears what
     an interrupted intro lit.
 - `leds.py` — `LedDriver` (`leds.py:11`): looks are off / `("on",)` /
   `("blink", on_ms, off_ms)`.
@@ -79,12 +83,12 @@ Blender state → LED messages to the controller.
   callback on a WinMM thread) and `MidiOut` (`winmm.py:125`). Short messages
   only.
 - `blender_glue.py` — the Blender side:
-  - **`Session`** (`blender_glue.py:113`) loads mapping + profile, validates
+  - **`Session`** (`blender_glue.py:123`) loads mapping + profile, validates
     the mapping against `STATES` and `ACTIONS`, finds and opens the ports by
     `port_name_contains`, builds the `Engine`, and starts the intro unless
-    `intro=False` (`blender_glue.py:144`).
+    `intro=False` (`blender_glue.py:154`).
   - **The timer:** a `bpy.app.timers` tick every 20 ms
-    (`blender_glue.py:168`) drains the input queue and updates the LEDs.
+    (`blender_glue.py:178`) drains the input queue and updates the LEDs.
   - **`STATES`** (`blender_glue.py:60`):
     - `object_mode` (`blender_glue.py:24`);
     - `view_perspective` (`blender_glue.py:34`): `PERSP` / `ORTHO` /
@@ -92,13 +96,17 @@ Blender state → LED messages to the controller.
     - `view_axis` (`blender_glue.py:48`): which of `AXIS_VIEWS`
       (`blender_glue.py:41`) the first 3D View looks along, else `NONE`
       (also `NONE` in camera view).
-  - **`ACTIONS`** (`blender_glue.py:78`): `camera_move(x, y, forward)`
-    (`blender_glue.py:67`) moves the scene camera in metres along its own
-    right/up axes and its view direction (a dolly; the lens is not touched).
-  - **`run_operator()`** (`blender_glue.py:96`) runs an operator with a
+  - **`ACTIONS`** (`blender_glue.py:88`):
+    - `camera_move(x, y, forward)` (`blender_glue.py:67`) moves the scene
+      camera in metres along its own right/up axes and its view direction (a
+      dolly; the lens is not touched);
+    - `view_move(x, y)` (`blender_glue.py:78`) moves the first 3D View's
+      centre in metres along the view's right/up (the same directions as
+      `view_pan` PANRIGHT/PANUP).
+  - **`run_operator()`** (`blender_glue.py:106`) runs an operator with a
     3D View context override and the `call` execution context.
   - **Operators and panel:** the panel also shows the layer states
-    (`blender_glue.py:238`).
+    (`blender_glue.py:248`) and the scales in cm (`blender_glue.py:251`).
 - `devices/dj_tech_4mix.json` — DJ-Tech 4-Mix profile: 169 controls
   (125 buttons, 29 absolute CCs, 9 relative controls, 4 lights, 2 meters),
   plus `layers`, `notes` and an `unverified` list.
@@ -108,7 +116,7 @@ Blender state → LED messages to the controller.
     the first source. Edited by hand from now on.
   - The deck layers list the deck channels (notes and CCs) as `channels`.
   - Its `notes` keep the hardware findings (LED checks, decks not settable,
-    CUE MIX noise).
+    the SysEx Device Inquiry answer, CUE MIX noise).
 - `mappings/blender_modes.json` — the bundled (and default) mapping
   (Rafael, 2026-11-20):
   - **Modes**, through `object.mode_set`:
@@ -121,18 +129,18 @@ Blender state → LED messages to the controller.
     - CUE C → `RIGHT` / `LEFT` (Numpad 3 / Ctrl+Numpad 3);
     - CUE A → `FRONT` / `BACK` (Numpad 1);
     - CUE B → `TOP` / `BOTTOM` (Numpad 7).
+  - **Step scale** `step`: S1 VOL sets 0.01–0.10 m (1–10 cm), 0.01 until
+    it moves. It sizes every platter step and the encoder's dolly.
   - **PRESS TO ENTER encoder** (`NAVIGATION`): in camera view, turned
-    right/left → `camera_move` `forward` ±0.05 m (dolly); otherwise
+    right/left → `camera_move` `forward` ±1 × `step` (dolly); otherwise
     `view3d.zoom` `delta=1` (in) / `delta=-1` (out). Press →
     `view3d.view_camera`, which toggles the camera view.
   - **Platters, only with decks C + B** (`when` on `deck_left`/`deck_right`;
-    A+B, A+D and C+D do nothing yet, Rafael defines them later). One step per
-    message, whatever the turning speed:
-    - in camera view: `camera_move` 0.01 m, left platter right/left → up/down,
+    A+B, A+D and C+D do nothing yet, Rafael defines them later). One step of
+    `step` metres per message, whatever the turning speed:
+    - in camera view: `camera_move`, left platter right/left → up/down,
       right platter right/left → right/left;
-    - otherwise: `view3d.view_pan` with `INVOKE_DEFAULT` (view_pan has no
-      exec), left platter right/left → `PANUP`/`PANDOWN`, right platter
-      right/left → `PANRIGHT`/`PANLEFT`.
+    - otherwise: `view_move`, the same directions for the view.
 - `tests/` — pytest:
   - `test_profile.py`, `test_leds.py`, `test_engine.py` and `test_layers.py`
     are pure, with fakes.
@@ -148,7 +156,7 @@ Blender state → LED messages to the controller.
     - checks the real WinMM's port listing and its "not found" error.
   - **Windowed check:** the view operators, the view states and
     `camera_move` (including `forward`: along the view direction, lens
-    unchanged) need a window, so they are not in the suite. They were
+    unchanged) and `view_move` (exact metres along the view's up/right) need a window, so they are not in the suite. They were
     checked by hand in a windowed Blender 5.2.2 on 2026-11-20.
   - The smoke test connects with `intro=False`.
 
@@ -156,7 +164,7 @@ Blender state → LED messages to the controller.
 
 - **Threads:** WinMM calls `MidiIn`'s callback on its own thread. The callback
   only puts the message on a queue. `bpy` is touched only from the timer, on
-  the main thread (`blender_glue.py:147`).
+  the main thread (`blender_glue.py:157`).
 - **First match wins:** for one control event only one binding runs, so a
   binding with a `when` placed before one without acts as "if … otherwise"
   (e.g. CUE C: in Right view go Left, otherwise go Right).
@@ -176,9 +184,9 @@ Blender state → LED messages to the controller.
   The flip-back seen in the echo test was not caused by the echo.
 - **LEDs show state, not presses:** a button press only runs its binding.
   The LED changes because the state changed, so pressing Tab on the keyboard
-  moves the blinking LED too (`engine.py:213`).
+  moves the blinking LED too (`engine.py:278`).
 - **Exclusive ports:** a Windows MIDI port opens in one program at a time.
-  Disconnect (or disabling the add-on, `blender_glue.py:253`) releases it.
+  Disconnect (or disabling the add-on, `blender_glue.py:265`) releases it.
   While another program holds it, Connect reports "port in use".
 - **Invoke-only operators:** some operators (e.g. `view3d.view_pan`) have no
   exec. Called with `EXEC_DEFAULT`, Blender only logs
@@ -217,6 +225,10 @@ Blender state → LED messages to the controller.
   their centre. `90 08 7F` (C FILTER) was seen in the echo test on
   2026-11-20; the others in the JSON's `unverified` come from the
   spreadsheet. The manual doesn't list them.
+- **The 4-Mix answers SysEx:** the Universal Device Inquiry
+  (`F0 7E 7F 06 01 F7`) gets `F0 7E 7F 06 02 00 20 79 20 0C 10 21 00 00 00 01
+  F7` (manufacturer `00 20 79`, Hanpin Electron, per Wireshark's SysEx ID
+  table). The add-on itself only sends and receives short messages.
 - **CUE MIX is noisy:** at rest it keeps sending CC `1D` values jittering by
   ±1 (34–36 seen on 2026-11-20). Filter it before binding it.
 

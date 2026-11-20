@@ -75,7 +75,17 @@ def camera_move(x=0.0, y=0.0, forward=0.0):
     return {"FINISHED"}
 
 
-ACTIONS = {"camera_move": camera_move}
+def view_move(x=0.0, y=0.0):
+    """Move the first 3D View's centre by (x, y) metres along the view's right/up
+    (the same directions as view3d.view_pan PANRIGHT/PANUP, but in metres)."""
+    rv3d = _region_3d()
+    if rv3d is None:
+        raise RuntimeError("no 3D View")
+    rv3d.view_location += rv3d.view_rotation @ Vector((x, y, 0.0))
+    return {"FINISHED"}
+
+
+ACTIONS = {"camera_move": camera_move, "view_move": view_move}
 
 
 def run_action(name, args):
@@ -238,6 +248,8 @@ class CONTROLSURFACE_PT_panel(bpy.types.Panel):
             layers = _session.engine.layers
             if layers:
                 col.label(text="  ".join(f"{k}: {v}" for k, v in layers.items()))
+            for name, value in _session.engine.scales.items():
+                col.label(text=f"{name}: {value * 100:.1f} cm")
             if _session.engine.last_error:
                 col.label(text=_session.engine.last_error, icon="ERROR")
 
