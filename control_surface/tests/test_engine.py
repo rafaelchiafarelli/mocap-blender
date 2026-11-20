@@ -9,7 +9,9 @@ from control_surface.profile import Profile
 ROOT = Path(__file__).resolve().parents[1]
 PROFILE = Profile.load(ROOT / "devices" / "dj_tech_4mix.json")
 MODES = ROOT / "mappings" / "blender_modes.json"
-A_LED, B_LED = (0x90, 0x2A), (0x90, 0x2B)
+# Test mapping: the bundled bindings plus mode LEDs on CUE A-D (A-D have no LED).
+CUE_LEDS = Path(__file__).resolve().parent / "data" / "modes_cue_leds.json"
+A_LED, B_LED = (0x90, 0x27), (0x90, 0x28)  # CUE A, CUE B
 
 
 class FakeBlender:
@@ -33,7 +35,7 @@ class FakeBlender:
 def make():
     fb = FakeBlender()
     sent = []
-    m = Mapping.load(MODES)
+    m = Mapping.load(CUE_LEDS)
     m.validate(PROFILE, {"object_mode"})
     e = Engine(PROFILE, m, lambda *x: sent.append(x), fb.run, fb.read, lambda: fb.now)
     return e, fb, sent
@@ -45,6 +47,7 @@ def led_values(sent, addr):
 
 def test_bundled_mapping_is_valid():
     Mapping.load(MODES).validate(PROFILE, {"object_mode"})
+    Mapping.load(CUE_LEDS).validate(PROFILE, {"object_mode"})
 
 
 def test_a_goes_to_edit_and_its_led_blinks():
@@ -88,14 +91,14 @@ def test_shutdown_turns_leds_off():
     e.update()
     sent.clear()
     e.shutdown()
-    assert sorted(sent) == [(0x90, n, LED_OFF) for n in (0x2A, 0x2B, 0x2C, 0x2D)]
+    assert sorted(sent) == [(0x90, n, LED_OFF) for n in (0x26, 0x27, 0x28, 0x29)]
 
 
 @pytest.mark.parametrize(
-    "note, mode",
-    [(0x2A, "EDIT"), (0x2B, "OBJECT"), (0x2C, "VERTEX_PAINT"), (0x2D, "POSE")],
+    "note, led, mode",
+    [(0x2A, 0x27, "EDIT"), (0x2B, 0x28, "OBJECT"), (0x2C, 0x26, "VERTEX_PAINT"), (0x2D, 0x29, "POSE")],
 )
-def test_each_mode_button_sets_its_mode_and_only_its_led_blinks(note, mode):
+def test_each_mode_button_sets_its_mode_and_only_its_led_blinks(note, led, mode):
     e, fb, sent = make()
     fb.mode = "SCULPT"  # none of the four: every LED off
     e.update()
@@ -104,7 +107,7 @@ def test_each_mode_button_sets_its_mode_and_only_its_led_blinks(note, mode):
     assert fb.calls == [("object.mode_set", {"mode": mode})]
     fb.now = 20
     e.update()
-    assert sent == [(0x90, note, LED_ON)]
+    assert sent == [(0x90, led, LED_ON)]
 
 
 @pytest.mark.parametrize(
@@ -113,9 +116,9 @@ def test_each_mode_button_sets_its_mode_and_only_its_led_blinks(note, mode):
         {"bindings": [{"control": "NOPE", "event": "press", "operator": "a.b"}]},
         {"bindings": [{"control": "A", "event": "hold", "operator": "a.b"}]},
         {"bindings": [{"control": "A", "event": "press", "operator": "mode_set"}]},
-        {"indicators": [{"control": "NAVIGATION push", "state": "object_mode", "equals": "X", "led": "on"}]},
-        {"indicators": [{"control": "A", "state": "weather", "equals": "X", "led": "on"}]},
-        {"indicators": [{"control": "A", "state": "object_mode", "equals": "X", "led": "blink"}]},
+        {"indicators": [{"control": "A", "state": "object_mode", "equals": "X", "led": "on"}]},
+        {"indicators": [{"control": "CUE A", "state": "weather", "equals": "X", "led": "on"}]},
+        {"indicators": [{"control": "CUE A", "state": "object_mode", "equals": "X", "led": "blink"}]},
     ],
 )
 def test_validation_rejects(bad):

@@ -1,7 +1,14 @@
 {
  "device": "DJ-Tech 4-Mix",
  "port_name_contains": "4-Mix",
- "source": "G:\\mocap-studio-downloads\\DJTech 4Mix MIDI mapping.xlsx, transcribed 2026-11-20; edit this file by hand from now on. 'row' = spreadsheet row.",
+ "source": "DJ-Tech 4-Mix manual, MIDI MAP (HEXADECIMAL), 4 pages scanned to G:\\mocap-studio-downloads\\manual-djtech\\ (read 2026-11-20). Earlier source: Rafael's spreadsheet G:\\mocap-studio-downloads\\DJTech 4Mix MIDI mapping.xlsx.",
+ "notes": [
+  "Deck buttons: the DECK A/C switch picks which channel the left side uses (0x91 deck A, 0x93 deck C); DECK B/D the same for the right side (0x92 B, 0x94 D). Pressing a switch sends the old deck's note with 00 and the new deck's note with 7F (seen 2026-11-20: 90 3B 00, 90 3A 7F).",
+  "SHIFT (note 0E on the deck's channel) makes the deck buttons send note + 40H while held; the LED stays on the unshifted note.",
+  "Relative controls send 40H - N (left/CCW) or 40H + N (right/CW); N grows with turning speed.",
+  "LEVEL meters: CC value 00-20 all off, 21-41 1 LED, 42-62 2, 63-83 3, ..., 105-119 5, 126-127 all.",
+  "Hardware check 2026-11-20 (Rafael, deck A and B selected): every top-row LED and every deck A/B button LED lights on its own button; deck C/D not checked."
+ ],
  "controls": {
   "S1 PLAY": {
    "type": "button",
@@ -18,8 +25,7 @@
    "led": [
     144,
     34
-   ],
-   "row": 2
+   ]
   },
   "S2 PLAY": {
    "type": "button",
@@ -36,8 +42,7 @@
    "led": [
     144,
     35
-   ],
-   "row": 4
+   ]
   },
   "S3 PLAY": {
    "type": "button",
@@ -54,8 +59,7 @@
    "led": [
     144,
     36
-   ],
-   "row": 6
+   ]
   },
   "S4 PLAY": {
    "type": "button",
@@ -72,8 +76,7 @@
    "led": [
     144,
     37
-   ],
-   "row": 8
+   ]
   },
   "CUE C": {
    "type": "button",
@@ -90,8 +93,7 @@
    "led": [
     144,
     38
-   ],
-   "row": 10
+   ]
   },
   "CUE A": {
    "type": "button",
@@ -108,8 +110,7 @@
    "led": [
     144,
     39
-   ],
-   "row": 12
+   ]
   },
   "CUE B": {
    "type": "button",
@@ -126,8 +127,7 @@
    "led": [
     144,
     40
-   ],
-   "row": 14
+   ]
   },
   "CUE D": {
    "type": "button",
@@ -144,8 +144,7 @@
    "led": [
     144,
     41
-   ],
-   "row": 16
+   ]
   },
   "A": {
    "type": "button",
@@ -159,11 +158,7 @@
     42,
     0
    ],
-   "led": [
-    144,
-    42
-   ],
-   "row": 18
+   "led": null
   },
   "B": {
    "type": "button",
@@ -177,11 +172,7 @@
     43,
     0
    ],
-   "led": [
-    144,
-    43
-   ],
-   "row": 20
+   "led": null
   },
   "C": {
    "type": "button",
@@ -195,11 +186,7 @@
     44,
     0
    ],
-   "led": [
-    144,
-    44
-   ],
-   "row": 22
+   "led": null
   },
   "D": {
    "type": "button",
@@ -213,11 +200,77 @@
     45,
     0
    ],
-   "led": [
+   "led": null
+  },
+  "NAVIGATION push": {
+   "type": "button",
+   "press": [
     144,
-    45
+    31,
+    127
    ],
-   "row": 24
+   "release": [
+    144,
+    31,
+    0
+   ],
+   "led": null
+  },
+  "DECK A/C to A": {
+   "type": "button",
+   "press": [
+    144,
+    58,
+    127
+   ],
+   "release": [
+    144,
+    58,
+    0
+   ],
+   "led": null
+  },
+  "DECK A/C to C": {
+   "type": "button",
+   "press": [
+    144,
+    59,
+    127
+   ],
+   "release": [
+    144,
+    59,
+    0
+   ],
+   "led": null
+  },
+  "DECK B/D to B": {
+   "type": "button",
+   "press": [
+    144,
+    60,
+    127
+   ],
+   "release": [
+    144,
+    60,
+    0
+   ],
+   "led": null
+  },
+  "DECK B/D to D": {
+   "type": "button",
+   "press": [
+    144,
+    61,
+    127
+   ],
+   "release": [
+    144,
+    61,
+    0
+   ],
+   "led": null
   },
   "VINYL MODE L/A": {
    "type": "button",
@@ -234,26 +287,7 @@
    "led": [
     145,
     1
-   ],
-   "row": 30
-  },
-  "VINYL MODE L/C": {
-   "type": "button",
-   "press": [
-    147,
-    1,
-    127
-   ],
-   "release": [
-    147,
-    1,
-    0
-   ],
-   "led": [
-    147,
-    1
-   ],
-   "row": 32
+   ]
   },
   "VINYL MODE L/A+SHIFT": {
    "type": "button",
@@ -269,27 +303,8 @@
    ],
    "led": [
     145,
-    65
-   ],
-   "row": 34
-  },
-  "VINYL MODE L/C+SHIFT": {
-   "type": "button",
-   "press": [
-    147,
-    65,
-    127
-   ],
-   "release": [
-    147,
-    65,
-    0
-   ],
-   "led": [
-    147,
-    65
-   ],
-   "row": 36
+    1
+   ]
   },
   "IN L/A": {
    "type": "button",
@@ -306,26 +321,7 @@
    "led": [
     145,
     2
-   ],
-   "row": 38
-  },
-  "IN L/C": {
-   "type": "button",
-   "press": [
-    147,
-    2,
-    127
-   ],
-   "release": [
-    147,
-    2,
-    0
-   ],
-   "led": [
-    147,
-    2
-   ],
-   "row": 40
+   ]
   },
   "IN L/A+SHIFT": {
    "type": "button",
@@ -341,27 +337,8 @@
    ],
    "led": [
     145,
-    66
-   ],
-   "row": 42
-  },
-  "IN L/C+SHIFT": {
-   "type": "button",
-   "press": [
-    147,
-    66,
-    127
-   ],
-   "release": [
-    147,
-    66,
-    0
-   ],
-   "led": [
-    147,
-    66
-   ],
-   "row": 44
+    2
+   ]
   },
   "OUT L/A": {
    "type": "button",
@@ -378,26 +355,7 @@
    "led": [
     145,
     3
-   ],
-   "row": 46
-  },
-  "OUT L/C": {
-   "type": "button",
-   "press": [
-    147,
-    3,
-    127
-   ],
-   "release": [
-    147,
-    3,
-    0
-   ],
-   "led": [
-    147,
-    3
-   ],
-   "row": 48
+   ]
   },
   "OUT L/A+SHIFT": {
    "type": "button",
@@ -413,27 +371,8 @@
    ],
    "led": [
     145,
-    67
-   ],
-   "row": 50
-  },
-  "OUT L/C+SHIFT": {
-   "type": "button",
-   "press": [
-    147,
-    67,
-    127
-   ],
-   "release": [
-    147,
-    67,
-    0
-   ],
-   "led": [
-    147,
-    67
-   ],
-   "row": 52
+    3
+   ]
   },
   "RE L/A": {
    "type": "button",
@@ -450,26 +389,7 @@
    "led": [
     145,
     4
-   ],
-   "row": 54
-  },
-  "RE L/C": {
-   "type": "button",
-   "press": [
-    147,
-    4,
-    127
-   ],
-   "release": [
-    147,
-    4,
-    0
-   ],
-   "led": [
-    147,
-    4
-   ],
-   "row": 56
+   ]
   },
   "RE L/A+SHIFT": {
    "type": "button",
@@ -485,27 +405,8 @@
    ],
    "led": [
     145,
-    68
-   ],
-   "row": 58
-  },
-  "RE L/C+SHIFT": {
-   "type": "button",
-   "press": [
-    147,
-    68,
-    127
-   ],
-   "release": [
-    147,
-    68,
-    0
-   ],
-   "led": [
-    147,
-    68
-   ],
-   "row": 60
+    4
+   ]
   },
   "SYNC L/A": {
    "type": "button",
@@ -522,26 +423,7 @@
    "led": [
     145,
     5
-   ],
-   "row": 62
-  },
-  "SYNC L/C": {
-   "type": "button",
-   "press": [
-    147,
-    5,
-    127
-   ],
-   "release": [
-    147,
-    5,
-    0
-   ],
-   "led": [
-    147,
-    5
-   ],
-   "row": 64
+   ]
   },
   "SYNC L/A+SHIFT": {
    "type": "button",
@@ -557,27 +439,8 @@
    ],
    "led": [
     145,
-    69
-   ],
-   "row": 66
-  },
-  "SYNC L/C+SHIFT": {
-   "type": "button",
-   "press": [
-    147,
-    69,
-    127
-   ],
-   "release": [
-    147,
-    69,
-    0
-   ],
-   "led": [
-    147,
-    69
-   ],
-   "row": 68
+    5
+   ]
   },
   "1 L/A": {
    "type": "button",
@@ -594,26 +457,7 @@
    "led": [
     145,
     6
-   ],
-   "row": 70
-  },
-  "1 L/C": {
-   "type": "button",
-   "press": [
-    147,
-    6,
-    127
-   ],
-   "release": [
-    147,
-    6,
-    0
-   ],
-   "led": [
-    147,
-    6
-   ],
-   "row": 72
+   ]
   },
   "1 L/A+SHIFT": {
    "type": "button",
@@ -629,27 +473,8 @@
    ],
    "led": [
     145,
-    70
-   ],
-   "row": 74
-  },
-  "1 L/C+SHIFT": {
-   "type": "button",
-   "press": [
-    147,
-    70,
-    127
-   ],
-   "release": [
-    147,
-    70,
-    0
-   ],
-   "led": [
-    147,
-    70
-   ],
-   "row": 76
+    6
+   ]
   },
   "2 L/A": {
    "type": "button",
@@ -666,26 +491,7 @@
    "led": [
     145,
     7
-   ],
-   "row": 78
-  },
-  "2 L/C": {
-   "type": "button",
-   "press": [
-    147,
-    7,
-    127
-   ],
-   "release": [
-    147,
-    7,
-    0
-   ],
-   "led": [
-    147,
-    7
-   ],
-   "row": 80
+   ]
   },
   "2 L/A+SHIFT": {
    "type": "button",
@@ -701,27 +507,8 @@
    ],
    "led": [
     145,
-    71
-   ],
-   "row": 82
-  },
-  "2 L/C+SHIFT": {
-   "type": "button",
-   "press": [
-    147,
-    71,
-    127
-   ],
-   "release": [
-    147,
-    71,
-    0
-   ],
-   "led": [
-    147,
-    71
-   ],
-   "row": 84
+    7
+   ]
   },
   "3 L/A": {
    "type": "button",
@@ -738,26 +525,7 @@
    "led": [
     145,
     8
-   ],
-   "row": 86
-  },
-  "3 L/C": {
-   "type": "button",
-   "press": [
-    147,
-    8,
-    127
-   ],
-   "release": [
-    147,
-    8,
-    0
-   ],
-   "led": [
-    147,
-    8
-   ],
-   "row": 88
+   ]
   },
   "3 L/A+SHIFT": {
    "type": "button",
@@ -773,27 +541,8 @@
    ],
    "led": [
     145,
-    72
-   ],
-   "row": 90
-  },
-  "3 L/C+SHIFT": {
-   "type": "button",
-   "press": [
-    147,
-    72,
-    127
-   ],
-   "release": [
-    147,
-    72,
-    0
-   ],
-   "led": [
-    147,
-    72
-   ],
-   "row": 92
+    8
+   ]
   },
   "4 L/A": {
    "type": "button",
@@ -810,26 +559,7 @@
    "led": [
     145,
     9
-   ],
-   "row": 94
-  },
-  "4 L/C": {
-   "type": "button",
-   "press": [
-    147,
-    9,
-    127
-   ],
-   "release": [
-    147,
-    9,
-    0
-   ],
-   "led": [
-    147,
-    9
-   ],
-   "row": 96
+   ]
   },
   "4 L/A+SHIFT": {
    "type": "button",
@@ -845,27 +575,8 @@
    ],
    "led": [
     145,
-    73
-   ],
-   "row": 98
-  },
-  "4 L/C+SHIFT": {
-   "type": "button",
-   "press": [
-    147,
-    73,
-    127
-   ],
-   "release": [
-    147,
-    73,
-    0
-   ],
-   "led": [
-    147,
-    73
-   ],
-   "row": 100
+    9
+   ]
   },
   "CUP L/A": {
    "type": "button",
@@ -882,26 +593,7 @@
    "led": [
     145,
     10
-   ],
-   "row": 102
-  },
-  "CUP L/C": {
-   "type": "button",
-   "press": [
-    147,
-    10,
-    127
-   ],
-   "release": [
-    147,
-    10,
-    0
-   ],
-   "led": [
-    147,
-    10
-   ],
-   "row": 104
+   ]
   },
   "CUP L/A+SHIFT": {
    "type": "button",
@@ -917,27 +609,8 @@
    ],
    "led": [
     145,
-    74
-   ],
-   "row": 106
-  },
-  "CUP L/C+SHIFT": {
-   "type": "button",
-   "press": [
-    147,
-    74,
-    127
-   ],
-   "release": [
-    147,
-    74,
-    0
-   ],
-   "led": [
-    147,
-    74
-   ],
-   "row": 108
+    10
+   ]
   },
   "CUE L/A": {
    "type": "button",
@@ -954,26 +627,7 @@
    "led": [
     145,
     11
-   ],
-   "row": 110
-  },
-  "CUE L/C": {
-   "type": "button",
-   "press": [
-    147,
-    11,
-    127
-   ],
-   "release": [
-    147,
-    11,
-    0
-   ],
-   "led": [
-    147,
-    11
-   ],
-   "row": 112
+   ]
   },
   "CUE L/A+SHIFT": {
    "type": "button",
@@ -989,27 +643,8 @@
    ],
    "led": [
     145,
-    75
-   ],
-   "row": 114
-  },
-  "CUE L/C+SHIFT": {
-   "type": "button",
-   "press": [
-    147,
-    75,
-    127
-   ],
-   "release": [
-    147,
-    75,
-    0
-   ],
-   "led": [
-    147,
-    75
-   ],
-   "row": 116
+    11
+   ]
   },
   "PLAY/PAUSE L/A": {
    "type": "button",
@@ -1026,26 +661,7 @@
    "led": [
     145,
     12
-   ],
-   "row": 118
-  },
-  "PLAY/PAUSE L/C": {
-   "type": "button",
-   "press": [
-    147,
-    12,
-    127
-   ],
-   "release": [
-    147,
-    12,
-    0
-   ],
-   "led": [
-    147,
-    12
-   ],
-   "row": 120
+   ]
   },
   "PLAY/PAUSE L/A+SHIFT": {
    "type": "button",
@@ -1061,27 +677,8 @@
    ],
    "led": [
     145,
-    76
-   ],
-   "row": 122
-  },
-  "PLAY/PAUSE L/C+SHIFT": {
-   "type": "button",
-   "press": [
-    147,
-    76,
-    127
-   ],
-   "release": [
-    147,
-    76,
-    0
-   ],
-   "led": [
-    147,
-    76
-   ],
-   "row": 124
+    12
+   ]
   },
   "SHIFT L/A": {
    "type": "button",
@@ -1095,29 +692,51 @@
     14,
     0
    ],
-   "led": [
-    145,
-    14
-   ],
-   "row": 126
+   "led": null
   },
-  "SHIFT L/C": {
+  "PLATTER L/A touch": {
    "type": "button",
    "press": [
-    147,
-    14,
+    145,
+    15,
     127
    ],
    "release": [
-    147,
-    14,
+    145,
+    15,
     0
    ],
-   "led": [
-    147,
-    14
+   "led": null
+  },
+  "PLATTER L/A+SHIFT touch": {
+   "type": "button",
+   "press": [
+    145,
+    79,
+    127
    ],
-   "row": 128
+   "release": [
+    145,
+    79,
+    0
+   ],
+   "led": null
+  },
+  "PLATTER L/A": {
+   "type": "relative",
+   "cc": [
+    177,
+    15
+   ],
+   "center": 64
+  },
+  "PLATTER L/A+SHIFT": {
+   "type": "relative",
+   "cc": [
+    177,
+    79
+   ],
+   "center": 64
   },
   "VINYL MODE R/B": {
    "type": "button",
@@ -1134,26 +753,7 @@
    "led": [
     146,
     1
-   ],
-   "row": 134
-  },
-  "VINYL MODE R/D": {
-   "type": "button",
-   "press": [
-    148,
-    1,
-    127
-   ],
-   "release": [
-    148,
-    1,
-    0
-   ],
-   "led": [
-    148,
-    1
-   ],
-   "row": 136
+   ]
   },
   "VINYL MODE R/B+SHIFT": {
    "type": "button",
@@ -1169,27 +769,8 @@
    ],
    "led": [
     146,
-    65
-   ],
-   "row": 138
-  },
-  "VINYL MODE R/D+SHIFT": {
-   "type": "button",
-   "press": [
-    148,
-    65,
-    127
-   ],
-   "release": [
-    148,
-    65,
-    0
-   ],
-   "led": [
-    148,
-    65
-   ],
-   "row": 140
+    1
+   ]
   },
   "IN R/B": {
    "type": "button",
@@ -1206,26 +787,7 @@
    "led": [
     146,
     2
-   ],
-   "row": 142
-  },
-  "IN R/D": {
-   "type": "button",
-   "press": [
-    148,
-    2,
-    127
-   ],
-   "release": [
-    148,
-    2,
-    0
-   ],
-   "led": [
-    148,
-    2
-   ],
-   "row": 144
+   ]
   },
   "IN R/B+SHIFT": {
    "type": "button",
@@ -1241,27 +803,8 @@
    ],
    "led": [
     146,
-    66
-   ],
-   "row": 146
-  },
-  "IN R/D+SHIFT": {
-   "type": "button",
-   "press": [
-    148,
-    66,
-    127
-   ],
-   "release": [
-    148,
-    66,
-    0
-   ],
-   "led": [
-    148,
-    66
-   ],
-   "row": 148
+    2
+   ]
   },
   "OUT R/B": {
    "type": "button",
@@ -1278,26 +821,7 @@
    "led": [
     146,
     3
-   ],
-   "row": 150
-  },
-  "OUT R/D": {
-   "type": "button",
-   "press": [
-    148,
-    3,
-    127
-   ],
-   "release": [
-    148,
-    3,
-    0
-   ],
-   "led": [
-    148,
-    3
-   ],
-   "row": 152
+   ]
   },
   "OUT R/B+SHIFT": {
    "type": "button",
@@ -1313,27 +837,8 @@
    ],
    "led": [
     146,
-    67
-   ],
-   "row": 154
-  },
-  "OUT R/D+SHIFT": {
-   "type": "button",
-   "press": [
-    148,
-    67,
-    127
-   ],
-   "release": [
-    148,
-    67,
-    0
-   ],
-   "led": [
-    148,
-    67
-   ],
-   "row": 156
+    3
+   ]
   },
   "RE R/B": {
    "type": "button",
@@ -1350,26 +855,7 @@
    "led": [
     146,
     4
-   ],
-   "row": 158
-  },
-  "RE R/D": {
-   "type": "button",
-   "press": [
-    148,
-    4,
-    127
-   ],
-   "release": [
-    148,
-    4,
-    0
-   ],
-   "led": [
-    148,
-    4
-   ],
-   "row": 160
+   ]
   },
   "RE R/B+SHIFT": {
    "type": "button",
@@ -1385,27 +871,8 @@
    ],
    "led": [
     146,
-    68
-   ],
-   "row": 162
-  },
-  "RE R/D+SHIFT": {
-   "type": "button",
-   "press": [
-    148,
-    68,
-    127
-   ],
-   "release": [
-    148,
-    68,
-    0
-   ],
-   "led": [
-    148,
-    68
-   ],
-   "row": 164
+    4
+   ]
   },
   "SYNC R/B": {
    "type": "button",
@@ -1422,26 +889,7 @@
    "led": [
     146,
     5
-   ],
-   "row": 166
-  },
-  "SYNC R/D": {
-   "type": "button",
-   "press": [
-    148,
-    5,
-    127
-   ],
-   "release": [
-    148,
-    5,
-    0
-   ],
-   "led": [
-    148,
-    5
-   ],
-   "row": 168
+   ]
   },
   "SYNC R/B+SHIFT": {
    "type": "button",
@@ -1457,27 +905,8 @@
    ],
    "led": [
     146,
-    69
-   ],
-   "row": 170
-  },
-  "SYNC R/D+SHIFT": {
-   "type": "button",
-   "press": [
-    148,
-    69,
-    127
-   ],
-   "release": [
-    148,
-    69,
-    0
-   ],
-   "led": [
-    148,
-    69
-   ],
-   "row": 172
+    5
+   ]
   },
   "1 R/B": {
    "type": "button",
@@ -1494,26 +923,7 @@
    "led": [
     146,
     6
-   ],
-   "row": 174
-  },
-  "1 R/D": {
-   "type": "button",
-   "press": [
-    148,
-    6,
-    127
-   ],
-   "release": [
-    148,
-    6,
-    0
-   ],
-   "led": [
-    148,
-    6
-   ],
-   "row": 176
+   ]
   },
   "1 R/B+SHIFT": {
    "type": "button",
@@ -1529,27 +939,8 @@
    ],
    "led": [
     146,
-    70
-   ],
-   "row": 178
-  },
-  "1 R/D+SHIFT": {
-   "type": "button",
-   "press": [
-    148,
-    70,
-    127
-   ],
-   "release": [
-    148,
-    70,
-    0
-   ],
-   "led": [
-    148,
-    70
-   ],
-   "row": 180
+    6
+   ]
   },
   "2 R/B": {
    "type": "button",
@@ -1566,26 +957,7 @@
    "led": [
     146,
     7
-   ],
-   "row": 182
-  },
-  "2 R/D": {
-   "type": "button",
-   "press": [
-    148,
-    7,
-    127
-   ],
-   "release": [
-    148,
-    7,
-    0
-   ],
-   "led": [
-    148,
-    7
-   ],
-   "row": 184
+   ]
   },
   "2 R/B+SHIFT": {
    "type": "button",
@@ -1601,27 +973,8 @@
    ],
    "led": [
     146,
-    71
-   ],
-   "row": 186
-  },
-  "2 R/D+SHIFT": {
-   "type": "button",
-   "press": [
-    148,
-    71,
-    127
-   ],
-   "release": [
-    148,
-    71,
-    0
-   ],
-   "led": [
-    148,
-    71
-   ],
-   "row": 188
+    7
+   ]
   },
   "3 R/B": {
    "type": "button",
@@ -1638,26 +991,7 @@
    "led": [
     146,
     8
-   ],
-   "row": 190
-  },
-  "3 R/D": {
-   "type": "button",
-   "press": [
-    148,
-    8,
-    127
-   ],
-   "release": [
-    148,
-    8,
-    0
-   ],
-   "led": [
-    148,
-    8
-   ],
-   "row": 192
+   ]
   },
   "3 R/B+SHIFT": {
    "type": "button",
@@ -1673,27 +1007,8 @@
    ],
    "led": [
     146,
-    72
-   ],
-   "row": 194
-  },
-  "3 R/D+SHIFT": {
-   "type": "button",
-   "press": [
-    148,
-    72,
-    127
-   ],
-   "release": [
-    148,
-    72,
-    0
-   ],
-   "led": [
-    148,
-    72
-   ],
-   "row": 196
+    8
+   ]
   },
   "4 R/B": {
    "type": "button",
@@ -1710,26 +1025,7 @@
    "led": [
     146,
     9
-   ],
-   "row": 198
-  },
-  "4 R/D": {
-   "type": "button",
-   "press": [
-    148,
-    9,
-    127
-   ],
-   "release": [
-    148,
-    9,
-    0
-   ],
-   "led": [
-    148,
-    9
-   ],
-   "row": 200
+   ]
   },
   "4 R/B+SHIFT": {
    "type": "button",
@@ -1745,27 +1041,8 @@
    ],
    "led": [
     146,
-    73
-   ],
-   "row": 202
-  },
-  "4 R/D+SHIFT": {
-   "type": "button",
-   "press": [
-    148,
-    73,
-    127
-   ],
-   "release": [
-    148,
-    73,
-    0
-   ],
-   "led": [
-    148,
-    73
-   ],
-   "row": 204
+    9
+   ]
   },
   "CUP R/B": {
    "type": "button",
@@ -1782,26 +1059,7 @@
    "led": [
     146,
     10
-   ],
-   "row": 206
-  },
-  "CUP R/D": {
-   "type": "button",
-   "press": [
-    148,
-    10,
-    127
-   ],
-   "release": [
-    148,
-    10,
-    0
-   ],
-   "led": [
-    148,
-    10
-   ],
-   "row": 208
+   ]
   },
   "CUP R/B+SHIFT": {
    "type": "button",
@@ -1817,27 +1075,8 @@
    ],
    "led": [
     146,
-    74
-   ],
-   "row": 210
-  },
-  "CUP R/D+SHIFT": {
-   "type": "button",
-   "press": [
-    148,
-    74,
-    127
-   ],
-   "release": [
-    148,
-    74,
-    0
-   ],
-   "led": [
-    148,
-    74
-   ],
-   "row": 212
+    10
+   ]
   },
   "CUE R/B": {
    "type": "button",
@@ -1854,26 +1093,7 @@
    "led": [
     146,
     11
-   ],
-   "row": 214
-  },
-  "CUE R/D": {
-   "type": "button",
-   "press": [
-    148,
-    11,
-    127
-   ],
-   "release": [
-    148,
-    11,
-    0
-   ],
-   "led": [
-    148,
-    11
-   ],
-   "row": 216
+   ]
   },
   "CUE R/B+SHIFT": {
    "type": "button",
@@ -1889,27 +1109,8 @@
    ],
    "led": [
     146,
-    75
-   ],
-   "row": 218
-  },
-  "CUE R/D+SHIFT": {
-   "type": "button",
-   "press": [
-    148,
-    75,
-    127
-   ],
-   "release": [
-    148,
-    75,
-    0
-   ],
-   "led": [
-    148,
-    75
-   ],
-   "row": 220
+    11
+   ]
   },
   "PLAY/PAUSE R/B": {
    "type": "button",
@@ -1926,8 +1127,922 @@
    "led": [
     146,
     12
+   ]
+  },
+  "PLAY/PAUSE R/B+SHIFT": {
+   "type": "button",
+   "press": [
+    146,
+    76,
+    127
    ],
-   "row": 222
+   "release": [
+    146,
+    76,
+    0
+   ],
+   "led": [
+    146,
+    12
+   ]
+  },
+  "SHIFT R/B": {
+   "type": "button",
+   "press": [
+    146,
+    14,
+    127
+   ],
+   "release": [
+    146,
+    14,
+    0
+   ],
+   "led": null
+  },
+  "PLATTER R/B touch": {
+   "type": "button",
+   "press": [
+    146,
+    15,
+    127
+   ],
+   "release": [
+    146,
+    15,
+    0
+   ],
+   "led": null
+  },
+  "PLATTER R/B+SHIFT touch": {
+   "type": "button",
+   "press": [
+    146,
+    79,
+    127
+   ],
+   "release": [
+    146,
+    79,
+    0
+   ],
+   "led": null
+  },
+  "PLATTER R/B": {
+   "type": "relative",
+   "cc": [
+    178,
+    15
+   ],
+   "center": 64
+  },
+  "PLATTER R/B+SHIFT": {
+   "type": "relative",
+   "cc": [
+    178,
+    79
+   ],
+   "center": 64
+  },
+  "VINYL MODE L/C": {
+   "type": "button",
+   "press": [
+    147,
+    1,
+    127
+   ],
+   "release": [
+    147,
+    1,
+    0
+   ],
+   "led": [
+    147,
+    1
+   ]
+  },
+  "VINYL MODE L/C+SHIFT": {
+   "type": "button",
+   "press": [
+    147,
+    65,
+    127
+   ],
+   "release": [
+    147,
+    65,
+    0
+   ],
+   "led": [
+    147,
+    1
+   ]
+  },
+  "IN L/C": {
+   "type": "button",
+   "press": [
+    147,
+    2,
+    127
+   ],
+   "release": [
+    147,
+    2,
+    0
+   ],
+   "led": [
+    147,
+    2
+   ]
+  },
+  "IN L/C+SHIFT": {
+   "type": "button",
+   "press": [
+    147,
+    66,
+    127
+   ],
+   "release": [
+    147,
+    66,
+    0
+   ],
+   "led": [
+    147,
+    2
+   ]
+  },
+  "OUT L/C": {
+   "type": "button",
+   "press": [
+    147,
+    3,
+    127
+   ],
+   "release": [
+    147,
+    3,
+    0
+   ],
+   "led": [
+    147,
+    3
+   ]
+  },
+  "OUT L/C+SHIFT": {
+   "type": "button",
+   "press": [
+    147,
+    67,
+    127
+   ],
+   "release": [
+    147,
+    67,
+    0
+   ],
+   "led": [
+    147,
+    3
+   ]
+  },
+  "RE L/C": {
+   "type": "button",
+   "press": [
+    147,
+    4,
+    127
+   ],
+   "release": [
+    147,
+    4,
+    0
+   ],
+   "led": [
+    147,
+    4
+   ]
+  },
+  "RE L/C+SHIFT": {
+   "type": "button",
+   "press": [
+    147,
+    68,
+    127
+   ],
+   "release": [
+    147,
+    68,
+    0
+   ],
+   "led": [
+    147,
+    4
+   ]
+  },
+  "SYNC L/C": {
+   "type": "button",
+   "press": [
+    147,
+    5,
+    127
+   ],
+   "release": [
+    147,
+    5,
+    0
+   ],
+   "led": [
+    147,
+    5
+   ]
+  },
+  "SYNC L/C+SHIFT": {
+   "type": "button",
+   "press": [
+    147,
+    69,
+    127
+   ],
+   "release": [
+    147,
+    69,
+    0
+   ],
+   "led": [
+    147,
+    5
+   ]
+  },
+  "1 L/C": {
+   "type": "button",
+   "press": [
+    147,
+    6,
+    127
+   ],
+   "release": [
+    147,
+    6,
+    0
+   ],
+   "led": [
+    147,
+    6
+   ]
+  },
+  "1 L/C+SHIFT": {
+   "type": "button",
+   "press": [
+    147,
+    70,
+    127
+   ],
+   "release": [
+    147,
+    70,
+    0
+   ],
+   "led": [
+    147,
+    6
+   ]
+  },
+  "2 L/C": {
+   "type": "button",
+   "press": [
+    147,
+    7,
+    127
+   ],
+   "release": [
+    147,
+    7,
+    0
+   ],
+   "led": [
+    147,
+    7
+   ]
+  },
+  "2 L/C+SHIFT": {
+   "type": "button",
+   "press": [
+    147,
+    71,
+    127
+   ],
+   "release": [
+    147,
+    71,
+    0
+   ],
+   "led": [
+    147,
+    7
+   ]
+  },
+  "3 L/C": {
+   "type": "button",
+   "press": [
+    147,
+    8,
+    127
+   ],
+   "release": [
+    147,
+    8,
+    0
+   ],
+   "led": [
+    147,
+    8
+   ]
+  },
+  "3 L/C+SHIFT": {
+   "type": "button",
+   "press": [
+    147,
+    72,
+    127
+   ],
+   "release": [
+    147,
+    72,
+    0
+   ],
+   "led": [
+    147,
+    8
+   ]
+  },
+  "4 L/C": {
+   "type": "button",
+   "press": [
+    147,
+    9,
+    127
+   ],
+   "release": [
+    147,
+    9,
+    0
+   ],
+   "led": [
+    147,
+    9
+   ]
+  },
+  "4 L/C+SHIFT": {
+   "type": "button",
+   "press": [
+    147,
+    73,
+    127
+   ],
+   "release": [
+    147,
+    73,
+    0
+   ],
+   "led": [
+    147,
+    9
+   ]
+  },
+  "CUP L/C": {
+   "type": "button",
+   "press": [
+    147,
+    10,
+    127
+   ],
+   "release": [
+    147,
+    10,
+    0
+   ],
+   "led": [
+    147,
+    10
+   ]
+  },
+  "CUP L/C+SHIFT": {
+   "type": "button",
+   "press": [
+    147,
+    74,
+    127
+   ],
+   "release": [
+    147,
+    74,
+    0
+   ],
+   "led": [
+    147,
+    10
+   ]
+  },
+  "CUE L/C": {
+   "type": "button",
+   "press": [
+    147,
+    11,
+    127
+   ],
+   "release": [
+    147,
+    11,
+    0
+   ],
+   "led": [
+    147,
+    11
+   ]
+  },
+  "CUE L/C+SHIFT": {
+   "type": "button",
+   "press": [
+    147,
+    75,
+    127
+   ],
+   "release": [
+    147,
+    75,
+    0
+   ],
+   "led": [
+    147,
+    11
+   ]
+  },
+  "PLAY/PAUSE L/C": {
+   "type": "button",
+   "press": [
+    147,
+    12,
+    127
+   ],
+   "release": [
+    147,
+    12,
+    0
+   ],
+   "led": [
+    147,
+    12
+   ]
+  },
+  "PLAY/PAUSE L/C+SHIFT": {
+   "type": "button",
+   "press": [
+    147,
+    76,
+    127
+   ],
+   "release": [
+    147,
+    76,
+    0
+   ],
+   "led": [
+    147,
+    12
+   ]
+  },
+  "SHIFT L/C": {
+   "type": "button",
+   "press": [
+    147,
+    14,
+    127
+   ],
+   "release": [
+    147,
+    14,
+    0
+   ],
+   "led": null
+  },
+  "PLATTER L/C touch": {
+   "type": "button",
+   "press": [
+    147,
+    15,
+    127
+   ],
+   "release": [
+    147,
+    15,
+    0
+   ],
+   "led": null
+  },
+  "PLATTER L/C+SHIFT touch": {
+   "type": "button",
+   "press": [
+    147,
+    79,
+    127
+   ],
+   "release": [
+    147,
+    79,
+    0
+   ],
+   "led": null
+  },
+  "PLATTER L/C": {
+   "type": "relative",
+   "cc": [
+    179,
+    15
+   ],
+   "center": 64
+  },
+  "PLATTER L/C+SHIFT": {
+   "type": "relative",
+   "cc": [
+    179,
+    79
+   ],
+   "center": 64
+  },
+  "VINYL MODE R/D": {
+   "type": "button",
+   "press": [
+    148,
+    1,
+    127
+   ],
+   "release": [
+    148,
+    1,
+    0
+   ],
+   "led": [
+    148,
+    1
+   ]
+  },
+  "VINYL MODE R/D+SHIFT": {
+   "type": "button",
+   "press": [
+    148,
+    65,
+    127
+   ],
+   "release": [
+    148,
+    65,
+    0
+   ],
+   "led": [
+    148,
+    1
+   ]
+  },
+  "IN R/D": {
+   "type": "button",
+   "press": [
+    148,
+    2,
+    127
+   ],
+   "release": [
+    148,
+    2,
+    0
+   ],
+   "led": [
+    148,
+    2
+   ]
+  },
+  "IN R/D+SHIFT": {
+   "type": "button",
+   "press": [
+    148,
+    66,
+    127
+   ],
+   "release": [
+    148,
+    66,
+    0
+   ],
+   "led": [
+    148,
+    2
+   ]
+  },
+  "OUT R/D": {
+   "type": "button",
+   "press": [
+    148,
+    3,
+    127
+   ],
+   "release": [
+    148,
+    3,
+    0
+   ],
+   "led": [
+    148,
+    3
+   ]
+  },
+  "OUT R/D+SHIFT": {
+   "type": "button",
+   "press": [
+    148,
+    67,
+    127
+   ],
+   "release": [
+    148,
+    67,
+    0
+   ],
+   "led": [
+    148,
+    3
+   ]
+  },
+  "RE R/D": {
+   "type": "button",
+   "press": [
+    148,
+    4,
+    127
+   ],
+   "release": [
+    148,
+    4,
+    0
+   ],
+   "led": [
+    148,
+    4
+   ]
+  },
+  "RE R/D+SHIFT": {
+   "type": "button",
+   "press": [
+    148,
+    68,
+    127
+   ],
+   "release": [
+    148,
+    68,
+    0
+   ],
+   "led": [
+    148,
+    4
+   ]
+  },
+  "SYNC R/D": {
+   "type": "button",
+   "press": [
+    148,
+    5,
+    127
+   ],
+   "release": [
+    148,
+    5,
+    0
+   ],
+   "led": [
+    148,
+    5
+   ]
+  },
+  "SYNC R/D+SHIFT": {
+   "type": "button",
+   "press": [
+    148,
+    69,
+    127
+   ],
+   "release": [
+    148,
+    69,
+    0
+   ],
+   "led": [
+    148,
+    5
+   ]
+  },
+  "1 R/D": {
+   "type": "button",
+   "press": [
+    148,
+    6,
+    127
+   ],
+   "release": [
+    148,
+    6,
+    0
+   ],
+   "led": [
+    148,
+    6
+   ]
+  },
+  "1 R/D+SHIFT": {
+   "type": "button",
+   "press": [
+    148,
+    70,
+    127
+   ],
+   "release": [
+    148,
+    70,
+    0
+   ],
+   "led": [
+    148,
+    6
+   ]
+  },
+  "2 R/D": {
+   "type": "button",
+   "press": [
+    148,
+    7,
+    127
+   ],
+   "release": [
+    148,
+    7,
+    0
+   ],
+   "led": [
+    148,
+    7
+   ]
+  },
+  "2 R/D+SHIFT": {
+   "type": "button",
+   "press": [
+    148,
+    71,
+    127
+   ],
+   "release": [
+    148,
+    71,
+    0
+   ],
+   "led": [
+    148,
+    7
+   ]
+  },
+  "3 R/D": {
+   "type": "button",
+   "press": [
+    148,
+    8,
+    127
+   ],
+   "release": [
+    148,
+    8,
+    0
+   ],
+   "led": [
+    148,
+    8
+   ]
+  },
+  "3 R/D+SHIFT": {
+   "type": "button",
+   "press": [
+    148,
+    72,
+    127
+   ],
+   "release": [
+    148,
+    72,
+    0
+   ],
+   "led": [
+    148,
+    8
+   ]
+  },
+  "4 R/D": {
+   "type": "button",
+   "press": [
+    148,
+    9,
+    127
+   ],
+   "release": [
+    148,
+    9,
+    0
+   ],
+   "led": [
+    148,
+    9
+   ]
+  },
+  "4 R/D+SHIFT": {
+   "type": "button",
+   "press": [
+    148,
+    73,
+    127
+   ],
+   "release": [
+    148,
+    73,
+    0
+   ],
+   "led": [
+    148,
+    9
+   ]
+  },
+  "CUP R/D": {
+   "type": "button",
+   "press": [
+    148,
+    10,
+    127
+   ],
+   "release": [
+    148,
+    10,
+    0
+   ],
+   "led": [
+    148,
+    10
+   ]
+  },
+  "CUP R/D+SHIFT": {
+   "type": "button",
+   "press": [
+    148,
+    74,
+    127
+   ],
+   "release": [
+    148,
+    74,
+    0
+   ],
+   "led": [
+    148,
+    10
+   ]
+  },
+  "CUE R/D": {
+   "type": "button",
+   "press": [
+    148,
+    11,
+    127
+   ],
+   "release": [
+    148,
+    11,
+    0
+   ],
+   "led": [
+    148,
+    11
+   ]
+  },
+  "CUE R/D+SHIFT": {
+   "type": "button",
+   "press": [
+    148,
+    75,
+    127
+   ],
+   "release": [
+    148,
+    75,
+    0
+   ],
+   "led": [
+    148,
+    11
+   ]
   },
   "PLAY/PAUSE R/D": {
    "type": "button",
@@ -1944,26 +2059,7 @@
    "led": [
     148,
     12
-   ],
-   "row": 224
-  },
-  "PLAY/PAUSE R/B+SHIFT": {
-   "type": "button",
-   "press": [
-    146,
-    76,
-    127
-   ],
-   "release": [
-    146,
-    76,
-    0
-   ],
-   "led": [
-    146,
-    76
-   ],
-   "row": 226
+   ]
   },
   "PLAY/PAUSE R/D+SHIFT": {
    "type": "button",
@@ -1979,27 +2075,8 @@
    ],
    "led": [
     148,
-    76
-   ],
-   "row": 228
-  },
-  "SHIFT R/B": {
-   "type": "button",
-   "press": [
-    146,
-    14,
-    127
-   ],
-   "release": [
-    146,
-    14,
-    0
-   ],
-   "led": [
-    146,
-    14
-   ],
-   "row": 230
+    12
+   ]
   },
   "SHIFT R/D": {
    "type": "button",
@@ -2013,268 +2090,7 @@
     14,
     0
    ],
-   "led": [
-    148,
-    14
-   ],
-   "row": 232
-  },
-  "S1VOL": {
-   "type": "absolute",
-   "cc": [
-    176,
-    1
-   ],
-   "row": 235
-  },
-  "MASTER": {
-   "type": "absolute",
-   "cc": [
-    176,
-    26
-   ],
-   "row": 278
-  },
-  "BOOTH": {
-   "type": "absolute",
-   "cc": [
-    176,
-    27
-   ],
-   "row": 279
-  },
-  "NAVIGATION": {
-   "type": "relative",
-   "cc": [
-    176,
-    31
-   ],
-   "ccw": 65,
-   "row": 280,
-   "cw": 63
-  },
-  "NAVIGATION push": {
-   "type": "button",
-   "press": [
-    144,
-    31,
-    127
-   ],
-   "release": [
-    144,
-    31,
-    0
-   ],
-   "led": null,
-   "row": 282
-  },
-  "CUE MIX": {
-   "type": "absolute",
-   "cc": [
-    176,
-    29
-   ],
-   "row": 284
-  },
-  "CUE MIX center": {
-   "type": "button",
-   "press": [
-    144,
-    29,
-    127
-   ],
-   "release": [
-    144,
-    29,
-    0
-   ],
-   "led": null,
-   "row": 285
-  },
-  "PLATTER L/A+SHIFT": {
-   "type": "relative",
-   "cc": [
-    177,
-    79
-   ],
-   "cw": 65,
-   "row": 288,
-   "ccw": 63
-  },
-  "PLATTER L/A+SHIFT touch": {
-   "type": "button",
-   "press": [
-    145,
-    79,
-    127
-   ],
-   "release": [
-    145,
-    79,
-    0
-   ],
-   "led": null,
-   "row": 290
-  },
-  "PLATTER L/C+SHIFT": {
-   "type": "relative",
-   "cc": [
-    179,
-    79
-   ],
-   "cw": 65,
-   "row": 292,
-   "ccw": 63
-  },
-  "PLATTER L/C+SHIFT touch": {
-   "type": "button",
-   "press": [
-    147,
-    79,
-    127
-   ],
-   "release": [
-    147,
-    79,
-    0
-   ],
-   "led": null,
-   "row": 294
-  },
-  "PLATTER R/B+SHIFT": {
-   "type": "relative",
-   "cc": [
-    178,
-    79
-   ],
-   "cw": 65,
-   "row": 296,
-   "ccw": 63
-  },
-  "PLATTER R/B+SHIFT touch": {
-   "type": "button",
-   "press": [
-    146,
-    79,
-    127
-   ],
-   "release": [
-    146,
-    79,
-    0
-   ],
-   "led": null,
-   "row": 298
-  },
-  "PLATTER R/D+SHIFT": {
-   "type": "relative",
-   "cc": [
-    180,
-    79
-   ],
-   "cw": 65,
-   "row": 300,
-   "ccw": 63
-  },
-  "PLATTER R/D+SHIFT touch": {
-   "type": "button",
-   "press": [
-    148,
-    79,
-    127
-   ],
-   "release": [
-    148,
-    79,
-    0
-   ],
-   "led": null,
-   "row": 302
-  },
-  "PLATTER L/A": {
-   "type": "relative",
-   "cc": [
-    177,
-    15
-   ],
-   "cw": 65,
-   "row": 304,
-   "ccw": 63
-  },
-  "PLATTER L/A touch": {
-   "type": "button",
-   "press": [
-    145,
-    15,
-    127
-   ],
-   "release": [
-    145,
-    15,
-    0
-   ],
-   "led": null,
-   "row": 306
-  },
-  "PLATTER L/C": {
-   "type": "relative",
-   "cc": [
-    179,
-    15
-   ],
-   "cw": 65,
-   "row": 308,
-   "ccw": 63
-  },
-  "PLATTER L/C touch": {
-   "type": "button",
-   "press": [
-    147,
-    15,
-    127
-   ],
-   "release": [
-    147,
-    15,
-    0
-   ],
-   "led": null,
-   "row": 310
-  },
-  "PLATTER R/B": {
-   "type": "relative",
-   "cc": [
-    178,
-    15
-   ],
-   "cw": 65,
-   "row": 312,
-   "ccw": 63
-  },
-  "PLATTER R/B touch": {
-   "type": "button",
-   "press": [
-    146,
-    15,
-    127
-   ],
-   "release": [
-    146,
-    15,
-    0
-   ],
-   "led": null,
-   "row": 314
-  },
-  "PLATTER R/D": {
-   "type": "relative",
-   "cc": [
-    180,
-    15
-   ],
-   "cw": 65,
-   "row": 316,
-   "ccw": 63
+   "led": null
   },
   "PLATTER R/D touch": {
    "type": "button",
@@ -2288,380 +2104,323 @@
     15,
     0
    ],
-   "led": null,
-   "row": 318
+   "led": null
+  },
+  "PLATTER R/D+SHIFT touch": {
+   "type": "button",
+   "press": [
+    148,
+    79,
+    127
+   ],
+   "release": [
+    148,
+    79,
+    0
+   ],
+   "led": null
+  },
+  "PLATTER R/D": {
+   "type": "relative",
+   "cc": [
+    180,
+    15
+   ],
+   "center": 64
+  },
+  "PLATTER R/D+SHIFT": {
+   "type": "relative",
+   "cc": [
+    180,
+    79
+   ],
+   "center": 64
+  },
+  "NAVIGATION": {
+   "type": "relative",
+   "cc": [
+    176,
+    31
+   ],
+   "center": 64
+  },
+  "S1 VOL": {
+   "type": "absolute",
+   "cc": [
+    176,
+    1
+   ]
+  },
+  "S2 VOL": {
+   "type": "absolute",
+   "cc": [
+    176,
+    2
+   ]
+  },
+  "S3 VOL": {
+   "type": "absolute",
+   "cc": [
+    176,
+    3
+   ]
+  },
+  "S4 VOL": {
+   "type": "absolute",
+   "cc": [
+    176,
+    4
+   ]
+  },
+  "C HI": {
+   "type": "absolute",
+   "cc": [
+    176,
+    5
+   ]
+  },
+  "C MID": {
+   "type": "absolute",
+   "cc": [
+    176,
+    6
+   ]
+  },
+  "C LOW": {
+   "type": "absolute",
+   "cc": [
+    176,
+    7
+   ]
+  },
+  "C FILTER": {
+   "type": "absolute",
+   "cc": [
+    176,
+    8
+   ]
+  },
+  "C CH FADER": {
+   "type": "absolute",
+   "cc": [
+    176,
+    9
+   ]
+  },
+  "A HI": {
+   "type": "absolute",
+   "cc": [
+    176,
+    10
+   ]
+  },
+  "A MID": {
+   "type": "absolute",
+   "cc": [
+    176,
+    11
+   ]
+  },
+  "A LOW": {
+   "type": "absolute",
+   "cc": [
+    176,
+    12
+   ]
+  },
+  "A FILTER": {
+   "type": "absolute",
+   "cc": [
+    176,
+    13
+   ]
+  },
+  "A CH FADER": {
+   "type": "absolute",
+   "cc": [
+    176,
+    14
+   ]
+  },
+  "B HI": {
+   "type": "absolute",
+   "cc": [
+    176,
+    15
+   ]
+  },
+  "B MID": {
+   "type": "absolute",
+   "cc": [
+    176,
+    16
+   ]
+  },
+  "B LOW": {
+   "type": "absolute",
+   "cc": [
+    176,
+    17
+   ]
+  },
+  "B FILTER": {
+   "type": "absolute",
+   "cc": [
+    176,
+    18
+   ]
+  },
+  "B CH FADER": {
+   "type": "absolute",
+   "cc": [
+    176,
+    19
+   ]
+  },
+  "D HI": {
+   "type": "absolute",
+   "cc": [
+    176,
+    20
+   ]
+  },
+  "D MID": {
+   "type": "absolute",
+   "cc": [
+    176,
+    21
+   ]
+  },
+  "D LOW": {
+   "type": "absolute",
+   "cc": [
+    176,
+    22
+   ]
+  },
+  "D FILTER": {
+   "type": "absolute",
+   "cc": [
+    176,
+    23
+   ]
+  },
+  "D CH FADER": {
+   "type": "absolute",
+   "cc": [
+    176,
+    24
+   ]
+  },
+  "CROSSFADER": {
+   "type": "absolute",
+   "cc": [
+    176,
+    25
+   ]
+  },
+  "MASTER": {
+   "type": "absolute",
+   "cc": [
+    176,
+    26
+   ]
+  },
+  "BOOTH": {
+   "type": "absolute",
+   "cc": [
+    176,
+    27
+   ]
+  },
+  "CUE MIX": {
+   "type": "absolute",
+   "cc": [
+    176,
+    29
+   ]
+  },
+  "CF CURVE": {
+   "type": "absolute",
+   "cc": [
+    176,
+    30
+   ]
+  },
+  "C PEAK": {
+   "type": "light",
+   "led": [
+    144,
+    46
+   ]
+  },
+  "A PEAK": {
+   "type": "light",
+   "led": [
+    144,
+    47
+   ]
+  },
+  "B PEAK": {
+   "type": "light",
+   "led": [
+    144,
+    48
+   ]
+  },
+  "D PEAK": {
+   "type": "light",
+   "led": [
+    144,
+    49
+   ]
+  },
+  "LEVEL L": {
+   "type": "meter",
+   "cc": [
+    176,
+    32
+   ]
+  },
+  "LEVEL R": {
+   "type": "meter",
+   "cc": [
+    176,
+    33
+   ]
   }
  },
  "unverified": [
   {
-   "name": "DECK A/C",
-   "row": 26,
+   "name": "knob centre notes",
    "bytes": [
-    144,
-    58,
-    0
+    [
+     144,
+     5,
+     127
+    ],
+    [
+     144,
+     6,
+     127
+    ],
+    [
+     144,
+     7,
+     127
+    ],
+    [
+     144,
+     8,
+     127
+    ],
+    [
+     144,
+     29,
+     127
+    ]
    ],
-   "note": "deck switch rows are ambiguous (LED-ON/LED-OFF, notes 58/59); not decoded"
-  },
-  {
-   "name": "DECK A/C",
-   "row": 27,
-   "bytes": [
-    144,
-    59,
-    127
-   ],
-   "note": "deck switch rows are ambiguous (LED-ON/LED-OFF, notes 58/59); not decoded"
-  },
-  {
-   "name": "DECK A/C",
-   "row": 28,
-   "bytes": [
-    144,
-    59,
-    0
-   ],
-   "note": "deck switch rows are ambiguous (LED-ON/LED-OFF, notes 58/59); not decoded"
-  },
-  {
-   "name": "DECK A/C",
-   "row": 29,
-   "bytes": [
-    144,
-    58,
-    127
-   ],
-   "note": "deck switch rows are ambiguous (LED-ON/LED-OFF, notes 58/59); not decoded"
-  },
-  {
-   "name": "DECK B/D",
-   "row": 130,
-   "bytes": [
-    144,
-    58,
-    0
-   ],
-   "note": "deck switch rows are ambiguous (LED-ON/LED-OFF, notes 58/59); not decoded"
-  },
-  {
-   "name": "DECK B/D",
-   "row": 131,
-   "bytes": [
-    144,
-    59,
-    127
-   ],
-   "note": "deck switch rows are ambiguous (LED-ON/LED-OFF, notes 58/59); not decoded"
-  },
-  {
-   "name": "DECK B/D",
-   "row": 132,
-   "bytes": [
-    144,
-    59,
-    0
-   ],
-   "note": "deck switch rows are ambiguous (LED-ON/LED-OFF, notes 58/59); not decoded"
-  },
-  {
-   "name": "DECK B/D",
-   "row": 133,
-   "bytes": [
-    144,
-    58,
-    127
-   ],
-   "note": "deck switch rows are ambiguous (LED-ON/LED-OFF, notes 58/59); not decoded"
-  },
-  {
-   "name": "S2VOL",
-   "row": 236,
-   "bytes": [
-    176,
-    2,
-    0
-   ],
-   "note": "S2VOL is listed twice (CC2, CC3) and S3VOL is CC4: names vs CCs need a hardware check"
-  },
-  {
-   "name": "S2VOL",
-   "row": 237,
-   "bytes": [
-    176,
-    3,
-    0
-   ],
-   "note": "S2VOL is listed twice (CC2, CC3) and S3VOL is CC4: names vs CCs need a hardware check"
-  },
-  {
-   "name": "S3VOL",
-   "row": 238,
-   "bytes": [
-    176,
-    4,
-    0
-   ],
-   "note": "S2VOL is listed twice (CC2, CC3) and S3VOL is CC4: names vs CCs need a hardware check"
-  },
-  {
-   "name": "Deck C HIGH",
-   "row": 239,
-   "bytes": [
-    176,
-    5,
-    0
-   ],
-   "note": "all four decks' EQ/filter knobs are listed with the same CC; needs a hardware check"
-  },
-  {
-   "name": "Deck C HIGH center",
-   "row": 240,
-   "bytes": [
-    144,
-    5,
-    127
-   ],
-   "note": "same note for every deck's knob; needs a hardware check"
-  },
-  {
-   "name": "Deck C MID",
-   "row": 242,
-   "bytes": [
-    176,
-    6,
-    0
-   ],
-   "note": "all four decks' EQ/filter knobs are listed with the same CC; needs a hardware check"
-  },
-  {
-   "name": "Deck C MID center",
-   "row": 243,
-   "bytes": [
-    144,
-    6,
-    127
-   ],
-   "note": "same note for every deck's knob; needs a hardware check"
-  },
-  {
-   "name": "Deck C LOW",
-   "row": 245,
-   "bytes": [
-    176,
-    7,
-    0
-   ],
-   "note": "all four decks' EQ/filter knobs are listed with the same CC; needs a hardware check"
-  },
-  {
-   "name": "Deck C LOW center",
-   "row": 246,
-   "bytes": [
-    144,
-    7,
-    127
-   ],
-   "note": "same note for every deck's knob; needs a hardware check"
-  },
-  {
-   "name": "Deck C FILTER",
-   "row": 248,
-   "bytes": [
-    176,
-    8,
-    0
-   ],
-   "note": "all four decks' EQ/filter knobs are listed with the same CC; needs a hardware check"
-  },
-  {
-   "name": "Deck C FILTER center",
-   "row": 249,
-   "bytes": [
-    144,
-    8,
-    127
-   ],
-   "note": "same note for every deck's knob; needs a hardware check"
-  },
-  {
-   "name": "Deck A HIGH",
-   "row": 251,
-   "bytes": [
-    176,
-    5,
-    0
-   ],
-   "note": "all four decks' EQ/filter knobs are listed with the same CC; needs a hardware check"
-  },
-  {
-   "name": "Deck A HIGH center",
-   "row": 252,
-   "bytes": [
-    144,
-    5,
-    127
-   ],
-   "note": "same note for every deck's knob; needs a hardware check"
-  },
-  {
-   "name": "Deck A MID",
-   "row": 254,
-   "bytes": [
-    176,
-    6,
-    0
-   ],
-   "note": "all four decks' EQ/filter knobs are listed with the same CC; needs a hardware check"
-  },
-  {
-   "name": "Deck A MID center",
-   "row": 255,
-   "bytes": [
-    144,
-    6,
-    127
-   ],
-   "note": "same note for every deck's knob; needs a hardware check"
-  },
-  {
-   "name": "Deck A LOW",
-   "row": 257,
-   "bytes": [
-    176,
-    7,
-    0
-   ],
-   "note": "all four decks' EQ/filter knobs are listed with the same CC; needs a hardware check"
-  },
-  {
-   "name": "Deck A LOW center",
-   "row": 258,
-   "bytes": [
-    144,
-    7,
-    127
-   ],
-   "note": "same note for every deck's knob; needs a hardware check"
-  },
-  {
-   "name": "Deck B FILTER",
-   "row": 260,
-   "bytes": [
-    176,
-    8,
-    0
-   ],
-   "note": "all four decks' EQ/filter knobs are listed with the same CC; needs a hardware check"
-  },
-  {
-   "name": "Deck B FILTER center",
-   "row": 261,
-   "bytes": [
-    144,
-    8,
-    127
-   ],
-   "note": "same note for every deck's knob; needs a hardware check"
-  },
-  {
-   "name": "Deck B HIGH",
-   "row": 263,
-   "bytes": [
-    176,
-    5,
-    0
-   ],
-   "note": "all four decks' EQ/filter knobs are listed with the same CC; needs a hardware check"
-  },
-  {
-   "name": "Deck B HIGH center",
-   "row": 264,
-   "bytes": [
-    144,
-    5,
-    127
-   ],
-   "note": "same note for every deck's knob; needs a hardware check"
-  },
-  {
-   "name": "Deck B MID",
-   "row": 266,
-   "bytes": [
-    176,
-    6,
-    0
-   ],
-   "note": "all four decks' EQ/filter knobs are listed with the same CC; needs a hardware check"
-  },
-  {
-   "name": "Deck B MID center",
-   "row": 267,
-   "bytes": [
-    144,
-    6,
-    127
-   ],
-   "note": "same note for every deck's knob; needs a hardware check"
-  },
-  {
-   "name": "Deck D LOW",
-   "row": 269,
-   "bytes": [
-    176,
-    7,
-    0
-   ],
-   "note": "all four decks' EQ/filter knobs are listed with the same CC; needs a hardware check"
-  },
-  {
-   "name": "Deck D LOW center",
-   "row": 270,
-   "bytes": [
-    144,
-    7,
-    127
-   ],
-   "note": "same note for every deck's knob; needs a hardware check"
-  },
-  {
-   "name": "Deck D FILTER",
-   "row": 272,
-   "bytes": [
-    176,
-    8,
-    0
-   ],
-   "note": "all four decks' EQ/filter knobs are listed with the same CC; needs a hardware check"
-  },
-  {
-   "name": "Deck D FILTER center",
-   "row": 273,
-   "bytes": [
-    144,
-    8,
-    127
-   ],
-   "note": "same note for every deck's knob; needs a hardware check"
-  },
-  {
-   "name": "Deck D HIGH",
-   "row": 275,
-   "bytes": [
-    176,
-    5,
-    0
-   ],
-   "note": "all four decks' EQ/filter knobs are listed with the same CC; needs a hardware check"
-  },
-  {
-   "name": "Deck D HIGH center",
-   "row": 276,
-   "bytes": [
-    144,
-    5,
-    127
-   ],
-   "note": "same note for every deck's knob; needs a hardware check"
+   "note": "in the spreadsheet (knob 'MID IN/OUT'), not in the manual; not decoded"
   }
  ]
 }
