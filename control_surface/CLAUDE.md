@@ -18,11 +18,14 @@ Blender state → LED messages to the controller.
 
 ## Files
 
+- `README.md` — quick start for the next change: how to use it, what each
+  control does now, where to change what, build/install/test commands, open
+  items.
 - `__init__.py` — `register()` / `unregister()`; imports `bpy` only inside
   them, so the pure modules import and test without Blender.
 - `blender_manifest.toml` — extension manifest (id `control_surface`,
   Blender ≥ 4.2, `windows-x64`, GPL-3.0-or-later). Its `[build]` section leaves
-  `tests/` and this file out of the zip.
+  `tests/`, `tools/`, `README.md` and this file out of the zip.
 - `profile.py` — device profile.
   - **Control types:** `button`, `absolute`, `relative`, and the output-only
     `light` and `meter`, which are not decoded (`profile.py:43`).
@@ -144,6 +147,14 @@ Blender state → LED messages to the controller.
     - in camera view: `camera_move`, left platter right/left → up/down,
       right platter right/left → right/left;
     - otherwise: `view_move`, the same directions for the view.
+- `tools/` — hardware test scripts, run in the pinned Blender with the add-on
+  disconnected (usage at the top of each):
+  - `probe_echo.py` echoes every message back to the controller and logs it
+    (deck switch notes are not echoed);
+  - `probe_sysex.py` sends one SysEx message through WinMM's long-message
+    calls, logs the answer and checks the device with a Device Inquiry.
+
+  Named `probe_*`, not `*_test`, so pytest does not collect them.
 - `tests/` — pytest:
   - `test_profile.py`, `test_leds.py`, `test_engine.py` and `test_layers.py`
     are pure, with fakes.
@@ -235,8 +246,13 @@ Blender state → LED messages to the controller.
   (`F0 7E 7F 06 01 F7`) gets `F0 7E 7F 06 02 00 20 79 20 0C 10 21 00 00 00 01
   F7` (manufacturer `00 20 79`, Hanpin Electron, per Wireshark's SysEx ID
   table). The add-on itself only sends and receives short messages.
-- **CUE MIX is noisy:** at rest it keeps sending CC `1D` values jittering by
-  ±1 (34–36 seen on 2026-11-20). Filter it before binding it.
+- **CUE MIX and S4 VOL are noisy:** at rest they keep sending CC `1D` / `04`
+  values jittering by ±1 (seen on 2026-11-20). Filter them before binding
+  them.
+- **Nothing reports positions:** knob CCs sent to the 4-Mix get no answer,
+  and reconnecting the USB cable sends nothing, so knob and fader positions
+  are unknown until they move. Eight manufacturer SysEx commands were
+  ignored (listed in the profile `notes`).
 
 ## Touchpoints
 

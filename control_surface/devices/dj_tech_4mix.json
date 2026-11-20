@@ -11,7 +11,9 @@
   "The deck switches cannot be set from the computer: 90 3A/3B with 7F, with 00, and as the pair the 4-Mix sends itself changed nothing and got no answer (2026-11-20). The host can only learn the decks.",
   "SysEx Device Inquiry (F0 7E 7F 06 01 F7) answered on 2026-11-20: F0 7E 7F 06 02 00 20 79 20 0C 10 21 00 00 00 01 F7 -> manufacturer 00 20 79 (Hanpin Electron Co., Ltd., per Wireshark's SysEx ID table), family 20 0C, model 10 21, version 00 00 00 01. Addressed to device 00 it gets no answer.",
   "Atomix Virtual DJ's map (4MIX Pitch.xml, 2012, USB id 0x200C/0x1021 = the SysEx family/model) adds: PH VOL on CC 1C (headphone volume; CUE MIX is its PH_MIX) and an LED on note 1F (the encoder button). Neither is in the manual; the 1F LED was not seen on the hardware (Rafael: consider it works, 2026-11-20). Virtual DJ also only reads the deck switches; it has no SysEx or init.",
-  "CUE MIX (CC 1D) is noisy: at rest it keeps sending values jittering by +-1 (34-36 seen on 2026-11-20); filter it before binding it."
+  "CUE MIX (CC 1D) and S4 VOL (CC 04) are noisy: at rest they keep sending values jittering by +-1 (CUE MIX 34-36, S4 VOL 4D-4E seen on 2026-11-20); filter them before binding them.",
+  "Manufacturer SysEx tried on 2026-11-20, all ignored (no answer; Device Inquiry still answered after each): F0 00 20 79 20 0C 01 F7, ... 20 0C 03 01 F7, ... 20 0C 10 21 01 F7, ... 20 0C 10 21 03 01 F7, ... 20 0C 10 21 00 01 F7, ... 03 01 F7, ... 00 01 F7, ... 01 01 F7. The Device Inquiry addressed to 00 or 7E, or with FE inside, gets no answer. Possible but unconfirmed: the knob noise stopped for a few seconds after a manufacturer SysEx three times (never after a Device Inquiry); a button-press test would tell.",
+  "Knob CCs sent to the 4-Mix (B0 01/05/1A/1D with 00 and 7F) get no answer, and reconnecting the USB cable sends nothing: knob and fader positions are unknown until they move (2026-11-20)."
  ],
  "layers": {
   "deck_left": {
