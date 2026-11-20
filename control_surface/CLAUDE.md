@@ -89,8 +89,8 @@ Blender state → LED messages to the controller.
   - `resend()` (`leds.py:40`) forgets what was sent, so the next tick sends
     every LED again.
 - `knob_select.py` — `pick(n, anchor, value)`: the object index for a
-  centre-tap knob's position (one per step while they fit, otherwise jumps;
-  the ends land on the last/first). Pure.
+  centre-tap knob's position, proportional (the travel is split evenly over
+  the objects; the ends land on the last/first). Pure.
 - `winmm.py` — Windows MIDI through `winmm.dll` + `ctypes`: `list_ports()`
   (`winmm.py:78`), `find_port()` (`winmm.py:93`), `MidiIn` (`winmm.py:102`,
   callback on a WinMM thread) and `MidiOut` (`winmm.py:125`). Short messages

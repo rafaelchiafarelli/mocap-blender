@@ -3,7 +3,7 @@
 The DJ-Tech 4-Mix as an extension of Blender's interface: its controls run
 Blender commands, its LEDs show Blender's state. The add-on code is described
 file by file in [`CLAUDE.md`](CLAUDE.md); this page is the quick start for the
-next change. State on 2026-11-20: version 0.1.12, installed in the portable
+next change. State on 2026-11-20: version 0.1.13, installed in the portable
 Blender on G:.
 
 ## Use it
@@ -118,8 +118,10 @@ then on it works normally. This avoids a jump to an unknown position.
   by name);
 - each time the knob leaves its centre it anchors on the active selected
   object, or on nothing: CW then starts at the first object, CCW at the last;
-- one object per knob step while they fit; with more objects than steps to
-  the end it jumps, and the end (127 / 0) always lands on the last / first.
+- proportional: the travel from the centre to the end is split evenly over
+  the objects on that side (few objects → several steps each; many → it
+  jumps); the end (127 / 0) always lands on the last / first. A filter for
+  the jitter around the centre may be needed later.
   The rule is `knob_select.pick`.
 
 A binding with `"event": "value"` passes an absolute control's value to an
