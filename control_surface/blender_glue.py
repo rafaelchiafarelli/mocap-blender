@@ -73,6 +73,7 @@ STATES = {
     "scale_mode": lambda: grab.tool_mode("SCALE"),
     "rotate_mode": lambda: grab.tool_mode("ROTATE"),
     "sync_mode": grab.sync_mode,
+    "cage": grab.cage_on,
     "grab_axis": _grab_axis,
     "object_mode": _object_mode, "view_perspective": _view_perspective,
     "view_axis": _view_axis, "orbit_selection": _orbit_selection,
@@ -181,9 +182,12 @@ def grab_start(mode="MOVE", axis="FREE"):
 
 def tool_toggle(mode):
     """RE (SCALE) / IN (ROTATE): off -> the other tools off, this one armed,
-    and a free grab of it starts at once; on -> off (a running grab is
-    confirmed)."""
+    and a free grab of it starts at once; pressed again within 0.4 s -> the
+    cage on (SHIFT + platter picks its fixed point); later -> off (a running
+    grab is confirmed)."""
     if grab.tool_mode(mode) != "OFF":
+        if grab.double_press(mode):  # second press within 0.4 s: the cage on
+            return {"FINISHED"}
         grab.end_tools()
         return {"FINISHED"}
     grab.end_tools()
@@ -203,6 +207,7 @@ ACTIONS = {
     "tool_toggle": tool_toggle,
     "move_start": move_start,
     "sync_cycle": lambda: grab.sync_cycle(),
+    "cage_step": lambda delta: grab.cage_step(delta),
     "grab_start": grab_start,
     "grab_confirm": lambda: grab.request("confirm"),
     "grab_axis": lambda axis: grab.request("axis", axis=axis),
@@ -402,6 +407,7 @@ def register():
 
 
 def unregister():
-    disconnect()  # release the ports, or they stay locked until Blender quits
+    disconnect()
+    grab.end_tools()  # release the ports, or they stay locked until Blender quits
     for c in reversed(CLASSES):
         bpy.utils.unregister_class(c)

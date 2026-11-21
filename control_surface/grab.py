@@ -20,9 +20,12 @@ running grab.
 """
 
 import math
+import time
 
 import bpy
+import gpu
 from bpy_extras import view3d_utils
+from gpu_extras.batch import batch_for_shader
 from mathutils import Matrix, Vector
 
 AXES = {"X": Vector((1, 0, 0)), "Y": Vector((0, 1, 0)), "Z": Vector((0, 0, 1))}
@@ -34,6 +37,99 @@ SYNC_VALUES = ("off", "on", "blink")
 _running = None  # the running grab's shared state, or None
 _armed = None    # {"mode": SCALE/ROTATE, "selection": names when armed}, or None
 _sync = "off"
+_last_toggle = (None, 0.0)  # (mode, time) of the last tool_toggle that turned a tool on
+DOUBLE_S = 0.4              # a second press within this time turns the cage on
+_draw_handle = None
+
+
+# --- Cage: a fixed point on the selection's box for SCALE / ROTATE ---------
+
+def _cage_points():
+    """27 points of the selection's world-axis bounding box: centre, 6 face
+    centres, 12 edge midpoints, 8 corners (in that order)."""
+    corners = [o.matrix_world @ Vector(c) for o in bpy.context.selected_objects for c in o.bound_box]
+    if not corners:
+        return []
+    lo = Vector([min(c[i] for c in corners) for i in range(3)])
+    hi = Vector([max(c[i] for c in corners) for i in range(3)])
+    mid = (lo + hi) / 2
+    pick = {-1: lo, 0: mid, 1: hi}
+    offsets = [(x, y, z) for x in (-1, 0, 1) for y in (-1, 0, 1) for z in (-1, 0, 1)]
+    offsets.sort(key=lambda o: sum(map(abs, o)))  # centre, faces, edges, corners
+    return [Vector([pick[o[i]][i] for i in range(3)]) for o in offsets]
+
+
+def cage_on():
+    return _armed is not None and _armed.get("cage") is not None
+
+
+def cage_point():
+    pts = _cage_points()
+    return pts[_armed["cage"] % len(pts)] if pts and cage_on() else None
+
+
+def cage_step(delta):
+    """SHIFT + platter: the next/previous cage point; a running grab goes on
+    from where it is, around the new point."""
+    if not cage_on():
+        raise RuntimeError("no cage (press RE or IN twice)")
+    _armed["cage"] = (_armed["cage"] + delta) % 27
+    if _running is not None:
+        _running["rebase"] = True
+    _tag_redraw()
+    return {"FINISHED"}
+
+
+def _cage_enable():
+    global _draw_handle
+    _armed["cage"] = 0
+    if _running is not None:
+        _running["rebase"] = True
+    if _draw_handle is None:
+        _draw_handle = bpy.types.SpaceView3D.draw_handler_add(_draw_cage, (), "WINDOW", "POST_VIEW")
+    _tag_redraw()
+
+
+def _cage_disable():
+    global _draw_handle
+    if _draw_handle is not None:
+        bpy.types.SpaceView3D.draw_handler_remove(_draw_handle, "WINDOW")
+        _draw_handle = None
+        _tag_redraw()
+
+
+def _draw_cage():
+    if not cage_on():
+        return
+    pts = _cage_points()
+    if not pts:
+        return
+    shader = gpu.shader.from_builtin("UNIFORM_COLOR")
+    lo = Vector([min(p[i] for p in pts) for i in range(3)])
+    hi = Vector([max(p[i] for p in pts) for i in range(3)])
+    c = [Vector((x, y, z)) for x in (lo.x, hi.x) for y in (lo.y, hi.y) for z in (lo.z, hi.z)]
+    edges = [(0, 1), (0, 2), (0, 4), (1, 3), (1, 5), (2, 3), (2, 6), (3, 7), (4, 5), (4, 6), (5, 7), (6, 7)]
+    gpu.state.blend_set("ALPHA")
+    gpu.state.line_width_set(1.5)
+    shader.uniform_float("color", (1.0, 0.6, 0.1, 0.8))
+    batch_for_shader(shader, "LINES", {"pos": [c[i] for e in edges for i in e]}).draw(shader)
+    gpu.state.point_size_set(5)
+    shader.uniform_float("color", (1.0, 0.6, 0.1, 0.6))
+    batch_for_shader(shader, "POINTS", {"pos": pts}).draw(shader)
+    gpu.state.point_size_set(14)
+    shader.uniform_float("color", (1.0, 1.0, 0.2, 1.0))
+    batch_for_shader(shader, "POINTS", {"pos": [pts[_armed["cage"] % len(pts)]]}).draw(shader)
+    gpu.state.point_size_set(1)
+    gpu.state.line_width_set(1)
+    gpu.state.blend_set("NONE")
+
+
+def _tag_redraw():
+    wm = bpy.context.window_manager
+    for win in (wm.windows if wm else ()):
+        for area in win.screen.areas:
+            if area.type == "VIEW_3D":
+                area.tag_redraw()
 
 
 def _selection():
@@ -57,6 +153,7 @@ def tool_mode(mode):
         return "RUNNING" if _running["mode"] == mode else "ARMED"
     if _selection() != _armed["selection"]:
         _armed = None
+        _cage_disable()
         return "OFF"
     return "ARMED"
 
@@ -74,11 +171,23 @@ def end_tools(keep=None):
         _sync = "off"
     if keep not in ARMABLE:
         _armed = None
+        _cage_disable()
 
 
 def arm(mode):
-    global _armed
-    _armed = {"mode": mode, "selection": _selection()}
+    global _armed, _last_toggle
+    _armed = {"mode": mode, "selection": _selection(), "cage": None}
+    _last_toggle = (mode, time.monotonic())
+
+
+def double_press(mode):
+    """True if `mode` was turned on less than DOUBLE_S ago (its second press):
+    the cage turns on."""
+    m, t = _last_toggle
+    if m == mode and _armed is not None and _armed["mode"] == mode and time.monotonic() - t < DOUBLE_S:
+        _cage_enable()
+        return True
+    return False
 
 
 def sync_cycle():
@@ -138,7 +247,7 @@ class CONTROLSURFACE_OT_grab(bpy.types.Operator):
         self.objs = list(context.selected_objects)
         self.start = {o.name: (o.matrix_world.translation.copy(), o.scale.copy(), o.matrix_world.copy())
                       for o in self.objs}
-        self.pivot = sum((s[0] for s in self.start.values()), Vector()) / len(self.objs)
+        self.pivot = self._pivot()
         self.region, self.rv3d = context.region, context.region_data
         # The mouse start is its first real move: invoked from the controller's
         # timer, the event's position can be stale (e.g. the mouse on another
@@ -147,10 +256,29 @@ class CONTROLSURFACE_OT_grab(bpy.types.Operator):
         self.push_move = Vector()
         self.push_scale = 1.0
         self.push_angle = 0.0
-        self.shared = _running = {"axis": self.axis, "mode": self.mode, "pushes": [], "end": None}
+        self.shared = _running = {"axis": self.axis, "mode": self.mode, "pushes": [], "end": None,
+                                  "rebase": False}
         self.timer = context.window_manager.event_timer_add(TIMER_S, window=context.window)
         context.window_manager.modal_handler_add(self)
         return {"RUNNING_MODAL"}
+
+    def _pivot(self):
+        """The cage point (scale/rotate with the cage on), else the median of the origins."""
+        if self.mode in ARMABLE and cage_on():
+            p = cage_point()
+            if p is not None:
+                return p
+        return sum((s[0] for s in self.start.values()), Vector()) / len(self.objs)
+
+    def _rebase(self, context):
+        """Go on from where the objects are now, around the current pivot."""
+        context.view_layer.update()
+        self.start = {o.name: (o.matrix_world.translation.copy(), o.scale.copy(), o.matrix_world.copy())
+                      for o in self.objs}
+        self.pivot = self._pivot()
+        self.mouse0 = self.mouse
+        self.push_move, self.push_scale, self.push_angle = Vector(), 1.0, 0.0
+        self.shared["rebase"] = False
 
     def _mouse(self, event):
         return Vector((event.mouse_x - self.region.x, event.mouse_y - self.region.y))
@@ -243,6 +371,8 @@ class CONTROLSURFACE_OT_grab(bpy.types.Operator):
             return self._end(context, False)
         elif event.type in {"MIDDLEMOUSE", "WHEELUPMOUSE", "WHEELDOWNMOUSE"}:
             return {"PASS_THROUGH"}  # navigate the view while grabbing
+        if self.shared["rebase"]:
+            self._rebase(context)
         self._take_pushes()
         self._apply()
         if context.area:

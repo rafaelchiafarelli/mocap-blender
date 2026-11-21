@@ -12,8 +12,8 @@ MODES = ROOT / "mappings" / "blender_modes.json"
 # Test mapping: the bundled bindings plus mode LEDs on CUE A-D (A-D have no LED).
 CUE_LEDS = Path(__file__).resolve().parent / "data" / "modes_cue_leds.json"
 A_LED, B_LED = (0x90, 0x27), (0x90, 0x28)  # CUE A, CUE B
-BUNDLED_ACTIONS = {"tool_toggle", "move_start", "sync_cycle", "grab_start", "grab_confirm", "grab_axis", "grab_push", "select_by_knob", "camera_move", "view_move", "view_projection", "orbit_selection_toggle"}
-BUNDLED_STATES = {"rotate_mode", "sync_mode", "scale_mode", "grabbing", "grab_axis", "object_mode", "view_axis", "view_perspective", "orbit_selection"}
+BUNDLED_ACTIONS = {"cage_step", "tool_toggle", "move_start", "sync_cycle", "grab_start", "grab_confirm", "grab_axis", "grab_push", "select_by_knob", "camera_move", "view_move", "view_projection", "orbit_selection_toggle"}
+BUNDLED_STATES = {"cage", "rotate_mode", "sync_mode", "scale_mode", "grabbing", "grab_axis", "object_mode", "view_axis", "view_perspective", "orbit_selection"}
 
 
 class FakeBlender:
@@ -21,7 +21,7 @@ class FakeBlender:
         self.mode = "OBJECT"
         self.view = {"view_axis": "NONE", "view_perspective": "PERSP", "orbit_selection": False,
                      "grabbing": False, "grab_axis": "NONE", "scale_mode": "OFF",
-                     "rotate_mode": "OFF", "sync_mode": "off"}
+                     "rotate_mode": "OFF", "sync_mode": "off", "cage": False}
         self.actions = []
         self.calls = []
         self.contexts = []
@@ -293,7 +293,16 @@ def test_bundled_platter_touch_and_shifted_turn_do_nothing():
     e, fb, _ = make_bundled()
     e.handle(0x91, 0x0F, 0x7F)  # touch
     e.handle(0xB1, 0x4F, 0x41)  # turn with SHIFT
-    assert fb.calls == []
+    e.handle(0xB3, 0x4F, 0x41)  # deck C, SHIFT, no cage
+    assert fb.calls == [] and fb.actions == []
+
+
+def test_bundled_shift_platter_steps_the_cage_point():
+    e, fb, _ = make_bundled()
+    fb.view["cage"] = True
+    e.handle(0xB3, 0x4F, 0x41)
+    e.handle(0xB3, 0x4F, 0x3F)
+    assert fb.actions == [("cage_step", {"delta": 1}), ("cage_step", {"delta": -1})]
 
 
 def test_cancelled_operator_is_reported():

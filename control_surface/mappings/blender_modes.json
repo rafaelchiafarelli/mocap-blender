@@ -530,6 +530,28 @@
    "control": "NAVIGATION push",
    "event": "press",
    "operator": "view3d.view_camera"
+  },
+  {
+   "control": "PLATTER L/C+SHIFT",
+   "event": "cw",
+   "action": "cage_step",
+   "args": {
+    "delta": 1
+   },
+   "when": {
+    "cage": true
+   }
+  },
+  {
+   "control": "PLATTER L/C+SHIFT",
+   "event": "ccw",
+   "action": "cage_step",
+   "args": {
+    "delta": -1
+   },
+   "when": {
+    "cage": true
+   }
   }
  ],
  "indicators": [
