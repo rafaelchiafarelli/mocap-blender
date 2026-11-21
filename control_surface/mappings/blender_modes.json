@@ -33,6 +33,16 @@
   {
    "control": "1 L/C",
    "event": "press",
+   "action": "rotate_snap_on",
+   "when": {
+    "grab_axis": "FREE",
+    "rotate_mode": "RUNNING",
+    "grab_snap": false
+   }
+  },
+  {
+   "control": "1 L/C",
+   "event": "press",
    "action": "grab_confirm",
    "when": {
     "grab_axis": "FREE"
@@ -79,6 +89,16 @@
    "action": "move_start",
    "args": {
     "axis": "FREE"
+   }
+  },
+  {
+   "control": "2 L/C",
+   "event": "press",
+   "action": "rotate_snap_on",
+   "when": {
+    "grab_axis": "X",
+    "rotate_mode": "RUNNING",
+    "grab_snap": false
    }
   },
   {
@@ -135,6 +155,16 @@
   {
    "control": "3 L/C",
    "event": "press",
+   "action": "rotate_snap_on",
+   "when": {
+    "grab_axis": "Y",
+    "rotate_mode": "RUNNING",
+    "grab_snap": false
+   }
+  },
+  {
+   "control": "3 L/C",
+   "event": "press",
    "action": "grab_confirm",
    "when": {
     "grab_axis": "Y"
@@ -186,6 +216,16 @@
   {
    "control": "4 L/C",
    "event": "press",
+   "action": "rotate_snap_on",
+   "when": {
+    "grab_axis": "Z",
+    "rotate_mode": "RUNNING",
+    "grab_snap": false
+   }
+  },
+  {
+   "control": "4 L/C",
+   "event": "press",
    "action": "grab_confirm",
    "when": {
     "grab_axis": "Z"
@@ -232,6 +272,17 @@
    "action": "move_start",
    "args": {
     "axis": "Z"
+   }
+  },
+  {
+   "control": "PLATTER L/C",
+   "event": "cw",
+   "action": "rotate_tip",
+   "args": {
+    "pulses": 1
+   },
+   "when": {
+    "grab_snap": true
    }
   },
   {
@@ -294,6 +345,17 @@
    "scale": "step",
    "when": {
     "sync_mode": "blink"
+   }
+  },
+  {
+   "control": "PLATTER L/C",
+   "event": "ccw",
+   "action": "rotate_tip",
+   "args": {
+    "pulses": -1
+   },
+   "when": {
+    "grab_snap": true
    }
   },
   {
@@ -534,28 +596,6 @@
   {
    "control": "PLATTER L/C+SHIFT",
    "event": "cw",
-   "action": "rotate_tip",
-   "args": {
-    "pulses": 1
-   },
-   "when": {
-    "rotate_mode": "RUNNING"
-   }
-  },
-  {
-   "control": "PLATTER L/C+SHIFT",
-   "event": "ccw",
-   "action": "rotate_tip",
-   "args": {
-    "pulses": -1
-   },
-   "when": {
-    "rotate_mode": "RUNNING"
-   }
-  },
-  {
-   "control": "PLATTER L/C+SHIFT",
-   "event": "cw",
    "action": "cage_step",
    "args": {
     "delta": 1
@@ -753,7 +793,29 @@
    "control": "1 L/C",
    "state": "grab_axis",
    "equals": "FREE",
+   "when": {
+    "grab_snap": true
+   },
+   "led": "blink",
+   "on_ms": 200,
+   "off_ms": 200
+  },
+  {
+   "control": "1 L/C",
+   "state": "grab_axis",
+   "equals": "FREE",
    "led": "on"
+  },
+  {
+   "control": "2 L/C",
+   "state": "grab_axis",
+   "equals": "X",
+   "when": {
+    "grab_snap": true
+   },
+   "led": "blink",
+   "on_ms": 200,
+   "off_ms": 200
   },
   {
    "control": "2 L/C",
@@ -765,7 +827,29 @@
    "control": "3 L/C",
    "state": "grab_axis",
    "equals": "Y",
+   "when": {
+    "grab_snap": true
+   },
+   "led": "blink",
+   "on_ms": 200,
+   "off_ms": 200
+  },
+  {
+   "control": "3 L/C",
+   "state": "grab_axis",
+   "equals": "Y",
    "led": "on"
+  },
+  {
+   "control": "4 L/C",
+   "state": "grab_axis",
+   "equals": "Z",
+   "when": {
+    "grab_snap": true
+   },
+   "led": "blink",
+   "on_ms": 200,
+   "off_ms": 200
   },
   {
    "control": "4 L/C",

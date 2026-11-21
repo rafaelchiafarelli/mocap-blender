@@ -12,8 +12,8 @@ MODES = ROOT / "mappings" / "blender_modes.json"
 # Test mapping: the bundled bindings plus mode LEDs on CUE A-D (A-D have no LED).
 CUE_LEDS = Path(__file__).resolve().parent / "data" / "modes_cue_leds.json"
 A_LED, B_LED = (0x90, 0x27), (0x90, 0x28)  # CUE A, CUE B
-BUNDLED_ACTIONS = {"rotate_tip", "add_menu_toggle", "add_menu_step", "add_menu_back", "add_menu_cancel", "delete_selected", "cage_step", "tool_toggle", "move_start", "sync_cycle", "grab_start", "grab_confirm", "grab_axis", "grab_push", "select_by_knob", "camera_move", "view_move", "view_projection", "orbit_selection_toggle"}
-BUNDLED_STATES = {"add_menu", "cage", "rotate_mode", "sync_mode", "scale_mode", "grabbing", "grab_axis", "object_mode", "view_axis", "view_perspective", "orbit_selection"}
+BUNDLED_ACTIONS = {"rotate_snap_on", "rotate_tip", "add_menu_toggle", "add_menu_step", "add_menu_back", "add_menu_cancel", "delete_selected", "cage_step", "tool_toggle", "move_start", "sync_cycle", "grab_start", "grab_confirm", "grab_axis", "grab_push", "select_by_knob", "camera_move", "view_move", "view_projection", "orbit_selection_toggle"}
+BUNDLED_STATES = {"grab_snap", "add_menu", "cage", "rotate_mode", "sync_mode", "scale_mode", "grabbing", "grab_axis", "object_mode", "view_axis", "view_perspective", "orbit_selection"}
 
 
 class FakeBlender:
@@ -22,7 +22,7 @@ class FakeBlender:
         self.view = {"view_axis": "NONE", "view_perspective": "PERSP", "orbit_selection": False,
                      "grabbing": False, "grab_axis": "NONE", "scale_mode": "OFF",
                      "rotate_mode": "OFF", "sync_mode": "off", "cage": False,
-                     "add_menu": False}
+                     "add_menu": False, "grab_snap": False}
         self.actions = []
         self.calls = []
         self.contexts = []
@@ -730,12 +730,25 @@ def test_bundled_deck_a_add_menu_in_platter_out():
     assert LED_ON in out[-3:] and LED_OFF in out[-3:]
 
 
-def test_bundled_shift_platter_tips_during_a_rotation_else_steps_the_cage():
+def test_bundled_rotation_second_press_turns_on_90_mode_third_confirms():
+    e, fb, sent = make_bundled()
+    fb.view.update(rotate_mode="RUNNING", grabbing=True, grab_axis="X", cage=True)
+    press(e, (0x93, NUM_C["X"]))            # 2nd press: 90° mode
+    fb.view["grab_snap"] = True
+    e.handle(0xB3, 0x0F, 0x41)               # platter: tips
+    e.handle(0xB3, 0x4F, 0x41)               # SHIFT + platter: still the cage
+    for t in range(0, 600, 20):
+        fb.now = t
+        e.update()
+    blink = led_values(sent, (0x93, NUM_C["X"]))
+    assert LED_ON in blink[-3:] and LED_OFF in blink[-3:]
+    press(e, (0x93, NUM_C["X"]))            # 3rd press: confirm
+    assert fb.actions == [("rotate_snap_on", {}), ("rotate_tip", {"pulses": 1}),
+                          ("cage_step", {"delta": 1}), ("grab_confirm", {})]
+
+
+def test_bundled_move_second_press_still_confirms():
     e, fb, _ = make_bundled()
-    fb.view.update(rotate_mode="RUNNING", cage=True)
-    e.handle(0xB3, 0x4F, 0x41)
-    e.handle(0xB3, 0x4F, 0x3F)
-    fb.view.update(rotate_mode="ARMED")
-    e.handle(0xB3, 0x4F, 0x41)
-    assert fb.actions == [("rotate_tip", {"pulses": 1}), ("rotate_tip", {"pulses": -1}),
-                          ("cage_step", {"delta": 1})]
+    fb.view.update(grabbing=True, grab_axis="Y")
+    press(e, (0x93, NUM_C["Y"]))
+    assert fb.actions == [("grab_confirm", {})]

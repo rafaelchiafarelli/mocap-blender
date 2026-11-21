@@ -225,8 +225,21 @@ def sync_cycle():
     return {"FINISHED"}
 
 
+def rotate_snap_on():
+    """Second press of the running rotation's axis button: the platter now
+    turns in 90° steps (rotate_tip); the third press confirms."""
+    if _running is None or _running["mode"] != "ROTATE":
+        raise RuntimeError("no rotation running")
+    _running["snap"] = True
+    return {"FINISHED"}
+
+
+def snap_on():
+    return _running is not None and bool(_running.get("snap"))
+
+
 def rotate_tip(pulses):
-    """SHIFT + platter during a rotation: every quarter platter turn, the total
+    """Platter in a rotation's 90° mode: every quarter platter turn, the total
     angle jumps to the next multiple of 90° from where the rotation started
     (a "tip over"); the mouse's share is absorbed."""
     if _running is None or _running["mode"] != "ROTATE":
