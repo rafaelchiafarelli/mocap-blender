@@ -630,3 +630,21 @@ def test_inactive_engine_follows_layers_but_runs_nothing_and_resends_on_return()
     e.set_active(True)
     e.update()
     assert len(sent) >= 3  # every indicated LED again
+
+
+def test_bundled_re_blinks_while_the_cage_is_on():
+    e, fb, sent = make_bundled()
+    fb.view.update(scale_mode="RUNNING", cage=True)
+    for t in range(0, 600, 20):
+        fb.now = t
+        e.update()
+    assert LED_ON in led_values(sent, RE_C)[-3:] and LED_OFF in led_values(sent, RE_C)[-3:]
+    fb.view.update(scale_mode="ARMED")
+    for t in range(600, 1200, 20):
+        fb.now = t
+        e.update()
+    assert LED_ON in led_values(sent, RE_C)[-3:] and LED_OFF in led_values(sent, RE_C)[-3:]
+    fb.view.update(cage=False)
+    fb.now = 1200
+    e.update()
+    assert led_values(sent, RE_C)[-1] == LED_ON

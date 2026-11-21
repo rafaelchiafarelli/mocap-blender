@@ -677,6 +677,28 @@
    "control": "RE L/C",
    "state": "scale_mode",
    "equals": "RUNNING",
+   "when": {
+    "cage": true
+   },
+   "led": "blink",
+   "on_ms": 200,
+   "off_ms": 200
+  },
+  {
+   "control": "RE L/C",
+   "state": "scale_mode",
+   "equals": "ARMED",
+   "when": {
+    "cage": true
+   },
+   "led": "blink",
+   "on_ms": 200,
+   "off_ms": 200
+  },
+  {
+   "control": "RE L/C",
+   "state": "scale_mode",
+   "equals": "RUNNING",
    "led": "on"
   },
   {
@@ -684,6 +706,28 @@
    "state": "scale_mode",
    "equals": "ARMED",
    "led": "on"
+  },
+  {
+   "control": "IN L/C",
+   "state": "rotate_mode",
+   "equals": "RUNNING",
+   "when": {
+    "cage": true
+   },
+   "led": "blink",
+   "on_ms": 200,
+   "off_ms": 200
+  },
+  {
+   "control": "IN L/C",
+   "state": "rotate_mode",
+   "equals": "ARMED",
+   "when": {
+    "cage": true
+   },
+   "led": "blink",
+   "on_ms": 200,
+   "off_ms": 200
   },
   {
    "control": "IN L/C",
