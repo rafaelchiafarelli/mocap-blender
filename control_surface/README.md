@@ -3,7 +3,7 @@
 The DJ-Tech 4-Mix as an extension of Blender's interface: its controls run
 Blender commands, its LEDs show Blender's state. The add-on code is described
 file by file in [`CLAUDE.md`](CLAUDE.md); this page is the quick start for the
-next change. State on 2026-11-20: version 0.1.17, installed in the portable
+next change. State on 2026-11-20: version 0.1.18, installed in the portable
 Blender on G:.
 
 ## Use it
@@ -46,7 +46,7 @@ All of this comes from [`mappings/blender_modes.json`](mappings/blender_modes.js
 | Left platter, deck C, SYNC on | view up/down by `step`; in camera view: camera up/down | — |
 | Left platter, deck C, SYNC blinking | view right/left by `step`; in camera view: camera right/left | — |
 | RE (deck C) | scale on: the other tools off, a free scale starts at once (button 1 lit); scale off (a running scale is confirmed) | on while a scale runs; blinking while scale is on with no grab |
-| RE or IN pressed twice quickly (0.4 s) | turns the cage on: a fixed point for the scale/rotation, drawn in the viewport with the selection's box | — |
+| RE or IN, second press | turns the cage on (third press: tool off): a fixed point for the scale/rotation, drawn in the viewport with the selection's box | — |
 | SHIFT + left platter, deck C, cage on | steps through the box's 27 points (centre, faces, edges, corners) | — |
 | IN (deck C) | rotation, the same logic as RE | on while a rotation runs; blinking while armed |
 | 1 / 2 / 3 / 4 (deck C) | move (or scale while RE blinks, rotate while IN blinks): free / X / Y / Z; a move turns the other tools off; the same button again confirms; another one changes the axis | on while that grab runs |
@@ -144,7 +144,8 @@ Enter confirms, right click / Esc cancels. No snapping or typed values (use
 G/S on the keyboard for that). Object Mode, every selected object, scale
 around their median point.
 
-**Cage** (like Blender's Scale Cage): RE or IN pressed twice within 0.4 s.
+**Cage** (like Blender's Scale Cage): each tool button cycles tool on →
+tool + cage → off (no timing).
 The fixed point is one of 27 points of the selection's world-axis bounding
 box; e.g. the −X face centre + button 2 stretches only towards +X. Changing
 the point during a scale/rotation goes on from where the objects are. The

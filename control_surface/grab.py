@@ -20,7 +20,6 @@ running grab.
 """
 
 import math
-import time
 
 import bpy
 import gpu
@@ -37,8 +36,6 @@ SYNC_VALUES = ("off", "on", "blink")
 _running = None  # the running grab's shared state, or None
 _armed = None    # {"mode": SCALE/ROTATE, "selection": names when armed}, or None
 _sync = "off"
-_last_toggle = (None, 0.0)  # (mode, time) of the last tool_toggle that turned a tool on
-DOUBLE_S = 0.4              # a second press within this time turns the cage on
 _draw_handle = None
 
 
@@ -72,7 +69,7 @@ def cage_step(delta):
     """SHIFT + platter: the next/previous cage point; a running grab goes on
     from where it is, around the new point."""
     if not cage_on():
-        raise RuntimeError("no cage (press RE or IN twice)")
+        raise RuntimeError("no cage (press RE or IN a second time)")
     _armed["cage"] = (_armed["cage"] + delta) % 27
     if _running is not None:
         _running["rebase"] = True
@@ -175,19 +172,12 @@ def end_tools(keep=None):
 
 
 def arm(mode):
-    global _armed, _last_toggle
+    global _armed
     _armed = {"mode": mode, "selection": _selection(), "cage": None}
-    _last_toggle = (mode, time.monotonic())
 
 
-def double_press(mode):
-    """True if `mode` was turned on less than DOUBLE_S ago (its second press):
-    the cage turns on."""
-    m, t = _last_toggle
-    if m == mode and _armed is not None and _armed["mode"] == mode and time.monotonic() - t < DOUBLE_S:
-        _cage_enable()
-        return True
-    return False
+def cage_enable():
+    _cage_enable()
 
 
 def sync_cycle():

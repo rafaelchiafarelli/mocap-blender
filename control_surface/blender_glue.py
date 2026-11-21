@@ -182,13 +182,14 @@ def grab_start(mode="MOVE", axis="FREE"):
 
 def tool_toggle(mode):
     """RE (SCALE) / IN (ROTATE): off -> the other tools off, this one armed,
-    and a free grab of it starts at once; pressed again within 0.4 s -> the
-    cage on (SHIFT + platter picks its fixed point); later -> off (a running
-    grab is confirmed)."""
+    and a free grab of it starts at once; second press -> the cage on (SHIFT +
+    platter picks its fixed point); third press -> off (a running grab is
+    confirmed)."""
     if grab.tool_mode(mode) != "OFF":
-        if grab.double_press(mode):  # second press within 0.4 s: the cage on
-            return {"FINISHED"}
-        grab.end_tools()
+        if not grab.cage_on():  # second press: the cage on
+            grab.cage_enable()
+        else:                   # third press: off
+            grab.end_tools()
         return {"FINISHED"}
     grab.end_tools()
     result = grab_start(mode, "FREE")

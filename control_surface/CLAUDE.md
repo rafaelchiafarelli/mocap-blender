@@ -196,8 +196,8 @@ Blender state → LED messages to the controller.
       confirmed. Scale/rotate stay armed after their grab (`scale_mode` /
       `rotate_mode`: `RUNNING` LED on, `ARMED` blinking, `OFF`) until the
       selection changes;
-    - **cage** (task 21): RE/IN pressed again within 0.4 s of turning it
-      on (`grab.double_press`) sets `_armed["cage"]`; the pivot of that
+    - **cage** (task 21): RE/IN cycle tool on → + cage
+      (`grab.cage_enable` sets `_armed["cage"]`) → off; the pivot of that
       tool's grabs is then one of 27 points of the selection's world-axis
       bounding box (`_cage_points`: centre, faces, edges, corners), drawn
       by a `SpaceView3D` draw handler; SHIFT + left platter → `cage_step`
