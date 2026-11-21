@@ -613,3 +613,21 @@ def test_a_pressed_buttons_led_is_sent_again_even_if_its_state_did_not_change():
     e.handle(0x93, 0x04, 0x00)  # released
     e.update()
     assert led_values(sent, RE_C) == [LED_ON, LED_ON, LED_ON]
+
+
+def test_inactive_engine_follows_layers_but_runs_nothing_and_resends_on_return():
+    e, fb, sent = make_bundled()
+    e.update()
+    e.set_active(False)
+    e.handle(0x90, 0x3B, 0x7F)  # DECK A/C to C
+    e.handle(0x90, 0x2C, 0x7F)  # C: view_all
+    e.handle(0xB0, 0x01, 127)   # S1 VOL
+    assert fb.calls == [] and e.layers["deck_left"] == "C" and e.scales["step"] == 0.1
+    fb.now = 10_000
+    e.update()
+    sent.clear()
+    e.update()
+    assert sent == []
+    e.set_active(True)
+    e.update()
+    assert len(sent) >= 3  # every indicated LED again

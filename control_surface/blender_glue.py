@@ -5,7 +5,9 @@ bpy.app timer (every 20 ms, main thread) drains it into the engine and drives
 the LEDs, because bpy must not be called from other threads.
 """
 
+import os
 import queue
+import tempfile
 import time
 from pathlib import Path
 
@@ -264,6 +266,45 @@ def run_operator(name, args, call="EXEC_DEFAULT"):
     return op(call, **args)  # background / no 3D View
 
 
+# --- Two Blenders on one controller ------------------------------------------
+# Windows MIDI Services lets several programs open the 4-Mix at once (tested
+# 2026-11-21), so two connected Blenders would both act and both drive the
+# LEDs. The controller belongs to the Blender that was focused last: each one
+# writes its pid to a shared file when its window is in the foreground.
+OWNER_FILE = os.path.join(tempfile.gettempdir(), "control_surface_owner.txt")
+
+
+def _foreground_is_me():
+    try:
+        import ctypes
+        from ctypes import wintypes
+
+        user32 = ctypes.windll.user32
+        pid = wintypes.DWORD()
+        user32.GetWindowThreadProcessId(user32.GetForegroundWindow(), ctypes.byref(pid))
+        return pid.value == os.getpid()
+    except Exception:  # not Windows: always the owner
+        return True
+
+
+def owner_is_me():
+    """Claim the controller when focused; True if this Blender owns it."""
+    me = str(os.getpid())
+    try:
+        with open(OWNER_FILE, encoding="ascii") as f:
+            owner = f.read().strip()
+    except OSError:
+        owner = ""
+    if owner != me and (_foreground_is_me() or not owner):
+        try:
+            with open(OWNER_FILE, "w", encoding="ascii") as f:
+                f.write(me)
+            owner = me
+        except OSError:
+            pass
+    return owner == me
+
+
 class Session:
     """One open controller. midi_in/midi_out are injectable for tests."""
 
@@ -290,8 +331,15 @@ class Session:
                 raise
             self.port_names = (ins[i], outs[o])
         self.midi_in, self.midi_out = midi_in, midi_out
+        # Injected ports (tests) never share the controller with another Blender.
+        self.owner = owner_is_me if self.port_names != ("", "") else (lambda: True)
+
+        def send(*m):  # only the owning Blender drives the LEDs
+            if self.engine.active:
+                midi_out.send(*m)
+
         self.engine = Engine(
-            profile, mapping, midi_out.send, run_operator, read_state,
+            profile, mapping, send, run_operator, read_state,
             lambda: int(time.monotonic() * 1000), run_action,
         )
         if intro:
@@ -299,6 +347,7 @@ class Session:
         self.device = profile.device
 
     def tick(self):
+        self.engine.set_active(self.owner())
         for _ in range(MAX_MESSAGES_PER_TICK):
             try:
                 msg = self.queue.get_nowait()
@@ -386,6 +435,8 @@ class CONTROLSURFACE_PT_panel(bpy.types.Panel):
     def draw(self, context):
         col = self.layout.column()
         col.label(text=_status)
+        if _session is not None and not _session.engine.active:
+            col.label(text="Standby: another Blender has the controller (click here to take it)", icon="PAUSE")
         if _session is None:
             col.operator(CONTROLSURFACE_OT_connect.bl_idname, icon="PLUGIN")
         else:

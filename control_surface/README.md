@@ -3,7 +3,7 @@
 The DJ-Tech 4-Mix as an extension of Blender's interface: its controls run
 Blender commands, its LEDs show Blender's state. The add-on code is described
 file by file in [`CLAUDE.md`](CLAUDE.md); this page is the quick start for the
-next change. State on 2026-11-20: version 0.1.19, installed in the portable
+next change. State on 2026-11-20: version 0.1.20, installed in the portable
 Blender on G:.
 
 ## Use it
@@ -20,6 +20,12 @@ Blender on G:.
    - `shift_left`/`shift_right`;
    - the `step` size;
    - the last error.
+
+**Two Blenders open:** Windows lets both connect to the 4-Mix at once
+(tested 2026-11-21). The controller belongs to the Blender focused last;
+the other one shows "Standby" in the panel, follows the decks/SHIFT/S1 VOL,
+runs nothing and leaves the LEDs alone. Clicking its window hands the
+controller over, and it resends all its LEDs.
 
 ## What the controls do now
 

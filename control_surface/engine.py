@@ -155,6 +155,9 @@ class Engine:
         self._read = read_state
         self._clock = clock_ms
         self.leds = LedDriver(send)
+        # Inactive (another Blender owns the controller): layers, scales and
+        # knob gates are still followed, but no binding runs.
+        self.active = True
         # Centre-tap knobs stay ignored until they reach their centre after Connect
         # (their position is unknown until then). control -> last value seen.
         self._tap_last = {}
@@ -257,6 +260,8 @@ class Engine:
             value = None
             if isinstance(event, tuple) and event[0] == VALUE:
                 event, value = VALUE, event[1]
+            if not self.active:
+                continue
             for b in self.mapping.bindings:
                 if b["control"] == cid and b["event"] == event and self._when_ok(b):
                     self._fire(cid, event, b, value)
@@ -342,6 +347,13 @@ class Engine:
         self._intro = None
         self.leds.resend()
         return False
+
+    def set_active(self, active):
+        """Becoming active again: every LED is sent again (the other Blender
+        drove them meanwhile)."""
+        if active and not self.active:
+            self.leds.resend()
+        self.active = active
 
     def update(self):
         """Read the states and drive the LEDs; call this often (e.g. every 20 ms)."""

@@ -267,7 +267,15 @@ Blender state → LED messages to the controller.
 - **LEDs show state, not presses:** a button press only runs its binding.
   The LED changes because the state changed, so pressing Tab on the keyboard
   moves the blinking LED too (`engine.py:278`).
-- **Exclusive ports:** a Windows MIDI port opens in one program at a time.
+- **Two Blenders** (task 22): Windows MIDI Services makes the 4-Mix's ports
+  multi-client (two opens of in and out succeeded on 2026-11-21), so two
+  connected Blenders both acted and both drove the LEDs. The owner is the
+  Blender focused last: `owner_is_me` (`blender_glue.py`) writes its pid to
+  `%TEMP%/control_surface_owner.txt` when `GetForegroundWindow` belongs to
+  it; `Session.tick` calls `Engine.set_active`. Inactive: layers, scales and
+  knob gates followed, no binding runs, nothing is sent; on return every LED
+  is resent. Injected ports (tests) are always active.
+- **Exclusive ports** (older Windows MIDI stack): a Windows MIDI port opens in one program at a time.
   Disconnect (or disabling the add-on, `blender_glue.py:265`) releases it.
   While another program holds it, Connect reports "port in use".
 - **Invoke-only operators:** some operators (e.g. `view3d.view_pan`) have no
