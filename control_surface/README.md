@@ -3,7 +3,7 @@
 The DJ-Tech 4-Mix as an extension of Blender's interface: its controls run
 Blender commands, its LEDs show Blender's state. The add-on code is described
 file by file in [`CLAUDE.md`](CLAUDE.md); this page is the quick start for the
-next change. State on 2026-11-20: version 0.1.22, installed in the portable
+next change. State on 2026-11-20: version 0.1.23, installed in the portable
 Blender on G:.
 
 ## Use it
@@ -51,11 +51,11 @@ All of this comes from [`mappings/blender_modes.json`](mappings/blender_modes.js
 | SYNC (deck C) | cycles off → on → blinking → off; sets what the left platter does; on turns the other tools off | on / blinking |
 | Left platter, deck C, SYNC on | view up/down by `step`; in camera view: camera up/down | — |
 | Left platter, deck C, SYNC blinking | view right/left by `step`; in camera view: camera right/left | — |
-| RE (deck C) | scale on: the other tools off, a free scale starts at once (button 1 lit); scale off (a running scale is confirmed) | on while a scale runs; blinking while scale is on with no grab |
+| RE (deck C) | scale on: the other tools off, a free scale starts at once (button 1 lit); scale off (a running scale is confirmed) | on while scale is on (running or armed) |
 | RE or IN, second press | turns the cage on (third press: tool off): a fixed point for the scale/rotation, drawn in the viewport with the selection's box | — |
 | SHIFT + left platter, deck C, cage on | steps through the box's 27 points (centre, faces, edges, corners) | — |
-| IN (deck C) | rotation, the same logic as RE | on while a rotation runs; blinking while armed |
-| 1 / 2 / 3 / 4 (deck C) | move (or scale while RE blinks, rotate while IN blinks): free / X / Y / Z; a move turns the other tools off; the same button again confirms; another one changes the axis | on while that grab runs |
+| IN (deck C) | rotation, the same logic as RE | on while rotation is on (running or armed) |
+| 1 / 2 / 3 / 4 (deck C) | move (or scale while RE is lit, rotate while IN is lit): free / X / Y / Z; a move turns the other tools off; the same button again confirms; another one changes the axis | on while that grab runs |
 | Left platter, deck C, during a grab | move: pushes by `step` along the axis (free: view right); scale: ×(1 ± `step`); rotate: ±1–10° (`step` × 100) | — |
 | Right platter | nothing (free) | — |
 | Deck switch | plays an animation on that deck's LEDs, then the LEDs show the state again | — |
@@ -160,7 +160,7 @@ cage lasts while its tool is on.
 **One tool at a time per deck:** SYNC, move (1–4), scale (RE) and rotate
 (IN). Turning one on turns the others off and confirms a running grab.
 
-**Scale and rotate stay on** after their grab ends (RE blinking), until RE is pressed or
+**Scale and rotate stay on** (RE/IN lit) after their grab ends (RE blinking), until RE is pressed or
 the selection changes (another object, or none): then RE goes off.
 
 **Toggles** (`toggles` in the mapping): a button that steps through values

@@ -683,9 +683,7 @@
    "control": "RE L/C",
    "state": "scale_mode",
    "equals": "ARMED",
-   "led": "blink",
-   "on_ms": 200,
-   "off_ms": 200
+   "led": "on"
   },
   {
    "control": "IN L/C",
@@ -697,9 +695,7 @@
    "control": "IN L/C",
    "state": "rotate_mode",
    "equals": "ARMED",
-   "led": "blink",
-   "on_ms": 200,
-   "off_ms": 200
+   "led": "on"
   }
  ]
 }

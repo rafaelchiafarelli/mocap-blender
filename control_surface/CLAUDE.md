@@ -194,7 +194,7 @@ Blender state → LED messages to the controller.
       `tool_toggle` SCALE) and rotate (IN, `tool_toggle` ROTATE). Turning
       one on calls `grab.end_tools`: the others off, a running grab
       confirmed. Scale/rotate stay armed after their grab (`scale_mode` /
-      `rotate_mode`: `RUNNING` LED on, `ARMED` blinking, `OFF`) until the
+      `rotate_mode`: `RUNNING` and `ARMED` LED on — Rafael 2026-11-21: no blinking, it clashed with the 1–4 buttons — `OFF`) until the
       selection changes;
     - **cage** (task 21): RE/IN cycle tool on → + cage
       (`grab.cage_enable` sets `_armed["cage"]`) → off; the pivot of that

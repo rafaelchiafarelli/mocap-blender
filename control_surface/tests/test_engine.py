@@ -584,7 +584,7 @@ def test_deck_learned_from_a_channel_plays_no_animation():
     assert e.layers["deck_left"] == "C" and not e.intro_running
 
 
-def test_bundled_re_toggles_scale_and_blinks_while_armed():
+def test_bundled_re_toggles_scale_and_stays_lit_while_armed():
     e, fb, sent = make_bundled()
     press(e, RE_C)
     press(e, (0x93, 0x02))  # IN
@@ -593,8 +593,7 @@ def test_bundled_re_toggles_scale_and_blinks_while_armed():
     for t in range(0, 600, 20):
         fb.now = t
         e.update()
-    blink = led_values(sent, RE_C)
-    assert LED_ON in blink[-3:] and LED_OFF in blink[-3:]
+    assert led_values(sent, RE_C)[-1] == LED_ON and LED_OFF not in led_values(sent, RE_C)
     fb.view["scale_mode"] = "OFF"
     fb.now = 600
     e.update()
