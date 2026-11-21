@@ -229,6 +229,7 @@ ACTIONS = {
     "add_menu_toggle": add_menu_toggle,
     "add_menu_step": lambda pulses: add_menu.step(pulses),
     "add_menu_back": lambda: add_menu.back(),
+    "add_menu_cancel": lambda: (add_menu.close(), {"FINISHED"})[1],
     "delete_selected": delete_selected,
     "tool_toggle": tool_toggle,
     "move_start": move_start,

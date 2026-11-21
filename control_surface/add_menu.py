@@ -10,7 +10,8 @@ items included, for the current mode. The list is drawn in the 3D View
   highlighted submenu, or run the highlighted item (in the 3D View, like the
   menu) and close.
 - `step(pulses)` (deck A platter): one item every PULSES_PER_ITEM pulses.
-- `back()` (deck A OUT): one level up; at the top, close.
+- `close()` (deck A OUT): cancel, the menu closes without adding.
+- `back()`: one level up; at the top, close (not bound now).
 """
 
 import bpy
@@ -265,5 +266,5 @@ def _draw():
         blf.draw(font, item["text"] + ("  ›" if "items" in item else ""))
     blf.color(font, 0.7, 0.7, 0.7, 0.8)
     blf.position(font, x + pad, y_top - height + int(6 * scale), 0)
-    blf.draw(font, f"{idx + 1}/{len(items)}   IN: open/insert   OUT: back")
+    blf.draw(font, f"{idx + 1}/{len(items)}   IN: open/insert   OUT: cancel")
     gpu.state.blend_set("NONE")

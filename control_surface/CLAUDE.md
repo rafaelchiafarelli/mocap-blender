@@ -114,7 +114,7 @@ Blender state → LED messages to the controller.
   `operator`, `menu`, `operator_enum`, `operator_menu_enum`), so the items
   are Blender's (and add-ons'); `ROOT_MENUS` picks Shift+A's menu per mode.
   `toggle` (IN: open / enter / run with INVOKE_DEFAULT and close), `step`
-  (platter, ~14 pulses per item), `back` (OUT); drawn with `blf`/`gpu` in a
+  (platter, ~14 pulses per item), `close` (OUT = cancel; `back` kept, unbound); drawn with `blf`/`gpu` in a
   POST_PIXEL handler right of the toolbar. State `add_menu`.
 - `knob_select.py` — `pick(n, anchor, value)`: the object index for a
   centre-tap knob's position, proportional (the travel is split evenly over
@@ -196,9 +196,10 @@ Blender state → LED messages to the controller.
   - **Deck C applies** (task 24): SHIFT + CUP / CUE / PLAY/PAUSE →
     `object.transform_apply` with only `location` / `rotation` / `scale`
     true, `flash_ms` 2000 (the SHIFT note shares the unshifted LED).
-  - **Deck A** (task 26): IN → `add_menu_toggle`, OUT → `add_menu_back`
-    and the left platter → `add_menu_step` while the menu is open; IN's LED
-    on while it is open.
+  - **Deck A** (task 26): IN → `add_menu_toggle`, OUT → `add_menu_cancel`
+    (task 28: closes the menu; it blinks while the menu is open) and the
+    left platter → `add_menu_step` while the menu is open; IN's LED on while
+    it is open.
   - **OUT** (task 25) → `delete_selected`: `grab.end_tools()` first (a
     running grab must not hold deleted objects), then `object.delete`
     without confirmation (Edit Mode: `mesh.delete` by the select mode,
