@@ -272,6 +272,7 @@ def run_operator(name, args, call="EXEC_DEFAULT"):
 # LEDs. The controller belongs to the Blender that was focused last: each one
 # writes its pid to a shared file when its window is in the foreground.
 OWNER_FILE = os.path.join(tempfile.gettempdir(), "control_surface_owner.txt")
+DEBUG_LOG = os.path.join(tempfile.gettempdir(), "control_surface_midi.log")
 
 
 def _foreground_is_me():
@@ -334,9 +335,14 @@ class Session:
         # Injected ports (tests) never share the controller with another Blender.
         self.owner = owner_is_me if self.port_names != ("", "") else (lambda: True)
 
+        self.debug = None  # an open log file while debugging
+        self._debug_state = None
+        self._t0 = time.monotonic()
+
         def send(*m):  # only the owning Blender drives the LEDs
             if self.engine.active:
                 midi_out.send(*m)
+            self._log("OUT" if self.engine.active else "out(standby, not sent)", m)
 
         self.engine = Engine(
             profile, mapping, send, run_operator, read_state,
@@ -346,6 +352,38 @@ class Session:
             self.engine.start_intro()
         self.device = profile.device
 
+    def _log(self, kind, m, extra=""):
+        if self.debug is None:
+            return
+        names = ", ".join(f"{c} {e}" for c, e in self.engine.profile.decode(*m)) if kind == "IN" else ""
+        if kind != "IN":
+            names = ", ".join(c for c, sp in self.engine.profile.controls.items()
+                              if sp.get("led") and tuple(sp["led"]) == (m[0], m[1]) and "+SHIFT" not in c)
+        self.debug.write(f"{(time.monotonic() - self._t0) * 1000:9.0f} ms  {kind:<24} "
+                         f"{m[0]:02X} {m[1]:02X} {m[2]:02X}  {names}{extra}\n")
+        self.debug.flush()
+
+    def set_debug(self, on):
+        if on and self.debug is None:
+            self.debug = open(DEBUG_LOG, "a", encoding="utf-8")
+            self.debug.write(f"--- debug on, pid {os.getpid()}, {time.strftime('%Y-%m-%d %H:%M:%S')}\n")
+            self._debug_state = None
+        elif not on and self.debug is not None:
+            self.debug.write("--- debug off\n")
+            self.debug.close()
+            self.debug = None
+
+    def _log_state(self):
+        if self.debug is None:
+            return
+        st = (f"owner={'yes' if self.engine.active else 'no'} sync={grab.sync_mode()} "
+              f"scale={grab.tool_mode('SCALE')} rotate={grab.tool_mode('ROTATE')} cage={grab.cage_on()} "
+              f"grab={_grab_axis()} layers={self.engine.layers}")
+        if st != self._debug_state:
+            self._debug_state = st
+            self.debug.write(f"{(time.monotonic() - self._t0) * 1000:9.0f} ms  STATE  {st}\n")
+            self.debug.flush()
+
     def tick(self):
         self.engine.set_active(self.owner())
         for _ in range(MAX_MESSAGES_PER_TICK):
@@ -353,10 +391,13 @@ class Session:
                 msg = self.queue.get_nowait()
             except queue.Empty:
                 break
+            self._log("IN", msg)
             self.engine.handle(*msg)
+        self._log_state()
         self.engine.update()
 
     def close(self):
+        self.set_debug(False)
         try:
             self.engine.shutdown()
         finally:
@@ -426,6 +467,17 @@ class CONTROLSURFACE_OT_disconnect(bpy.types.Operator):
         return {"FINISHED"}
 
 
+class CONTROLSURFACE_OT_debug(bpy.types.Operator):
+    bl_idname = "control_surface.debug"
+    bl_label = "Debug log"
+    bl_description = "Log every MIDI message in and out, and the tool states, to %TEMP%/control_surface_midi.log"
+
+    def execute(self, context):
+        if _session is not None:
+            _session.set_debug(_session.debug is None)
+        return {"FINISHED"}
+
+
 class CONTROLSURFACE_PT_panel(bpy.types.Panel):
     bl_label = "Control Surface"
     bl_space_type = "VIEW_3D"
@@ -441,6 +493,9 @@ class CONTROLSURFACE_PT_panel(bpy.types.Panel):
             col.operator(CONTROLSURFACE_OT_connect.bl_idname, icon="PLUGIN")
         else:
             col.operator(CONTROLSURFACE_OT_disconnect.bl_idname, icon="CANCEL")
+            col.operator(CONTROLSURFACE_OT_debug.bl_idname,
+                         text="Debug log: ON (click to stop)" if _session.debug else "Debug log: off",
+                         icon="REC" if _session.debug else "TEXT")
             layers = _session.engine.layers
             if layers:
                 col.label(text="  ".join(f"{k}: {v}" for k, v in layers.items()))
@@ -453,7 +508,7 @@ class CONTROLSURFACE_PT_panel(bpy.types.Panel):
                 col.label(text=_session.engine.last_error, icon="ERROR")
 
 
-CLASSES = grab.CLASSES + (CONTROLSURFACE_OT_connect, CONTROLSURFACE_OT_disconnect, CONTROLSURFACE_PT_panel)
+CLASSES = grab.CLASSES + (CONTROLSURFACE_OT_debug, CONTROLSURFACE_OT_connect, CONTROLSURFACE_OT_disconnect, CONTROLSURFACE_PT_panel)
 
 
 def register():
