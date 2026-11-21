@@ -3,7 +3,7 @@
 The DJ-Tech 4-Mix as an extension of Blender's interface: its controls run
 Blender commands, its LEDs show Blender's state. The add-on code is described
 file by file in [`CLAUDE.md`](CLAUDE.md); this page is the quick start for the
-next change. State on 2026-11-20: version 0.1.20, installed in the portable
+next change. State on 2026-11-20: version 0.1.21, installed in the portable
 Blender on G:.
 
 ## Use it

@@ -444,6 +444,9 @@ class CONTROLSURFACE_PT_panel(bpy.types.Panel):
             layers = _session.engine.layers
             if layers:
                 col.label(text="  ".join(f"{k}: {v}" for k, v in layers.items()))
+            col.label(text=(f"sync: {grab.sync_mode()}  scale: {grab.tool_mode('SCALE')}  "
+                            f"rotate: {grab.tool_mode('ROTATE')}  cage: {grab.cage_on()}  "
+                            f"grab: {_grab_axis()}  owner: {'yes' if _session.engine.active else 'no'}"))
             for name, value in _session.engine.scales.items():
                 col.label(text=f"{name}: {value * 100:.1f} cm")
             if _session.engine.last_error:
