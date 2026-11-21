@@ -200,7 +200,7 @@ Blender state → LED messages to the controller.
       (`grab.cage_enable` sets `_armed["cage"]`) → off; the pivot of that
       tool's grabs is then one of 27 points of the selection's world-axis
       bounding box (`_cage_points`: centre, faces, edges, corners), drawn
-      by a `SpaceView3D` draw handler; SHIFT + left platter → `cage_step`
+      by a `SpaceView3D` draw handler; SHIFT + left platter → `cage_step` (one point per ~14 pulses: one turn = 27 points)
       (state `cage`); a change during a grab rebases it (`_rebase`);
     - left platter: during a grab → `grab_push` (move: along the axis, free
       = view right; scale ×(1 ± step); rotate ± step × 100 degrees); SYNC
@@ -309,6 +309,9 @@ Blender state → LED messages to the controller.
   works). A–D, SHIFT and the deck switches have none.
 - **Release:** a note-on with velocity 0 and a note-off (0x8n) both decode as
   `release` (`profile.py:83`, `profile.py:93`).
+- **Platter resolution:** ~390 pulses per turn, every message ±1 whatever
+  the speed (measured 2026-11-21, one counter-clockwise turn: 393 × `3F`,
+  decoded `ccw` as expected).
 - **Relative controls** (NAVIGATION, platters) send 40H − N (left, `ccw`) or
   40H + N (right, `cw`); N grows with speed, and the size of a step is not
   passed on.

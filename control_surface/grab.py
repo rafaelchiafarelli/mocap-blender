@@ -29,13 +29,20 @@ from mathutils import Matrix, Vector
 
 AXES = {"X": Vector((1, 0, 0)), "Y": Vector((0, 1, 0)), "Z": Vector((0, 0, 1))}
 TIMER_S = 0.02
-DEG_PER_PUSH_UNIT = 100.0  # a rotate push of `step` (0.01-0.10) = 1-10 degrees
+DEG_PER_PUSH_UNIT = 100.0
+# The 4-Mix platter sends ~390 pulses per turn, each +-1 whatever the speed
+# (measured 2026-11-21, review/2026-11-21/teste-volta-platter.csv). One turn
+# walks through all 27 cage points.
+PLATTER_PULSES_PER_TURN = 390
+CAGE_POINTS = 27
+PULSES_PER_CAGE_POINT = PLATTER_PULSES_PER_TURN / CAGE_POINTS  # a rotate push of `step` (0.01-0.10) = 1-10 degrees
 ARMABLE = ("SCALE", "ROTATE")
 SYNC_VALUES = ("off", "on", "blink")
 
 _running = None  # the running grab's shared state, or None
 _armed = None    # {"mode": SCALE/ROTATE, "selection": names when armed}, or None
 _sync = "off"
+_cage_acc = 0.0  # platter pulses not yet turned into a cage step
 _draw_handle = None
 
 
@@ -66,11 +73,20 @@ def cage_point():
 
 
 def cage_step(delta):
-    """SHIFT + platter: the next/previous cage point; a running grab goes on
-    from where it is, around the new point."""
+    """SHIFT + platter pulse(s): one cage point every PULSES_PER_CAGE_POINT
+    pulses (one turn = all 27 points); a running grab goes on from where it
+    is, around the new point."""
+    global _cage_acc
     if not cage_on():
         raise RuntimeError("no cage (press RE or IN a second time)")
-    _armed["cage"] = (_armed["cage"] + delta) % 27
+    if _cage_acc * delta < 0:  # turned the other way: start counting again
+        _cage_acc = 0.0
+    _cage_acc += delta
+    steps = int(_cage_acc / PULSES_PER_CAGE_POINT)
+    if steps == 0:
+        return {"FINISHED"}
+    _cage_acc -= steps * PULSES_PER_CAGE_POINT
+    _armed["cage"] = (_armed["cage"] + steps) % CAGE_POINTS
     if _running is not None:
         _running["rebase"] = True
     _tag_redraw()
@@ -78,8 +94,9 @@ def cage_step(delta):
 
 
 def _cage_enable():
-    global _draw_handle
+    global _draw_handle, _cage_acc
     _armed["cage"] = 0
+    _cage_acc = 0.0
     if _running is not None:
         _running["rebase"] = True
     if _draw_handle is None:
