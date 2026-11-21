@@ -5,14 +5,16 @@ bpy.app timer (every 20 ms, main thread) drains it into the engine and drives
 the LEDs, because bpy must not be called from other threads.
 """
 
+import os
 import queue
+import tempfile
 import time
 from pathlib import Path
 
 import bpy
 from mathutils import Matrix, Vector
 
-from . import knob_select
+from . import grab, knob_select
 from .engine import Engine, Mapping
 from .profile import Profile
 
@@ -63,7 +65,18 @@ def _orbit_selection():
     return bool(bpy.context.preferences.inputs.use_rotate_around_active)
 
 
+def _grab_axis():
+    g = grab.state()
+    return g["axis"] if g else "NONE"
+
+
 STATES = {
+    "grabbing": lambda: grab.state() is not None,
+    "scale_mode": lambda: grab.tool_mode("SCALE"),
+    "rotate_mode": lambda: grab.tool_mode("ROTATE"),
+    "sync_mode": grab.sync_mode,
+    "cage": grab.cage_on,
+    "grab_axis": _grab_axis,
     "object_mode": _object_mode, "view_perspective": _view_perspective,
     "view_axis": _view_axis, "orbit_selection": _orbit_selection,
 }
@@ -164,15 +177,65 @@ def select_by_knob(value, knob="", center=knob_select.CENTER):
     return {"FINISHED"}
 
 
+def grab_start(mode="MOVE", axis="FREE"):
+    """Start the add-on's grab/scale (grab.py), invoked in the 3D View."""
+    return run_operator("control_surface.grab", {"mode": mode, "axis": axis}, "INVOKE_DEFAULT")
+
+
+def tool_toggle(mode):
+    """RE (SCALE) / IN (ROTATE): off -> the other tools off, this one armed,
+    and a free grab of it starts at once; second press -> the cage on (SHIFT +
+    platter picks its fixed point); third press -> off (a running grab is
+    confirmed)."""
+    if grab.tool_mode(mode) != "OFF":
+        if not grab.cage_on():  # second press: the cage on
+            grab.cage_enable()
+        else:                   # third press: off
+            grab.end_tools()
+        return {"FINISHED"}
+    grab.end_tools()
+    result = grab_start(mode, "FREE")
+    if "RUNNING_MODAL" in result:
+        grab.arm(mode)
+    return result
+
+
+def move_start(axis):
+    """1-4 with no tool armed: a move grab; the other tools go off."""
+    grab.end_tools()
+    return grab_start("MOVE", axis)
+
+
 ACTIONS = {
+    "tool_toggle": tool_toggle,
+    "move_start": move_start,
+    "sync_cycle": lambda: grab.sync_cycle(),
+    "cage_step": lambda delta: grab.cage_step(delta),
+    "grab_start": grab_start,
+    "grab_confirm": lambda: grab.request("confirm"),
+    "grab_axis": lambda axis: grab.request("axis", axis=axis),
+    "grab_push": lambda amount, along="right": grab.request("push", amount=amount, along=along),
     "select_by_knob": select_by_knob,
     "camera_move": camera_move, "view_move": view_move,
     "view_projection": view_projection, "orbit_selection_toggle": orbit_selection_toggle,
 }
 
 
+def _redraw():
+    """Tag every area for redraw: changes made from a timer (selection,
+    preferences) send no notifier, so the screen would only update when the
+    mouse moves over it."""
+    wm = bpy.context.window_manager
+    for win in (wm.windows if wm else ()):
+        for area in win.screen.areas:
+            area.tag_redraw()
+
+
 def run_action(name, args):
-    return ACTIONS[name](**args)
+    try:
+        return ACTIONS[name](**args)
+    finally:
+        _redraw()
 
 
 def _view3d():
@@ -203,6 +266,46 @@ def run_operator(name, args, call="EXEC_DEFAULT"):
     return op(call, **args)  # background / no 3D View
 
 
+# --- Two Blenders on one controller ------------------------------------------
+# Windows MIDI Services lets several programs open the 4-Mix at once (tested
+# 2026-11-21), so two connected Blenders would both act and both drive the
+# LEDs. The controller belongs to the Blender that was focused last: each one
+# writes its pid to a shared file when its window is in the foreground.
+OWNER_FILE = os.path.join(tempfile.gettempdir(), "control_surface_owner.txt")
+DEBUG_LOG = os.path.join(tempfile.gettempdir(), "control_surface_midi.log")
+
+
+def _foreground_is_me():
+    try:
+        import ctypes
+        from ctypes import wintypes
+
+        user32 = ctypes.windll.user32
+        pid = wintypes.DWORD()
+        user32.GetWindowThreadProcessId(user32.GetForegroundWindow(), ctypes.byref(pid))
+        return pid.value == os.getpid()
+    except Exception:  # not Windows: always the owner
+        return True
+
+
+def owner_is_me():
+    """Claim the controller when focused; True if this Blender owns it."""
+    me = str(os.getpid())
+    try:
+        with open(OWNER_FILE, encoding="ascii") as f:
+            owner = f.read().strip()
+    except OSError:
+        owner = ""
+    if owner != me and (_foreground_is_me() or not owner):
+        try:
+            with open(OWNER_FILE, "w", encoding="ascii") as f:
+                f.write(me)
+            owner = me
+        except OSError:
+            pass
+    return owner == me
+
+
 class Session:
     """One open controller. midi_in/midi_out are injectable for tests."""
 
@@ -229,24 +332,72 @@ class Session:
                 raise
             self.port_names = (ins[i], outs[o])
         self.midi_in, self.midi_out = midi_in, midi_out
+        # Injected ports (tests) never share the controller with another Blender.
+        self.owner = owner_is_me if self.port_names != ("", "") else (lambda: True)
+
+        self.debug = None  # an open log file while debugging
+        self._debug_state = None
+        self._t0 = time.monotonic()
+
+        def send(*m):  # only the owning Blender drives the LEDs
+            if self.engine.active:
+                midi_out.send(*m)
+            self._log("OUT" if self.engine.active else "out(standby, not sent)", m)
+
         self.engine = Engine(
-            profile, mapping, midi_out.send, run_operator, read_state,
+            profile, mapping, send, run_operator, read_state,
             lambda: int(time.monotonic() * 1000), run_action,
         )
         if intro:
             self.engine.start_intro()
         self.device = profile.device
 
+    def _log(self, kind, m, extra=""):
+        if self.debug is None:
+            return
+        names = ", ".join(f"{c} {e}" for c, e in self.engine.profile.decode(*m)) if kind == "IN" else ""
+        if kind != "IN":
+            names = ", ".join(c for c, sp in self.engine.profile.controls.items()
+                              if sp.get("led") and tuple(sp["led"]) == (m[0], m[1]) and "+SHIFT" not in c)
+        self.debug.write(f"{(time.monotonic() - self._t0) * 1000:9.0f} ms  {kind:<24} "
+                         f"{m[0]:02X} {m[1]:02X} {m[2]:02X}  {names}{extra}\n")
+        self.debug.flush()
+
+    def set_debug(self, on):
+        if on and self.debug is None:
+            self.debug = open(DEBUG_LOG, "a", encoding="utf-8")
+            self.debug.write(f"--- debug on, pid {os.getpid()}, {time.strftime('%Y-%m-%d %H:%M:%S')}\n")
+            self._debug_state = None
+        elif not on and self.debug is not None:
+            self.debug.write("--- debug off\n")
+            self.debug.close()
+            self.debug = None
+
+    def _log_state(self):
+        if self.debug is None:
+            return
+        st = (f"owner={'yes' if self.engine.active else 'no'} sync={grab.sync_mode()} "
+              f"scale={grab.tool_mode('SCALE')} rotate={grab.tool_mode('ROTATE')} cage={grab.cage_on()} "
+              f"grab={_grab_axis()} layers={self.engine.layers}")
+        if st != self._debug_state:
+            self._debug_state = st
+            self.debug.write(f"{(time.monotonic() - self._t0) * 1000:9.0f} ms  STATE  {st}\n")
+            self.debug.flush()
+
     def tick(self):
+        self.engine.set_active(self.owner())
         for _ in range(MAX_MESSAGES_PER_TICK):
             try:
                 msg = self.queue.get_nowait()
             except queue.Empty:
                 break
+            self._log("IN", msg)
             self.engine.handle(*msg)
+        self._log_state()
         self.engine.update()
 
     def close(self):
+        self.set_debug(False)
         try:
             self.engine.shutdown()
         finally:
@@ -316,6 +467,17 @@ class CONTROLSURFACE_OT_disconnect(bpy.types.Operator):
         return {"FINISHED"}
 
 
+class CONTROLSURFACE_OT_debug(bpy.types.Operator):
+    bl_idname = "control_surface.debug"
+    bl_label = "Debug log"
+    bl_description = "Log every MIDI message in and out, and the tool states, to %TEMP%/control_surface_midi.log"
+
+    def execute(self, context):
+        if _session is not None:
+            _session.set_debug(_session.debug is None)
+        return {"FINISHED"}
+
+
 class CONTROLSURFACE_PT_panel(bpy.types.Panel):
     bl_label = "Control Surface"
     bl_space_type = "VIEW_3D"
@@ -325,20 +487,28 @@ class CONTROLSURFACE_PT_panel(bpy.types.Panel):
     def draw(self, context):
         col = self.layout.column()
         col.label(text=_status)
+        if _session is not None and not _session.engine.active:
+            col.label(text="Standby: another Blender has the controller (click here to take it)", icon="PAUSE")
         if _session is None:
             col.operator(CONTROLSURFACE_OT_connect.bl_idname, icon="PLUGIN")
         else:
             col.operator(CONTROLSURFACE_OT_disconnect.bl_idname, icon="CANCEL")
+            col.operator(CONTROLSURFACE_OT_debug.bl_idname,
+                         text="Debug log: ON (click to stop)" if _session.debug else "Debug log: off",
+                         icon="REC" if _session.debug else "TEXT")
             layers = _session.engine.layers
             if layers:
                 col.label(text="  ".join(f"{k}: {v}" for k, v in layers.items()))
+            col.label(text=(f"sync: {grab.sync_mode()}  scale: {grab.tool_mode('SCALE')}  "
+                            f"rotate: {grab.tool_mode('ROTATE')}  cage: {grab.cage_on()}  "
+                            f"grab: {_grab_axis()}  owner: {'yes' if _session.engine.active else 'no'}"))
             for name, value in _session.engine.scales.items():
                 col.label(text=f"{name}: {value * 100:.1f} cm")
             if _session.engine.last_error:
                 col.label(text=_session.engine.last_error, icon="ERROR")
 
 
-CLASSES = (CONTROLSURFACE_OT_connect, CONTROLSURFACE_OT_disconnect, CONTROLSURFACE_PT_panel)
+CLASSES = grab.CLASSES + (CONTROLSURFACE_OT_debug, CONTROLSURFACE_OT_connect, CONTROLSURFACE_OT_disconnect, CONTROLSURFACE_PT_panel)
 
 
 def register():
@@ -347,6 +517,7 @@ def register():
 
 
 def unregister():
-    disconnect()  # release the ports, or they stay locked until Blender quits
+    disconnect()
+    grab.end_tools()  # release the ports, or they stay locked until Blender quits
     for c in reversed(CLASSES):
         bpy.utils.unregister_class(c)

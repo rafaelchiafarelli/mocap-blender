@@ -3,7 +3,7 @@
 The DJ-Tech 4-Mix as an extension of Blender's interface: its controls run
 Blender commands, its LEDs show Blender's state. The add-on code is described
 file by file in [`CLAUDE.md`](CLAUDE.md); this page is the quick start for the
-next change. State on 2026-11-20: version 0.1.11, installed in the portable
+next change. State on 2026-11-20: version 0.1.25, installed in the portable
 Blender on G:.
 
 ## Use it
@@ -20,6 +20,12 @@ Blender on G:.
    - `shift_left`/`shift_right`;
    - the `step` size;
    - the last error.
+
+**Two Blenders open:** Windows lets both connect to the 4-Mix at once
+(tested 2026-11-21). The controller belongs to the Blender focused last;
+the other one shows "Standby" in the panel, follows the decks/SHIFT/S1 VOL,
+runs nothing and leaves the LEDs alone. Clicking its window hands the
+controller over, and it resends all its LEDs.
 
 ## What the controls do now
 
@@ -42,9 +48,17 @@ All of this comes from [`mappings/blender_modes.json`](mappings/blender_modes.js
 | Encoder (PRESS TO ENTER), turn | zoom in (right) / out (left); in camera view: dolly the camera forward/back by `step` | — |
 | Encoder, press | toggle the camera view | on while in camera view |
 | S1 VOL | sets `step`: 1 cm (bottom) to 10 cm (top); 1 cm until moved | — |
-| Left platter, decks C + B | view up/down by `step`; in camera view: camera up/down | — |
-| Right platter, decks C + B | view right/left by `step`; in camera view: camera right/left | — |
-| Platters, decks A+B, A+D, C+D | nothing yet (to be defined) | — |
+| SYNC (deck C) | cycles off → on → blinking → off; sets what the left platter does; on turns the other tools off | on / blinking |
+| Left platter, deck C, SYNC on | view up/down by `step`; in camera view: camera up/down | — |
+| Left platter, deck C, SYNC blinking | view right/left by `step`; in camera view: camera right/left | — |
+| RE (deck C) | scale on: the other tools off, a free scale starts at once (button 1 lit); scale off (a running scale is confirmed) | on while scale is on (running or armed); blinking while the cage is on |
+| RE or IN, second press | turns the cage on (third press: tool off): a fixed point for the scale/rotation, drawn in the viewport with the selection's box | — |
+| SHIFT + left platter, deck C, cage on | steps through the box's 27 points (centre, faces, edges, corners); one platter turn (~390 pulses) = all 27 | — |
+| IN (deck C) | rotation, the same logic as RE | on while rotation is on (running or armed); blinking while the cage is on |
+| 1 / 2 / 3 / 4 (deck C) | move (or scale while RE is lit, rotate while IN is lit): free / X / Y / Z; a move turns the other tools off; the same button again confirms; another one changes the axis | on while that grab runs |
+| Left platter, deck C, during a grab | move: pushes by `step` along the axis (free: view right); scale: ×(1 ± `step`); rotate: ±1–10° (`step` × 100) | — |
+| Right platter | nothing (free) | — |
+| Deck switch | plays an animation on that deck's LEDs, then the LEDs show the state again | — |
 
 ## Where to change what
 
@@ -85,7 +99,10 @@ All of this comes from [`mappings/blender_modes.json`](mappings/blender_modes.js
   `BACK`, `RIGHT`, `LEFT`, `TOP`, `BOTTOM`, `NONE`), `orbit_selection`
   (`true`/`false`);
 - from the controller: `deck_left` (`A`/`C`), `deck_right` (`B`/`D`),
-  `shift_left`, `shift_right` (`true`/`false`).
+  `shift_left`, `shift_right` (`true`/`false`);
+- from the add-on: `sync_mode` (`off`, `on`, `blink`), `scale_mode` and
+  `rotate_mode` (`OFF`, `ARMED`, `RUNNING`), `grabbing` (`true`/`false`), `grab_axis` (`NONE`,
+  `FREE`, `X`, `Y`, `Z`), and every toggle.
 
 **An LED** goes under `indicators`:
 
@@ -118,12 +135,40 @@ then on it works normally. This avoids a jump to an unknown position.
   by name);
 - each time the knob leaves its centre it anchors on the active selected
   object, or on nothing: CW then starts at the first object, CCW at the last;
-- one object per knob step while they fit; with more objects than steps to
-  the end it jumps, and the end (127 / 0) always lands on the last / first.
+- proportional: the travel from the centre to the end is split evenly over
+  the objects on that side (few objects → several steps each; many → it
+  jumps); the end (127 / 0) always lands on the last / first. A filter for
+  the jitter around the centre may be needed later.
   The rule is `knob_select.pick`.
 
 A binding with `"event": "value"` passes an absolute control's value to an
 action as `value=`.
+
+**The grab (buttons 1–4)** is the add-on's own (`grab.py`), not Blender's G:
+the mouse moves/scales like G/S and the platter adds on top. Left click /
+Enter confirms, right click / Esc cancels. No snapping or typed values (use
+G/S on the keyboard for that). Object Mode, every selected object, scale
+around their median point.
+
+**Cage** (like Blender's Scale Cage): each tool button cycles tool on →
+tool + cage → off (no timing).
+The fixed point is one of 27 points of the selection's world-axis bounding
+box; e.g. the −X face centre + button 2 stretches only towards +X. Changing
+the point during a scale/rotation goes on from where the objects are. The
+cage lasts while its tool is on.
+
+**One tool at a time per deck:** SYNC, move (1–4), scale (RE) and rotate
+(IN). Turning one on turns the others off and confirms a running grab.
+
+**Scale and rotate stay on** (RE/IN lit) after their grab ends (RE blinking), until RE is pressed or
+the selection changes (another object, or none): then RE goes off.
+
+**Toggles** (`toggles` in the mapping): a button that steps through values
+on each press, usable in `when` and in indicators:
+
+```json
+"sync_c": {"control": "SYNC L/C", "values": ["off", "on", "blink"]}
+```
 
 **A new Blender state or action:** add a function to `STATES` or `ACTIONS` in
 [`blender_glue.py`](blender_glue.py). The mapping is validated against those
@@ -176,8 +221,7 @@ Blender must be restarted to load a reinstalled version.
   manufacturer SysEx? A button-press test with `probe_sysex.py` would tell.
 - **Idea (Rafael, 2026-11-20):** a way to step through the Properties
   editor's tabs (the column of icons on its left) from the controller.
-- **To define:** the platters for decks A+B, A+D and C+D; Rafael is drawing a
-  new set of actions.
+- **To define:** the right platter and the decks A, B and D.
 - **Mapping file:** it lives inside the add-on, so changing it means rebuild
   and reinstall. Choosing an external file plus a Reload button is the next
   convenience.

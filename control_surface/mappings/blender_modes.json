@@ -10,6 +10,355 @@
  },
  "bindings": [
   {
+   "control": "SYNC L/C",
+   "event": "press",
+   "action": "sync_cycle"
+  },
+  {
+   "control": "RE L/C",
+   "event": "press",
+   "action": "tool_toggle",
+   "args": {
+    "mode": "SCALE"
+   }
+  },
+  {
+   "control": "IN L/C",
+   "event": "press",
+   "action": "tool_toggle",
+   "args": {
+    "mode": "ROTATE"
+   }
+  },
+  {
+   "control": "1 L/C",
+   "event": "press",
+   "action": "grab_confirm",
+   "when": {
+    "grab_axis": "FREE"
+   }
+  },
+  {
+   "control": "1 L/C",
+   "event": "press",
+   "action": "grab_axis",
+   "args": {
+    "axis": "FREE"
+   },
+   "when": {
+    "grabbing": true
+   }
+  },
+  {
+   "control": "1 L/C",
+   "event": "press",
+   "action": "grab_start",
+   "args": {
+    "mode": "SCALE",
+    "axis": "FREE"
+   },
+   "when": {
+    "scale_mode": "ARMED"
+   }
+  },
+  {
+   "control": "1 L/C",
+   "event": "press",
+   "action": "grab_start",
+   "args": {
+    "mode": "ROTATE",
+    "axis": "FREE"
+   },
+   "when": {
+    "rotate_mode": "ARMED"
+   }
+  },
+  {
+   "control": "1 L/C",
+   "event": "press",
+   "action": "move_start",
+   "args": {
+    "axis": "FREE"
+   }
+  },
+  {
+   "control": "2 L/C",
+   "event": "press",
+   "action": "grab_confirm",
+   "when": {
+    "grab_axis": "X"
+   }
+  },
+  {
+   "control": "2 L/C",
+   "event": "press",
+   "action": "grab_axis",
+   "args": {
+    "axis": "X"
+   },
+   "when": {
+    "grabbing": true
+   }
+  },
+  {
+   "control": "2 L/C",
+   "event": "press",
+   "action": "grab_start",
+   "args": {
+    "mode": "SCALE",
+    "axis": "X"
+   },
+   "when": {
+    "scale_mode": "ARMED"
+   }
+  },
+  {
+   "control": "2 L/C",
+   "event": "press",
+   "action": "grab_start",
+   "args": {
+    "mode": "ROTATE",
+    "axis": "X"
+   },
+   "when": {
+    "rotate_mode": "ARMED"
+   }
+  },
+  {
+   "control": "2 L/C",
+   "event": "press",
+   "action": "move_start",
+   "args": {
+    "axis": "X"
+   }
+  },
+  {
+   "control": "3 L/C",
+   "event": "press",
+   "action": "grab_confirm",
+   "when": {
+    "grab_axis": "Y"
+   }
+  },
+  {
+   "control": "3 L/C",
+   "event": "press",
+   "action": "grab_axis",
+   "args": {
+    "axis": "Y"
+   },
+   "when": {
+    "grabbing": true
+   }
+  },
+  {
+   "control": "3 L/C",
+   "event": "press",
+   "action": "grab_start",
+   "args": {
+    "mode": "SCALE",
+    "axis": "Y"
+   },
+   "when": {
+    "scale_mode": "ARMED"
+   }
+  },
+  {
+   "control": "3 L/C",
+   "event": "press",
+   "action": "grab_start",
+   "args": {
+    "mode": "ROTATE",
+    "axis": "Y"
+   },
+   "when": {
+    "rotate_mode": "ARMED"
+   }
+  },
+  {
+   "control": "3 L/C",
+   "event": "press",
+   "action": "move_start",
+   "args": {
+    "axis": "Y"
+   }
+  },
+  {
+   "control": "4 L/C",
+   "event": "press",
+   "action": "grab_confirm",
+   "when": {
+    "grab_axis": "Z"
+   }
+  },
+  {
+   "control": "4 L/C",
+   "event": "press",
+   "action": "grab_axis",
+   "args": {
+    "axis": "Z"
+   },
+   "when": {
+    "grabbing": true
+   }
+  },
+  {
+   "control": "4 L/C",
+   "event": "press",
+   "action": "grab_start",
+   "args": {
+    "mode": "SCALE",
+    "axis": "Z"
+   },
+   "when": {
+    "scale_mode": "ARMED"
+   }
+  },
+  {
+   "control": "4 L/C",
+   "event": "press",
+   "action": "grab_start",
+   "args": {
+    "mode": "ROTATE",
+    "axis": "Z"
+   },
+   "when": {
+    "rotate_mode": "ARMED"
+   }
+  },
+  {
+   "control": "4 L/C",
+   "event": "press",
+   "action": "move_start",
+   "args": {
+    "axis": "Z"
+   }
+  },
+  {
+   "control": "PLATTER L/C",
+   "event": "cw",
+   "action": "grab_push",
+   "args": {
+    "amount": 1
+   },
+   "scale": "step",
+   "when": {
+    "grabbing": true
+   }
+  },
+  {
+   "control": "PLATTER L/C",
+   "event": "cw",
+   "action": "camera_move",
+   "args": {
+    "y": 1
+   },
+   "scale": "step",
+   "when": {
+    "sync_mode": "on",
+    "view_perspective": "CAMERA"
+   }
+  },
+  {
+   "control": "PLATTER L/C",
+   "event": "cw",
+   "action": "view_move",
+   "args": {
+    "y": 1
+   },
+   "scale": "step",
+   "when": {
+    "sync_mode": "on"
+   }
+  },
+  {
+   "control": "PLATTER L/C",
+   "event": "cw",
+   "action": "camera_move",
+   "args": {
+    "x": 1
+   },
+   "scale": "step",
+   "when": {
+    "sync_mode": "blink",
+    "view_perspective": "CAMERA"
+   }
+  },
+  {
+   "control": "PLATTER L/C",
+   "event": "cw",
+   "action": "view_move",
+   "args": {
+    "x": 1
+   },
+   "scale": "step",
+   "when": {
+    "sync_mode": "blink"
+   }
+  },
+  {
+   "control": "PLATTER L/C",
+   "event": "ccw",
+   "action": "grab_push",
+   "args": {
+    "amount": -1
+   },
+   "scale": "step",
+   "when": {
+    "grabbing": true
+   }
+  },
+  {
+   "control": "PLATTER L/C",
+   "event": "ccw",
+   "action": "camera_move",
+   "args": {
+    "y": -1
+   },
+   "scale": "step",
+   "when": {
+    "sync_mode": "on",
+    "view_perspective": "CAMERA"
+   }
+  },
+  {
+   "control": "PLATTER L/C",
+   "event": "ccw",
+   "action": "view_move",
+   "args": {
+    "y": -1
+   },
+   "scale": "step",
+   "when": {
+    "sync_mode": "on"
+   }
+  },
+  {
+   "control": "PLATTER L/C",
+   "event": "ccw",
+   "action": "camera_move",
+   "args": {
+    "x": -1
+   },
+   "scale": "step",
+   "when": {
+    "sync_mode": "blink",
+    "view_perspective": "CAMERA"
+   }
+  },
+  {
+   "control": "PLATTER L/C",
+   "event": "ccw",
+   "action": "view_move",
+   "args": {
+    "x": -1
+   },
+   "scale": "step",
+   "when": {
+    "sync_mode": "blink"
+   }
+  },
+  {
    "control": "C FILTER",
    "event": "value",
    "action": "select_by_knob",
@@ -183,111 +532,25 @@
    "operator": "view3d.view_camera"
   },
   {
-   "control": "PLATTER L/C",
+   "control": "PLATTER L/C+SHIFT",
    "event": "cw",
-   "action": "camera_move",
+   "action": "cage_step",
    "args": {
-    "y": 1
+    "delta": 1
    },
    "when": {
-    "deck_left": "C",
-    "deck_right": "B",
-    "view_perspective": "CAMERA"
-   },
-   "scale": "step"
-  },
-  {
-   "control": "PLATTER L/C",
-   "event": "ccw",
-   "action": "camera_move",
-   "args": {
-    "y": -1
-   },
-   "when": {
-    "deck_left": "C",
-    "deck_right": "B",
-    "view_perspective": "CAMERA"
-   },
-   "scale": "step"
-  },
-  {
-   "control": "PLATTER R/B",
-   "event": "cw",
-   "action": "camera_move",
-   "args": {
-    "x": 1
-   },
-   "when": {
-    "deck_left": "C",
-    "deck_right": "B",
-    "view_perspective": "CAMERA"
-   },
-   "scale": "step"
-  },
-  {
-   "control": "PLATTER R/B",
-   "event": "ccw",
-   "action": "camera_move",
-   "args": {
-    "x": -1
-   },
-   "when": {
-    "deck_left": "C",
-    "deck_right": "B",
-    "view_perspective": "CAMERA"
-   },
-   "scale": "step"
-  },
-  {
-   "control": "PLATTER L/C",
-   "event": "cw",
-   "action": "view_move",
-   "args": {
-    "y": 1
-   },
-   "scale": "step",
-   "when": {
-    "deck_left": "C",
-    "deck_right": "B"
+    "cage": true
    }
   },
   {
-   "control": "PLATTER L/C",
+   "control": "PLATTER L/C+SHIFT",
    "event": "ccw",
-   "action": "view_move",
+   "action": "cage_step",
    "args": {
-    "y": -1
+    "delta": -1
    },
-   "scale": "step",
    "when": {
-    "deck_left": "C",
-    "deck_right": "B"
-   }
-  },
-  {
-   "control": "PLATTER R/B",
-   "event": "cw",
-   "action": "view_move",
-   "args": {
-    "x": 1
-   },
-   "scale": "step",
-   "when": {
-    "deck_left": "C",
-    "deck_right": "B"
-   }
-  },
-  {
-   "control": "PLATTER R/B",
-   "event": "ccw",
-   "action": "view_move",
-   "args": {
-    "x": -1
-   },
-   "scale": "step",
-   "when": {
-    "deck_left": "C",
-    "deck_right": "B"
+    "cage": true
    }
   }
  ],
@@ -371,6 +634,112 @@
    "led": "blink",
    "on_ms": 200,
    "off_ms": 200
+  },
+  {
+   "control": "1 L/C",
+   "state": "grab_axis",
+   "equals": "FREE",
+   "led": "on"
+  },
+  {
+   "control": "2 L/C",
+   "state": "grab_axis",
+   "equals": "X",
+   "led": "on"
+  },
+  {
+   "control": "3 L/C",
+   "state": "grab_axis",
+   "equals": "Y",
+   "led": "on"
+  },
+  {
+   "control": "4 L/C",
+   "state": "grab_axis",
+   "equals": "Z",
+   "led": "on"
+  },
+  {
+   "control": "SYNC L/C",
+   "state": "sync_mode",
+   "equals": "on",
+   "led": "on"
+  },
+  {
+   "control": "SYNC L/C",
+   "state": "sync_mode",
+   "equals": "blink",
+   "led": "blink",
+   "on_ms": 200,
+   "off_ms": 200
+  },
+  {
+   "control": "RE L/C",
+   "state": "scale_mode",
+   "equals": "RUNNING",
+   "when": {
+    "cage": true
+   },
+   "led": "blink",
+   "on_ms": 200,
+   "off_ms": 200
+  },
+  {
+   "control": "RE L/C",
+   "state": "scale_mode",
+   "equals": "ARMED",
+   "when": {
+    "cage": true
+   },
+   "led": "blink",
+   "on_ms": 200,
+   "off_ms": 200
+  },
+  {
+   "control": "RE L/C",
+   "state": "scale_mode",
+   "equals": "RUNNING",
+   "led": "on"
+  },
+  {
+   "control": "RE L/C",
+   "state": "scale_mode",
+   "equals": "ARMED",
+   "led": "on"
+  },
+  {
+   "control": "IN L/C",
+   "state": "rotate_mode",
+   "equals": "RUNNING",
+   "when": {
+    "cage": true
+   },
+   "led": "blink",
+   "on_ms": 200,
+   "off_ms": 200
+  },
+  {
+   "control": "IN L/C",
+   "state": "rotate_mode",
+   "equals": "ARMED",
+   "when": {
+    "cage": true
+   },
+   "led": "blink",
+   "on_ms": 200,
+   "off_ms": 200
+  },
+  {
+   "control": "IN L/C",
+   "state": "rotate_mode",
+   "equals": "RUNNING",
+   "led": "on"
+  },
+  {
+   "control": "IN L/C",
+   "state": "rotate_mode",
+   "equals": "ARMED",
+   "led": "on"
   }
  ]
 }

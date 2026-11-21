@@ -64,6 +64,12 @@ Blender state → LED messages to the controller.
     two messages fall on opposite sides of it (`Engine._tap_ok`); then it is
     in `Engine.armed` for the rest of the session. Today: A/B/C/D FILTER
     and HI/MID/LOW (task 16), 64.
+  - **Toggles** (task 18, `toggles` in the mapping): a button press steps
+    to the next value (wrapping) before the bindings run; a state for `when`
+    and indicators; first value at Connect.
+  - **Deck animation** (task 18): a deck switch press plays `start_intro`
+    on that deck's LEDs only (`_deck_animation`, from the layer's
+    `channels`); a deck learned from a message's channel plays none.
   - **`value` bindings** (task 16): an absolute control's value goes to an
     action as `value=` (validated: absolute control + action).
   - **`_fire()`** (`engine.py:231`) runs the operator or action and reports a
@@ -88,9 +94,18 @@ Blender state → LED messages to the controller.
   - A blink's phase restarts only when its look changes (`leds.py:18`).
   - `resend()` (`leds.py:40`) forgets what was sent, so the next tick sends
     every LED again.
+- `grab.py` — the add-on's own modal grab/scale/rotate
+  (`control_surface.grab`, tasks 18–20) and the deck's tool state: follows the mouse like G/S (the start is the first real mouse
+  move, since an invoke from the timer may carry a stale position), adds the
+  controller's pushes, ends on click/Enter/right click/Esc or
+  `request("confirm")`, which detaches the grab at once so another can start
+  right away. Rotation: the mouse's angle around the pivot (free: the view
+  axis). Places objects through `location` (parent-aware),
+  not `matrix_world`, which is stale right after a scale change. `state()`
+  feeds the `grabbing`/`grab_axis` states.
 - `knob_select.py` — `pick(n, anchor, value)`: the object index for a
-  centre-tap knob's position (one per step while they fit, otherwise jumps;
-  the ends land on the last/first). Pure.
+  centre-tap knob's position, proportional (the travel is split evenly over
+  the objects; the ends land on the last/first). Pure.
 - `winmm.py` — Windows MIDI through `winmm.dll` + `ctypes`: `list_ports()`
   (`winmm.py:78`), `find_port()` (`winmm.py:93`), `MidiIn` (`winmm.py:102`,
   callback on a WinMM thread) and `MidiOut` (`winmm.py:125`). Short messages
@@ -172,12 +187,28 @@ Blender state → LED messages to the controller.
     `view3d.zoom` `delta=1` (in) / `delta=-1` (out). Press →
     `view3d.view_camera`, which toggles the camera view. The encoder's LED
     is on while the camera view is on.
-  - **Platters, only with decks C + B** (`when` on `deck_left`/`deck_right`;
-    A+B, A+D and C+D do nothing yet, Rafael defines them later). One step of
-    `step` metres per message, whatever the turning speed:
-    - in camera view: `camera_move`, left platter right/left → up/down,
-      right platter right/left → right/left;
-    - otherwise: `view_move`, the same directions for the view.
+  - **Deck C** (task 18; the right platter and decks A, B, D are free).
+    One platter step = `step` metres per message, whatever the speed:
+    - **one tool at a time** (task 20, `grab.py`): SYNC (`sync_cycle`,
+      state `sync_mode` off/on/blink), move (`move_start`), scale (RE,
+      `tool_toggle` SCALE) and rotate (IN, `tool_toggle` ROTATE). Turning
+      one on calls `grab.end_tools`: the others off, a running grab
+      confirmed. Scale/rotate stay armed after their grab (`scale_mode` /
+      `rotate_mode`: `RUNNING` and `ARMED` LED on, blinking while the cage is on — Rafael 2026-11-21 — `OFF`) until the
+      selection changes;
+    - **cage** (task 21): RE/IN cycle tool on → + cage
+      (`grab.cage_enable` sets `_armed["cage"]`) → off; the pivot of that
+      tool's grabs is then one of 27 points of the selection's world-axis
+      bounding box (`_cage_points`: centre, faces, edges, corners), drawn
+      by a `SpaceView3D` draw handler; SHIFT + left platter → `cage_step` (one point per ~14 pulses: one turn = 27 points)
+      (state `cage`); a change during a grab rebases it (`_rebase`);
+    - left platter: during a grab → `grab_push` (move: along the axis, free
+      = view right; scale ×(1 ± step); rotate ± step × 100 degrees); SYNC
+      on → up/down, blinking → right/left (`camera_move` in camera view,
+      else `view_move`); SYNC off → nothing;
+    - buttons 1–4 → free/X/Y/Z: the running axis's button → `grab_confirm`;
+      during a grab → `grab_axis`; scale/rotate armed → `grab_start` of it;
+      else `move_start`; each LED is on while `grab_axis` is its axis.
 - `tools/` — hardware test scripts, run in the pinned Blender with the add-on
   disconnected (usage at the top of each):
   - `probe_echo.py` echoes every message back to the controller and logs it
@@ -229,10 +260,22 @@ Blender state → LED messages to the controller.
   `90 3A…3D` (with `7F`, with `00`, and as the pair it sends itself; tested
   2026-11-20, no LED change and no answer). The add-on only learns them.
   The flip-back seen in the echo test was not caused by the echo.
+- **The 4-Mix changes a button's LED by itself on press/release** (seen
+  2026-11-21: RE's LED went dark on a press that did not change the state).
+  The engine forgets what it sent to a pressed/released button's LED, so the
+  next tick sends it again (`LedDriver.forget`).
 - **LEDs show state, not presses:** a button press only runs its binding.
   The LED changes because the state changed, so pressing Tab on the keyboard
   moves the blinking LED too (`engine.py:278`).
-- **Exclusive ports:** a Windows MIDI port opens in one program at a time.
+- **Two Blenders** (task 22): Windows MIDI Services makes the 4-Mix's ports
+  multi-client (two opens of in and out succeeded on 2026-11-21), so two
+  connected Blenders both acted and both drove the LEDs. The owner is the
+  Blender focused last: `owner_is_me` (`blender_glue.py`) writes its pid to
+  `%TEMP%/control_surface_owner.txt` when `GetForegroundWindow` belongs to
+  it; `Session.tick` calls `Engine.set_active`. Inactive: layers, scales and
+  knob gates followed, no binding runs, nothing is sent; on return every LED
+  is resent. Injected ports (tests) are always active.
+- **Exclusive ports** (older Windows MIDI stack): a Windows MIDI port opens in one program at a time.
   Disconnect (or disabling the add-on, `blender_glue.py:265`) releases it.
   While another program holds it, Connect reports "port in use".
 - **Invoke-only operators:** some operators (e.g. `view3d.view_pan`) have no
@@ -266,6 +309,9 @@ Blender state → LED messages to the controller.
   works). A–D, SHIFT and the deck switches have none.
 - **Release:** a note-on with velocity 0 and a note-off (0x8n) both decode as
   `release` (`profile.py:83`, `profile.py:93`).
+- **Platter resolution:** ~390 pulses per turn, every message ±1 whatever
+  the speed (measured 2026-11-21, one counter-clockwise turn: 393 × `3F`,
+  decoded `ccw` as expected).
 - **Relative controls** (NAVIGATION, platters) send 40H − N (left, `ccw`) or
   40H + N (right, `cw`); N grows with speed, and the size of a step is not
   passed on.

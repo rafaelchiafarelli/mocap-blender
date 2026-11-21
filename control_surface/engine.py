@@ -15,6 +15,9 @@ Mapping JSON:
                                                # operators such as view3d.view_pan
        "when": {"shift_left": false}}          # optional: every state must match
     ],
+    "toggles": {                               # optional: a button steps through values
+      "sync_c": {"control": "SYNC L/C", "values": ["off", "on", "blink"]}
+    },                                         # each press -> next value (wraps); a state
     "scales": {                                # optional: a fader sets a size
       "step": {"control": "S1 VOL", "min": 0.01, "max": 0.10, "default": 0.01}
     },                                         # a binding's "scale": "step" multiplies
@@ -55,6 +58,7 @@ class Mapping:
         self.bindings = list(data.get("bindings", []))
         self.indicators = list(data.get("indicators", []))
         self.scales = dict(data.get("scales", {}))
+        self.toggles = dict(data.get("toggles", {}))
 
     @classmethod
     def load(cls, path):
@@ -67,7 +71,12 @@ class Mapping:
         state_names: the Blender states available; the profile's layers are added.
         action_names: the actions the Blender side provides.
         """
-        known = set(state_names) | set(profile.layers)
+        known = set(state_names) | set(profile.layers) | set(self.toggles)
+        for name, t in self.toggles.items():
+            if profile.controls.get(t.get("control"), {}).get("type") != "button":
+                raise MappingError(f"toggle {name!r}: control must be a button")
+            if not isinstance(t.get("values"), list) or len(t["values"]) < 2:
+                raise MappingError(f"toggle {name!r}: values must list at least two values")
 
         def check_when(rule, who):
             when = rule.get("when", {})
@@ -140,10 +149,15 @@ class Engine:
         self._intro = None  # [(time_ms, [messages])] while the intro runs
         # Scale values: the default until their control moves.
         self.scales = {name: float(sc["default"]) for name, sc in mapping.scales.items()}
+        # Toggles: the first value until their button is pressed.
+        self.toggles = {name: t["values"][0] for name, t in mapping.toggles.items()}
         self._intro_next = 0
         self._read = read_state
         self._clock = clock_ms
         self.leds = LedDriver(send)
+        # Inactive (another Blender owns the controller): layers, scales and
+        # knob gates are still followed, but no binding runs.
+        self.active = True
         # Centre-tap knobs stay ignored until they reach their centre after Connect
         # (their position is unknown until then). control -> last value seen.
         self._tap_last = {}
@@ -169,6 +183,8 @@ class Engine:
         """A layer state, or a Blender state (cached per call site)."""
         if name in self.layers:
             return self.layers[name]
+        if name in self.toggles:
+            return self.toggles[name]
         if cache is None:
             return self._read(name)
         if name not in cache:
@@ -198,6 +214,7 @@ class Engine:
                     for value, control in layer["values"].items():
                         if control == cid:
                             self.layers[name] = value
+                            self._deck_animation(layer, value)
             elif cid in layer["controls"]:
                 held = self._held[name]
                 if event == PRESS:
@@ -207,6 +224,13 @@ class Engine:
                 self.layers[name] = bool(held)
             changed |= self.layers[name] != old
         return changed
+
+    def _deck_animation(self, layer, value):
+        """The deck switch moved to `value`: play the intro on that deck's LEDs."""
+        statuses = set(layer.get("channels", {}).get(value, ()))
+        leds = [led for led in self.profile.all_leds() if led[0] in statuses]
+        if leds:
+            self.start_intro(leds)
 
     def handle(self, b0, b1, b2):
         """One incoming message -> follow the layers, run the first binding that matches."""
@@ -219,12 +243,25 @@ class Engine:
                 for name, sc in self.mapping.scales.items():
                     if sc["control"] == cid:
                         self.scales[name] = sc["min"] + (sc["max"] - sc["min"]) * event[1] / 127
+            if event in (PRESS, RELEASE):
+                # The 4-Mix may change a button's LED by itself when it is
+                # pressed or released: send that LED again on the next tick.
+                led = self.profile.led(cid)
+                if led is not None:
+                    self.leds.forget(led)
+            if event == PRESS:
+                for name, t in self.mapping.toggles.items():
+                    if t["control"] == cid:
+                        vals = t["values"]
+                        self.toggles[name] = vals[(vals.index(self.toggles[name]) + 1) % len(vals)]
             if self._track_layers(cid, event):
                 # The controller now shows another deck/layer: send every LED again.
                 self.leds.resend()
             value = None
             if isinstance(event, tuple) and event[0] == VALUE:
                 event, value = VALUE, event[1]
+            if not self.active:
+                continue
             for b in self.mapping.bindings:
                 if b["control"] == cid and b["event"] == event and self._when_ok(b):
                     self._fire(cid, event, b, value)
@@ -269,13 +306,23 @@ class Engine:
             # and returns {'CANCELLED'}: show them too.
             self.last_error = f"{cid} {event} -> {what}: cancelled"
 
-    def start_intro(self):
+    def start_intro(self, leds=None):
         """Light every LED one by one (level meters rising), hold, then all off.
 
+        With `leds` (a deck's LEDs, on a deck switch): only those, no meters.
         Indicators wait until it ends; then every LED is sent again.
         """
         now = self._clock()
-        leds, meters = self.profile.all_leds(), self.profile.meters()
+        if self._intro is not None:  # one already running: clear what it lit
+            for m in self._intro[-1][1]:
+                self._send(*m)
+        if leds is None:
+            leds, meters = self.profile.all_leds(), self.profile.meters()
+        else:
+            meters = []
+        if not leds:
+            self._intro = None
+            return
         frames = []
         for i, (b0, b1) in enumerate(leds):
             level = round(127 * (i + 1) / len(leds))
@@ -300,6 +347,13 @@ class Engine:
         self._intro = None
         self.leds.resend()
         return False
+
+    def set_active(self, active):
+        """Becoming active again: every LED is sent again (the other Blender
+        drove them meanwhile)."""
+        if active and not self.active:
+            self.leds.resend()
+        self.active = active
 
     def update(self):
         """Read the states and drive the LEDs; call this often (e.g. every 20 ms)."""

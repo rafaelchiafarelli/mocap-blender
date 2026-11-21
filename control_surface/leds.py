@@ -37,6 +37,10 @@ class LedDriver:
         on_ms, off_ms = look[1], look[2]
         return LED_ON if elapsed_ms % (on_ms + off_ms) < on_ms else LED_OFF
 
+    def forget(self, addr):
+        """Forget what was sent to one LED: the next tick sends it again."""
+        self._sent.pop(addr, None)
+
     def resend(self):
         """Forget what was sent: the next tick sends every LED again."""
         self._sent.clear()
