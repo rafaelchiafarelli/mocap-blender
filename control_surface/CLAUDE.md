@@ -21,11 +21,16 @@ Blender state → LED messages to the controller.
 - `README.md` — quick start for the next change: how to use it, what each
   control does now, where to change what, build/install/test commands, open
   items.
+- `acoes-4mix.md` — Rafael's reference, in Portuguese: every control's
+  action and LED, numbered, with Object/Edit Mode columns. Keep it in step
+  with the mapping on every change (a copy goes to the day's review folder
+  on G:).
 - `__init__.py` — `register()` / `unregister()`; imports `bpy` only inside
   them, so the pure modules import and test without Blender.
 - `blender_manifest.toml` — extension manifest (id `control_surface`,
   Blender ≥ 4.2, `windows-x64`, GPL-3.0-or-later). Its `[build]` section leaves
-  `tests/`, `tools/`, `README.md` and this file out of the zip.
+  `tests/`, `tools/`, `README.md`, `acoes-4mix.md` and this file out of
+  the zip.
 - `profile.py` — device profile.
   - **Control types:** `button`, `absolute`, `relative`, and the output-only
     `light` and `meter`, which are not decoded (`profile.py:43`).
