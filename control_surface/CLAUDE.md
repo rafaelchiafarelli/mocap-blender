@@ -234,13 +234,17 @@ Blender state → LED messages to the controller.
       bounding box (`_cage_points`: centre, faces, edges, corners), drawn
       by a `SpaceView3D` draw handler; SHIFT + left platter → `cage_step` (one point per ~14 pulses: one turn = 27 points)
       (state `cage`); a change during a grab rebases it (`_rebase`);
-    - **tip over** (tasks 29–30): in a rotation, the 2nd press of the
+    - **tip over** (tasks 29–31): in a rotation, the 2nd press of the
       running axis's button → `rotate_snap_on` (state `grab_snap`, the
-      number's LED blinks), then the left platter → `rotate_tip`: every
-      `PULSES_PER_TIP` (a quarter platter turn, ~97 pulses) the total angle
-      jumps to the next multiple of 90° from the rotation's start
-      (`_take_tips`); the 3rd press confirms. Object and Edit Mode. (Task 29
-      used SHIFT + platter; Rafael found it confusing.)
+      number's LED blinks). In the 90° mode the mouse is ignored, the angle
+      snaps to the nearest absolute multiple of 90° on that global axis (the
+      first object's world Euler; Edit Mode and the free axis: relative to
+      the start; `_snap_to_grid`), and the left platter → `rotate_tip`:
+      every `PULSES_PER_TIP` (a quarter platter turn) exactly ±90°. Another
+      number changes the axis keeping the 90° mode; a rotation's axis
+      change rebases, so the turn on the old axis stays. The 3rd press
+      confirms. (Task 29 used SHIFT + platter, found confusing; task 30
+      counted from the start and let the mouse add drift.)
     - left platter: during a grab → `grab_push` (move: along the axis, free
       = view right; scale ×(1 ± step); rotate ± step × 100 degrees); SYNC
       on → up/down, blinking → right/left (`camera_move` in camera view,

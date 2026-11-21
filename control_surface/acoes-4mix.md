@@ -1,4 +1,4 @@
-# DJ-Tech 4-Mix no Blender — ações (add-on control_surface 0.1.33)
+# DJ-Tech 4-Mix no Blender — ações (add-on control_surface 0.1.34)
 
 Atualizado em 2026-11-21. "Object" e "Edit" indicam o modo do Blender em que a
 ação funciona; "—" = sem efeito nesse modo.
@@ -41,7 +41,7 @@ ação funciona; "—" = sem efeito nesse modo.
 | 22 | IN (rotação) | o mesmo ciclo do RE, para rotação | aceso ligado; piscando com cage | ✔ objetos | ✔ vértices |
 | 23 | 1 / 2 / 3 / 4 | grab livre / X / Y / Z (com RE ou IN ligado: scale ou rotação nesse eixo); mesmo botão de novo confirma (na rotação: liga o modo 90°, ver 24b); outro número troca o eixo; o mouse funciona como no G/S/R | aceso enquanto a operação roda | ✔ objetos | ✔ vértices |
 | 24 | Platter esquerdo, durante um grab | empurra pelo passo do S1 VOL (move no eixo; livre = horizontal da vista; scale; rotação) | — | ✔ | ✔ |
-| 24b | 1 / 2 / 3 / 4, 2º clique durante uma rotação | modo 90° ("tombo"): o platter esquerdo gira de 90° em 90° (¼ de volta = 90°, sempre no próximo múltiplo de 90° contado do início da rotação); 3º clique confirma | o número pisca no modo 90° | ✔ | ✔ |
+| 24b | 1 / 2 / 3 / 4, 2º clique durante uma rotação | modo 90° ("tombo"): o objeto encaixa no ângulo absoluto mais próximo (0/90/180/270°) naquele eixo e o mouse é ignorado; cada ¼ de volta do platter = exatamente ±90°; outro número troca o eixo mantendo o modo 90° (a rotação do eixo anterior fica); 3º clique confirma. No Edit Mode e no eixo livre, os 90° contam do início | o número pisca no modo 90° | ✔ | ✔ |
 | 25 | SHIFT + platter esquerdo, cage ligada | troca o ponto fixo entre os 27 pontos da caixa (centro, faces, arestas, cantos); uma volta passa por todos; caixa e ponto desenhados no viewport | — | ✔ | ✔ (caixa dos vértices) |
 | 26 | CUP | Clear Location | aceso 2 s se funcionou | ✔ | — |
 | 27 | CUE | Clear Rotation | aceso 2 s se funcionou | ✔ | — |

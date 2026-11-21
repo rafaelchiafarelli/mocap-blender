@@ -266,6 +266,8 @@ def request(what, **kw):
         raise RuntimeError("no grab running")
     if what == "axis":
         _running["axis"] = kw["axis"]
+        if _running["mode"] == "ROTATE":  # keep what was turned on the old axis
+            _running["rebase"] = True
     elif what == "push":
         _running["pushes"].append((kw["amount"], kw.get("along", "right")))
     else:
@@ -320,6 +322,7 @@ class CONTROLSURFACE_OT_grab(bpy.types.Operator):
         self.push_move = Vector()
         self.push_scale = 1.0
         self.push_angle = 0.0
+        self.snap = None  # the 90° mode's angle, or None
         self.shared = _running = {"axis": self.axis, "mode": self.mode, "pushes": [], "end": None,
                                   "rebase": False}
         self.timer = context.window_manager.event_timer_add(TIMER_S, window=context.window)
@@ -360,6 +363,9 @@ class CONTROLSURFACE_OT_grab(bpy.types.Operator):
         self.pivot = self._pivot()
         self.mouse0 = self.mouse
         self.push_move, self.push_scale, self.push_angle = Vector(), 1.0, 0.0
+        if self.snap is not None:  # 90° mode goes on on the new axis, aligned to it
+            self.snap = None
+            self._snap_to_grid()
         self.shared["rebase"] = False
 
     def _mouse(self, event):
@@ -409,7 +415,9 @@ class CONTROLSURFACE_OT_grab(bpy.types.Operator):
             rot_axis = toward_viewer if axis == "FREE" else AXES[axis]
             angle = self.push_angle
             c = self._pivot_2d()
-            if moved and c is not None and min((self.mouse0 - c).length, (self.mouse - c).length) > 1:
+            if self.snap is not None:  # 90° mode: the mouse is ignored
+                angle = self.snap
+            elif moved and c is not None and min((self.mouse0 - c).length, (self.mouse - c).length) > 1:
                 a = math.atan2(*(self.mouse - c).yx) - math.atan2(*(self.mouse0 - c).yx)
                 # Counter-clockwise on screen turns counter-clockwise as seen by the viewer.
                 angle += a if rot_axis.dot(toward_viewer) >= 0 else -a
@@ -445,17 +453,31 @@ class CONTROLSURFACE_OT_grab(bpy.types.Operator):
             angle += a if rot_axis.dot(toward_viewer) >= 0 else -a
         return angle
 
-    def _take_tips(self):
-        """Tip over: the total angle to the next multiple of 90° (per tip),
-        counted from the rotation's start."""
-        n = self.shared.pop("tips", 0)
-        if not n or self.shared["mode"] != "ROTATE":
-            return
+    def _start_angle_on_axis(self):
+        """The rotation the objects already have on the current global axis
+        (the first object's world Euler), so the 90° mode lands on 0/90/180/270
+        in absolute terms. Edit Mode and the free axis have no such reference: 0."""
+        axis = self.shared["axis"]
+        if self.edit or axis == "FREE" or not self.objs:
+            return 0.0
+        return self.start[self.objs[0].name][2].to_euler("XYZ")["XYZ".index(axis)]
+
+    def _snap_to_grid(self):
+        """Turn the 90° mode on (or re-align it after an axis change): the
+        angle to the nearest absolute multiple of 90°."""
         quarter = math.pi / 2
-        now = self._rotation_angle()
-        k = math.floor(now / quarter + 1e-6) + 1 if n > 0 else math.ceil(now / quarter - 1e-6) - 1
-        k += n - 1 if n > 0 else n + 1
-        self.push_angle += k * quarter - now
+        a0 = self._start_angle_on_axis()
+        self.snap = round((a0 + self._rotation_angle()) / quarter) * quarter - a0
+
+    def _take_tips(self):
+        """90° mode: on entering it, snap to the nearest multiple of 90°; then
+        every tip turns exactly ±90°."""
+        if not self.shared.get("snap") or self.shared["mode"] != "ROTATE":
+            return
+        if self.snap is None:
+            self._snap_to_grid()
+        n = self.shared.pop("tips", 0)
+        self.snap += n * math.pi / 2
 
     def _end(self, context, confirm):
         global _running
