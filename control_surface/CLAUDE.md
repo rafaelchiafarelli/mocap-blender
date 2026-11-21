@@ -197,7 +197,7 @@ Blender state → LED messages to the controller.
       SYNC on, else right); SYNC on → up/down, SYNC blinking → right/left
       (`camera_move` in camera view, else `view_move`); SYNC off → nothing;
     - buttons 1–4 → free/X/Y/Z: the running axis's button → `grab_confirm`;
-      during a grab → `grab_axis`; else `grab_start` with `SCALE` (RE on)
+      during a grab → `grab_axis`; else `grab_start` with `SCALE`
       (`scale_mode` ARMED) or `MOVE`; each LED is on while `grab_axis` is
       its axis.
 - `tools/` — hardware test scripts, run in the pinned Blender with the add-on
