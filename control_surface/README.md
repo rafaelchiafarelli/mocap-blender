@@ -3,7 +3,7 @@
 The DJ-Tech 4-Mix as an extension of Blender's interface: its controls run
 Blender commands, its LEDs show Blender's state. The add-on code is described
 file by file in [`CLAUDE.md`](CLAUDE.md); this page is the quick start for the
-next change. State on 2026-11-20: version 0.1.29, installed in the portable
+next change. State on 2026-11-20: version 0.1.30, installed in the portable
 Blender on G:.
 
 ## Use it
@@ -63,7 +63,7 @@ All of this comes from [`mappings/blender_modes.json`](mappings/blender_modes.js
 | SHIFT + CUP (deck C) | Apply Location (Ctrl+A) | lit 2 s after it worked |
 | SHIFT + CUE (deck C) | Apply Rotation | lit 2 s after it worked |
 | SHIFT + PLAY/PAUSE (deck C) | Apply Scale | lit 2 s after it worked |
-| OUT (deck C) | deletes the selected objects (no confirmation; a running grab is confirmed first) | lit 2 s after it worked |
+| OUT (deck C) | deletes the selected objects; Edit Mode: vertices/edges/faces by the select mode (no confirmation; a running grab is confirmed first) | lit 2 s after it worked |
 | IN (deck A) | opens the Add menu (Shift+A) drawn in the viewport; on a submenu: enters it; on an item: adds it (at the 3D Cursor) and closes | on while the menu is open |
 | Left platter (deck A), menu open | moves through the items (~14 pulses per item) | — |
 | OUT (deck A), menu open | one level back; at the top: closes | — |
@@ -168,6 +168,12 @@ The fixed point is one of 27 points of the selection's world-axis bounding
 box; e.g. the −X face centre + button 2 stretches only towards +X. Changing
 the point during a scale/rotation goes on from where the objects are. The
 cage lasts while its tool is on.
+
+**Edit Mode (mesh):** deck C's 1–4, RE, IN, the cage and the left platter
+work on the selected vertices of every mesh in Edit Mode (pivot: their
+median; cage: their box). OUT deletes vertices / edges / faces by the select
+mode. CUP/CUE/PLAY (clear/apply) exist only in Object Mode: in Edit Mode
+they fail into the panel and their LED stays dark.
 
 **One tool at a time per deck:** SYNC, move (1–4), scale (RE) and rotate
 (IN). Turning one on turns the others off and confirms a running grab.

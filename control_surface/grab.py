@@ -21,6 +21,7 @@ running grab.
 
 import math
 
+import bmesh
 import bpy
 import gpu
 from bpy_extras import view3d_utils
@@ -48,10 +49,26 @@ _draw_handle = None
 
 # --- Cage: a fixed point on the selection's box for SCALE / ROTATE ---------
 
+def _edit_selection():
+    """[(object, bmesh, selected verts)] of the meshes in Edit Mode."""
+    out = []
+    for o in bpy.context.objects_in_mode_unique_data:
+        if o.type == "MESH":
+            bm = bmesh.from_edit_mesh(o.data)
+            verts = [v for v in bm.verts if v.select]
+            if verts:
+                out.append((o, bm, verts))
+    return out
+
+
 def _cage_points():
     """27 points of the selection's world-axis bounding box: centre, 6 face
-    centres, 12 edge midpoints, 8 corners (in that order)."""
-    corners = [o.matrix_world @ Vector(c) for o in bpy.context.selected_objects for c in o.bound_box]
+    centres, 12 edge midpoints, 8 corners (in that order). In Edit Mode the
+    box of the selected vertices, else of the selected objects."""
+    if bpy.context.mode == "EDIT_MESH":
+        corners = [o.matrix_world @ v.co for o, _, verts in _edit_selection() for v in verts]
+    else:
+        corners = [o.matrix_world @ Vector(c) for o in bpy.context.selected_objects for c in o.bound_box]
     if not corners:
         return []
     lo = Vector([min(c[i] for c in corners) for i in range(3)])
@@ -229,7 +246,8 @@ def request(what, **kw):
 class CONTROLSURFACE_OT_grab(bpy.types.Operator):
     bl_idname = "control_surface.grab"
     bl_label = "Grab / Scale / Rotate (control surface)"
-    bl_description = "Move, scale or rotate the selected objects with the mouse and the controller"
+    bl_description = ("Move, scale or rotate the selected objects (Edit Mode: the selected vertices) "
+                      "with the mouse and the controller")
     bl_options = {"REGISTER", "UNDO", "BLOCKING"}
 
     mode: bpy.props.EnumProperty(items=[(m, m.title(), "") for m in ("MOVE", "SCALE", "ROTATE")])
@@ -237,10 +255,10 @@ class CONTROLSURFACE_OT_grab(bpy.types.Operator):
 
     @classmethod
     def poll(cls, context):
-        if context.mode != "OBJECT":
-            cls.poll_message_set("grab/scale/rotate works in Object Mode only")
+        if context.mode not in ("OBJECT", "EDIT_MESH"):
+            cls.poll_message_set("grab/scale/rotate works in Object Mode and mesh Edit Mode")
             return False
-        if not context.selected_objects:
+        if context.mode == "OBJECT" and not context.selected_objects:
             cls.poll_message_set("select an object first")
             return False
         return context.region_data is not None
@@ -251,9 +269,17 @@ class CONTROLSURFACE_OT_grab(bpy.types.Operator):
             self.report({"WARNING"}, "a grab is already running")
             return {"CANCELLED"}
         context.view_layer.update()  # matrix_world current after a grab that just ended
-        self.objs = list(context.selected_objects)
-        self.start = {o.name: (o.matrix_world.translation.copy(), o.scale.copy(), o.matrix_world.copy())
-                      for o in self.objs}
+        self.edit = context.mode == "EDIT_MESH"
+        if self.edit:
+            self.meshes = _edit_selection()
+            if not self.meshes:
+                self.report({"WARNING"}, "select some vertices first")
+                return {"CANCELLED"}
+            self.objs = []
+        else:
+            self.objs = list(context.selected_objects)
+        self._take_start()
+        self.orig = (self.start, self.vstart)  # what Esc restores, even after a rebase
         self.pivot = self._pivot()
         self.region, self.rv3d = context.region, context.region_data
         # The mouse start is its first real move: invoked from the controller's
@@ -269,19 +295,37 @@ class CONTROLSURFACE_OT_grab(bpy.types.Operator):
         context.window_manager.modal_handler_add(self)
         return {"RUNNING_MODAL"}
 
+    def _take_start(self):
+        """Objects: origin, scale, matrix. Edit Mode: each selected vertex's world position."""
+        self.start = {o.name: (o.matrix_world.translation.copy(), o.scale.copy(), o.matrix_world.copy())
+                      for o in self.objs}
+        self.vstart = ([[o.matrix_world @ v.co for v in verts] for o, _, verts in self.meshes]
+                       if self.edit else [])
+
     def _pivot(self):
-        """The cage point (scale/rotate with the cage on), else the median of the origins."""
+        """The cage point (scale/rotate with the cage on), else the median of the
+        origins (Object Mode) or of the selected vertices (Edit Mode)."""
         if self.mode in ARMABLE and cage_on():
             p = cage_point()
             if p is not None:
                 return p
+        if self.edit:
+            pts = [w for ws in self.vstart for w in ws]
+            return sum(pts, Vector()) / len(pts)
         return sum((s[0] for s in self.start.values()), Vector()) / len(self.objs)
 
+    def _set_verts(self, world_of):
+        """Edit Mode: move every selected vertex to world_of(its start position)."""
+        for (o, bm, verts), starts in zip(self.meshes, self.vstart):
+            inv = o.matrix_world.inverted()
+            for v, w0 in zip(verts, starts):
+                v.co = inv @ world_of(w0)
+            bmesh.update_edit_mesh(o.data, loop_triangles=False, destructive=False)
+
     def _rebase(self, context):
-        """Go on from where the objects are now, around the current pivot."""
+        """Go on from where the objects/vertices are now, around the current pivot."""
         context.view_layer.update()
-        self.start = {o.name: (o.matrix_world.translation.copy(), o.scale.copy(), o.matrix_world.copy())
-                      for o in self.objs}
+        self._take_start()
         self.pivot = self._pivot()
         self.mouse0 = self.mouse
         self.push_move, self.push_scale, self.push_angle = Vector(), 1.0, 0.0
@@ -313,6 +357,8 @@ class CONTROLSURFACE_OT_grab(bpy.types.Operator):
                 d += self._plane_point(self.mouse) - self._plane_point(self.mouse0)
             if axis != "FREE":
                 d = AXES[axis] * d.dot(AXES[axis])
+            if self.edit:
+                self._set_verts(lambda w0: w0 + d)
             for o in self.objs:
                 self._set_world_location(o, self.start[o.name][0] + d)
         elif mode == "SCALE":
@@ -321,6 +367,8 @@ class CONTROLSURFACE_OT_grab(bpy.types.Operator):
             if moved and c is not None and (self.mouse0 - c).length > 1:
                 f *= (self.mouse - c).length / (self.mouse0 - c).length
             k = Vector((f, f, f)) if axis == "FREE" else Vector([f if a == axis else 1.0 for a in "XYZ"])
+            if self.edit:
+                self._set_verts(lambda w0: self.pivot + Vector([a * b for a, b in zip(w0 - self.pivot, k)]))
             for o in self.objs:
                 p0, s0, _ = self.start[o.name]
                 o.scale = Vector([a * b for a, b in zip(s0, k)])
@@ -336,6 +384,8 @@ class CONTROLSURFACE_OT_grab(bpy.types.Operator):
                 angle += a if rot_axis.dot(toward_viewer) >= 0 else -a
             m = (Matrix.Translation(self.pivot) @ Matrix.Rotation(angle, 4, rot_axis)
                  @ Matrix.Translation(-self.pivot))
+            if self.edit:
+                self._set_verts(lambda w0: m @ w0)
             for o in self.objs:
                 o.matrix_world = m @ self.start[o.name][2]
 
@@ -357,8 +407,11 @@ class CONTROLSURFACE_OT_grab(bpy.types.Operator):
         global _running
         context.window_manager.event_timer_remove(self.timer)
         if not confirm:
+            self.start, self.vstart = self.orig
             for o in self.objs:
                 o.matrix_world = self.start[o.name][2]
+            if self.edit:
+                self._set_verts(lambda w0: w0)
         if _running is self.shared:
             _running = None
         for area in context.window.screen.areas:

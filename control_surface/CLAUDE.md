@@ -103,7 +103,10 @@ Blender state → LED messages to the controller.
   controller's pushes, ends on click/Enter/right click/Esc or
   `request("confirm")`, which detaches the grab at once so another can start
   right away. Rotation: the mouse's angle around the pivot (free: the view
-  axis). Places objects through `location` (parent-aware),
+  axis). Mesh Edit Mode (task 27): the targets are the selected vertices of
+  `objects_in_mode_unique_data` through `bmesh` (`_edit_selection`,
+  `_set_verts`), pivot their median, the cage their box; Esc restores the
+  start even after a cage rebase (`self.orig`). Places objects through `location` (parent-aware),
   not `matrix_world`, which is stale right after a scale change. `state()`
   feeds the `grabbing`/`grab_axis` states.
 - `add_menu.py` — the Add menu on deck A (task 26): `read_menu` calls the
@@ -198,7 +201,8 @@ Blender state → LED messages to the controller.
     on while it is open.
   - **OUT** (task 25) → `delete_selected`: `grab.end_tools()` first (a
     running grab must not hold deleted objects), then `object.delete`
-    without confirmation; `flash_ms` 2000.
+    without confirmation (Edit Mode: `mesh.delete` by the select mode,
+    task 27); `flash_ms` 2000.
   - **CUE D:** unbound (the Properties editor rule was cancelled).
   - **VINYL MODE R/B and R/D** → `orbit_selection_toggle`; their LED blinks
     200/200 ms while Orbit Around Selection is on.

@@ -208,9 +208,13 @@ def move_start(axis):
 
 
 def delete_selected():
-    """Delete the selected objects (no confirmation, like X > Delete). The deck's
-    tools end first: a running grab must not hold deleted objects."""
+    """Delete the selected objects (no confirmation, like X > Delete); in mesh
+    Edit Mode the selected vertices / edges / faces, by the select mode. The
+    deck's tools end first: a running grab must not hold deleted data."""
     grab.end_tools()
+    if bpy.context.mode == "EDIT_MESH":
+        vert, edge, face = bpy.context.tool_settings.mesh_select_mode
+        return run_operator("mesh.delete", {"type": "FACE" if face else "EDGE" if edge else "VERT"})
     return run_operator("object.delete", {"use_global": False, "confirm": False})
 
 
