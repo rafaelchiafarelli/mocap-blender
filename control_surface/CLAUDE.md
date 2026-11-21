@@ -94,11 +94,13 @@ Blender state → LED messages to the controller.
   - A blink's phase restarts only when its look changes (`leds.py:18`).
   - `resend()` (`leds.py:40`) forgets what was sent, so the next tick sends
     every LED again.
-- `grab.py` — the add-on's own modal grab/scale (`control_surface.grab`,
-  task 18): follows the mouse like G/S (the start is the first real mouse
+- `grab.py` — the add-on's own modal grab/scale/rotate
+  (`control_surface.grab`, tasks 18–20) and the deck's tool state: follows the mouse like G/S (the start is the first real mouse
   move, since an invoke from the timer may carry a stale position), adds the
   controller's pushes, ends on click/Enter/right click/Esc or
-  `request("confirm")`. Places objects through `location` (parent-aware),
+  `request("confirm")`, which detaches the grab at once so another can start
+  right away. Rotation: the mouse's angle around the pivot (free: the view
+  axis). Places objects through `location` (parent-aware),
   not `matrix_world`, which is stale right after a scale change. `state()`
   feeds the `grabbing`/`grab_axis` states.
 - `knob_select.py` — `pick(n, anchor, value)`: the object index for a
@@ -187,19 +189,20 @@ Blender state → LED messages to the controller.
     is on while the camera view is on.
   - **Deck C** (task 18; the right platter and decks A, B, D are free).
     One platter step = `step` metres per message, whatever the speed:
-    - toggle `sync_c` (SYNC: `off`/`on`/`blink`, LED on/blinking);
-    - RE → `scale_toggle` (task 19): off → arms scale and starts a free
-      scale; on → disarms (a running scale is confirmed). State
-      `scale_mode` (`grab.scale_mode`): `RUNNING` (LED on), `ARMED` (LED
-      blinking; 1–4 start scales), `OFF`. An armed scale turns off when the
-      selection differs from the one it was armed with;
-    - left platter: during a grab → `grab_push` (free grab: `along` up with
-      SYNC on, else right); SYNC on → up/down, SYNC blinking → right/left
-      (`camera_move` in camera view, else `view_move`); SYNC off → nothing;
+    - **one tool at a time** (task 20, `grab.py`): SYNC (`sync_cycle`,
+      state `sync_mode` off/on/blink), move (`move_start`), scale (RE,
+      `tool_toggle` SCALE) and rotate (IN, `tool_toggle` ROTATE). Turning
+      one on calls `grab.end_tools`: the others off, a running grab
+      confirmed. Scale/rotate stay armed after their grab (`scale_mode` /
+      `rotate_mode`: `RUNNING` LED on, `ARMED` blinking, `OFF`) until the
+      selection changes;
+    - left platter: during a grab → `grab_push` (move: along the axis, free
+      = view right; scale ×(1 ± step); rotate ± step × 100 degrees); SYNC
+      on → up/down, blinking → right/left (`camera_move` in camera view,
+      else `view_move`); SYNC off → nothing;
     - buttons 1–4 → free/X/Y/Z: the running axis's button → `grab_confirm`;
-      during a grab → `grab_axis`; else `grab_start` with `SCALE`
-      (`scale_mode` ARMED) or `MOVE`; each LED is on while `grab_axis` is
-      its axis.
+      during a grab → `grab_axis`; scale/rotate armed → `grab_start` of it;
+      else `move_start`; each LED is on while `grab_axis` is its axis.
 - `tools/` — hardware test scripts, run in the pinned Blender with the add-on
   disconnected (usage at the top of each):
   - `probe_echo.py` echoes every message back to the controller and logs it

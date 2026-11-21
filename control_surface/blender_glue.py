@@ -70,7 +70,9 @@ def _grab_axis():
 
 STATES = {
     "grabbing": lambda: grab.state() is not None,
-    "scale_mode": grab.scale_mode,
+    "scale_mode": lambda: grab.tool_mode("SCALE"),
+    "rotate_mode": lambda: grab.tool_mode("ROTATE"),
+    "sync_mode": grab.sync_mode,
     "grab_axis": _grab_axis,
     "object_mode": _object_mode, "view_perspective": _view_perspective,
     "view_axis": _view_axis, "orbit_selection": _orbit_selection,
@@ -177,22 +179,30 @@ def grab_start(mode="MOVE", axis="FREE"):
     return run_operator("control_surface.grab", {"mode": mode, "axis": axis}, "INVOKE_DEFAULT")
 
 
-def scale_toggle():
-    """RE: scale off -> on, starting a free scale at once; on -> off (a
-    running scale is confirmed)."""
-    if grab.scale_mode() != "OFF":
-        if grab.state() is not None and grab.state()["mode"] == "SCALE":
-            grab.request("confirm")
-        grab.scale_disarm()
+def tool_toggle(mode):
+    """RE (SCALE) / IN (ROTATE): off -> the other tools off, this one armed,
+    and a free grab of it starts at once; on -> off (a running grab is
+    confirmed)."""
+    if grab.tool_mode(mode) != "OFF":
+        grab.end_tools()
         return {"FINISHED"}
-    result = grab_start("SCALE", "FREE")
+    grab.end_tools()
+    result = grab_start(mode, "FREE")
     if "RUNNING_MODAL" in result:
-        grab.scale_arm()
+        grab.arm(mode)
     return result
 
 
+def move_start(axis):
+    """1-4 with no tool armed: a move grab; the other tools go off."""
+    grab.end_tools()
+    return grab_start("MOVE", axis)
+
+
 ACTIONS = {
-    "scale_toggle": scale_toggle,
+    "tool_toggle": tool_toggle,
+    "move_start": move_start,
+    "sync_cycle": lambda: grab.sync_cycle(),
     "grab_start": grab_start,
     "grab_confirm": lambda: grab.request("confirm"),
     "grab_axis": lambda axis: grab.request("axis", axis=axis),

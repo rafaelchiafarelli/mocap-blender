@@ -12,15 +12,16 @@ MODES = ROOT / "mappings" / "blender_modes.json"
 # Test mapping: the bundled bindings plus mode LEDs on CUE A-D (A-D have no LED).
 CUE_LEDS = Path(__file__).resolve().parent / "data" / "modes_cue_leds.json"
 A_LED, B_LED = (0x90, 0x27), (0x90, 0x28)  # CUE A, CUE B
-BUNDLED_ACTIONS = {"scale_toggle", "grab_start", "grab_confirm", "grab_axis", "grab_push", "select_by_knob", "camera_move", "view_move", "view_projection", "orbit_selection_toggle"}
-BUNDLED_STATES = {"scale_mode", "grabbing", "grab_axis", "object_mode", "view_axis", "view_perspective", "orbit_selection"}
+BUNDLED_ACTIONS = {"tool_toggle", "move_start", "sync_cycle", "grab_start", "grab_confirm", "grab_axis", "grab_push", "select_by_knob", "camera_move", "view_move", "view_projection", "orbit_selection_toggle"}
+BUNDLED_STATES = {"rotate_mode", "sync_mode", "scale_mode", "grabbing", "grab_axis", "object_mode", "view_axis", "view_perspective", "orbit_selection"}
 
 
 class FakeBlender:
     def __init__(self):
         self.mode = "OBJECT"
         self.view = {"view_axis": "NONE", "view_perspective": "PERSP", "orbit_selection": False,
-                     "grabbing": False, "grab_axis": "NONE", "scale_mode": "OFF"}
+                     "grabbing": False, "grab_axis": "NONE", "scale_mode": "OFF",
+                     "rotate_mode": "OFF", "sync_mode": "off"}
         self.actions = []
         self.calls = []
         self.contexts = []
@@ -41,6 +42,9 @@ class FakeBlender:
 
     def act(self, name, args):
         self.actions.append((name, args))
+        if name == "sync_cycle":
+            vals = ["off", "on", "blink"]
+            self.view["sync_mode"] = vals[(vals.index(self.view["sync_mode"]) + 1) % 3]
         if name == "orbit_selection_toggle":
             self.view["orbit_selection"] = not self.view["orbit_selection"]
 
@@ -185,16 +189,17 @@ def test_bundled_sync_cycles_vertical_horizontal_off(persp, action):
     e, fb, sent = make_bundled()
     fb.view["view_perspective"] = persp
     press(e, SYNC_C)
-    assert e.toggles["sync_c"] == "on"
+    assert fb.view["sync_mode"] == "on"
     e.handle(0xB3, 0x0F, 0x41)
     e.handle(0xB3, 0x0F, 0x3F)
     press(e, SYNC_C)
-    assert e.toggles["sync_c"] == "blink"
+    assert fb.view["sync_mode"] == "blink"
     e.handle(0xB3, 0x0F, 0x45)  # fast turn: same step
     press(e, SYNC_C)
-    assert e.toggles["sync_c"] == "off"
+    assert fb.view["sync_mode"] == "off"
     e.handle(0xB3, 0x0F, 0x41)
-    assert fb.actions == [(action, {"y": 0.01}), (action, {"y": -0.01}), (action, {"x": 0.01})]
+    moves = [a for a in fb.actions if a[0] != "sync_cycle"]
+    assert moves == [(action, {"y": 0.01}), (action, {"y": -0.01}), (action, {"x": 0.01})]
 
 
 def test_bundled_sync_and_re_leds():
@@ -218,7 +223,8 @@ def test_bundled_number_buttons_start_grab_or_scale(axis, scale, mode):
     if scale:
         fb.view["scale_mode"] = "ARMED"
     press(e, (0x93, NUM_C[axis]))
-    assert fb.actions == [("grab_start", {"mode": mode, "axis": axis})]
+    expected = ("grab_start", {"mode": mode, "axis": axis}) if scale else ("move_start", {"axis": axis})
+    assert fb.actions == [expected]
 
 
 def test_bundled_while_grabbing_same_button_confirms_other_changes_axis_and_platter_pushes():
@@ -231,9 +237,9 @@ def test_bundled_while_grabbing_same_button_confirms_other_changes_axis_and_plat
     e.handle(0xB3, 0x0F, 0x3F)
     press(e, SYNC_C)
     e.handle(0xB3, 0x0F, 0x41)
-    assert fb.actions == [("grab_axis", {"axis": "Y"}), ("grab_confirm", {}),
-                          ("grab_push", {"amount": -0.01, "along": "right"}),
-                          ("grab_push", {"amount": 0.01, "along": "up"})]
+    assert [a for a in fb.actions if a[0] != "sync_cycle"] == [
+        ("grab_axis", {"axis": "Y"}), ("grab_confirm", {}),
+        ("grab_push", {"amount": -0.01}), ("grab_push", {"amount": 0.01})]
     fb.view.update(grabbing=False, grab_axis="NONE")
     fb.now = 20
     e.update()
@@ -398,7 +404,7 @@ def test_s1_vol_scales_the_step_from_1_to_10_cm():
     e.handle(0xB0, 0x01, 64)   # about half way
     fb.view["view_perspective"] = "CAMERA"
     e.handle(0xB0, 0x1F, 0x41)  # encoder dolly
-    assert approx_actions(fb.actions) == [
+    assert approx_actions([a for a in fb.actions if a[0] != "sync_cycle"]) == [
         ("view_move", {"y": 0.1}), ("view_move", {"x": -0.01}),
         ("camera_move", {"forward": round(0.01 + 0.09 * 64 / 127, 6)}),
     ]
@@ -572,7 +578,8 @@ def test_deck_learned_from_a_channel_plays_no_animation():
 def test_bundled_re_toggles_scale_and_blinks_while_armed():
     e, fb, sent = make_bundled()
     press(e, RE_C)
-    assert fb.actions == [("scale_toggle", {})]
+    press(e, (0x93, 0x02))  # IN
+    assert fb.actions == [("tool_toggle", {"mode": "SCALE"}), ("tool_toggle", {"mode": "ROTATE"})]
     fb.view["scale_mode"] = "ARMED"
     for t in range(0, 600, 20):
         fb.now = t

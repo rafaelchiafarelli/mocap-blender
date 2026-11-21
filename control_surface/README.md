@@ -3,7 +3,7 @@
 The DJ-Tech 4-Mix as an extension of Blender's interface: its controls run
 Blender commands, its LEDs show Blender's state. The add-on code is described
 file by file in [`CLAUDE.md`](CLAUDE.md); this page is the quick start for the
-next change. State on 2026-11-20: version 0.1.15, installed in the portable
+next change. State on 2026-11-20: version 0.1.16, installed in the portable
 Blender on G:.
 
 ## Use it
@@ -42,12 +42,13 @@ All of this comes from [`mappings/blender_modes.json`](mappings/blender_modes.js
 | Encoder (PRESS TO ENTER), turn | zoom in (right) / out (left); in camera view: dolly the camera forward/back by `step` | — |
 | Encoder, press | toggle the camera view | on while in camera view |
 | S1 VOL | sets `step`: 1 cm (bottom) to 10 cm (top); 1 cm until moved | — |
-| SYNC (deck C) | cycles off → on → blinking → off; sets what the left platter does | on / blinking |
+| SYNC (deck C) | cycles off → on → blinking → off; sets what the left platter does; on turns the other tools off | on / blinking |
 | Left platter, deck C, SYNC on | view up/down by `step`; in camera view: camera up/down | — |
 | Left platter, deck C, SYNC blinking | view right/left by `step`; in camera view: camera right/left | — |
-| RE (deck C) | scale on: starts a free scale at once (button 1 lit); scale off (a running scale is confirmed) | on while a scale runs; blinking while scale is on with no grab |
-| 1 / 2 / 3 / 4 (deck C) | grab (or scale while RE blinks): free / X / Y / Z; the same button again confirms; another one changes the axis | on while that grab runs |
-| Left platter, deck C, during a grab | pushes by `step` along the axis (free: view up with SYNC on, else view right); scale: ×(1 ± `step`) | — |
+| RE (deck C) | scale on: the other tools off, a free scale starts at once (button 1 lit); scale off (a running scale is confirmed) | on while a scale runs; blinking while scale is on with no grab |
+| IN (deck C) | rotation, the same logic as RE | on while a rotation runs; blinking while armed |
+| 1 / 2 / 3 / 4 (deck C) | move (or scale while RE blinks, rotate while IN blinks): free / X / Y / Z; a move turns the other tools off; the same button again confirms; another one changes the axis | on while that grab runs |
+| Left platter, deck C, during a grab | move: pushes by `step` along the axis (free: view right); scale: ×(1 ± `step`); rotate: ±1–10° (`step` × 100) | — |
 | Right platter | nothing (free) | — |
 | Deck switch | plays an animation on that deck's LEDs, then the LEDs show the state again | — |
 
@@ -91,7 +92,8 @@ All of this comes from [`mappings/blender_modes.json`](mappings/blender_modes.js
   (`true`/`false`);
 - from the controller: `deck_left` (`A`/`C`), `deck_right` (`B`/`D`),
   `shift_left`, `shift_right` (`true`/`false`);
-- from the add-on: `scale_mode` (`OFF`, `ARMED`, `RUNNING`), `grabbing` (`true`/`false`), `grab_axis` (`NONE`,
+- from the add-on: `sync_mode` (`off`, `on`, `blink`), `scale_mode` and
+  `rotate_mode` (`OFF`, `ARMED`, `RUNNING`), `grabbing` (`true`/`false`), `grab_axis` (`NONE`,
   `FREE`, `X`, `Y`, `Z`), and every toggle.
 
 **An LED** goes under `indicators`:
@@ -140,7 +142,10 @@ Enter confirms, right click / Esc cancels. No snapping or typed values (use
 G/S on the keyboard for that). Object Mode, every selected object, scale
 around their median point.
 
-**Scale stays on** after a scale ends (RE blinking), until RE is pressed or
+**One tool at a time per deck:** SYNC, move (1–4), scale (RE) and rotate
+(IN). Turning one on turns the others off and confirms a running grab.
+
+**Scale and rotate stay on** after their grab ends (RE blinking), until RE is pressed or
 the selection changes (another object, or none): then RE goes off.
 
 **Toggles** (`toggles` in the mapping): a button that steps through values
