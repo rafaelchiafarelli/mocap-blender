@@ -1,4 +1,4 @@
-# DJ-Tech 4-Mix no Blender — ações (add-on control_surface 0.1.31)
+# DJ-Tech 4-Mix no Blender — ações (add-on control_surface 0.1.32)
 
 Atualizado em 2026-11-21. "Object" e "Edit" indicam o modo do Blender em que a
 ação funciona; "—" = sem efeito nesse modo.
@@ -41,7 +41,8 @@ ação funciona; "—" = sem efeito nesse modo.
 | 22 | IN (rotação) | o mesmo ciclo do RE, para rotação | aceso ligado; piscando com cage | ✔ objetos | ✔ vértices |
 | 23 | 1 / 2 / 3 / 4 | grab livre / X / Y / Z (com RE ou IN ligado: scale ou rotação nesse eixo); mesmo botão de novo confirma; outro número troca o eixo; o mouse funciona como no G/S/R | aceso enquanto a operação roda | ✔ objetos | ✔ vértices |
 | 24 | Platter esquerdo, durante um grab | empurra pelo passo do S1 VOL (move no eixo; livre = horizontal da vista; scale; rotação) | — | ✔ | ✔ |
-| 25 | SHIFT + platter esquerdo, cage ligada | troca o ponto fixo entre os 27 pontos da caixa (centro, faces, arestas, cantos); uma volta passa por todos; caixa e ponto desenhados no viewport | — | ✔ | ✔ (caixa dos vértices) |
+| 24b | SHIFT + platter esquerdo, durante uma rotação | "tombo": a cada ¼ de volta do platter, o ângulo pula para o próximo múltiplo de 90° contado do início da rotação | — | ✔ | ✔ |
+| 25 | SHIFT + platter esquerdo, cage ligada e sem rotação rodando | troca o ponto fixo entre os 27 pontos da caixa (centro, faces, arestas, cantos); uma volta passa por todos; caixa e ponto desenhados no viewport | — | ✔ | ✔ (caixa dos vértices) |
 | 26 | CUP | Clear Location | aceso 2 s se funcionou | ✔ | — |
 | 27 | CUE | Clear Rotation | aceso 2 s se funcionou | ✔ | — |
 | 28 | PLAY/PAUSE | Clear Scale | aceso 2 s se funcionou | ✔ | — |

@@ -12,7 +12,7 @@ MODES = ROOT / "mappings" / "blender_modes.json"
 # Test mapping: the bundled bindings plus mode LEDs on CUE A-D (A-D have no LED).
 CUE_LEDS = Path(__file__).resolve().parent / "data" / "modes_cue_leds.json"
 A_LED, B_LED = (0x90, 0x27), (0x90, 0x28)  # CUE A, CUE B
-BUNDLED_ACTIONS = {"add_menu_toggle", "add_menu_step", "add_menu_back", "add_menu_cancel", "delete_selected", "cage_step", "tool_toggle", "move_start", "sync_cycle", "grab_start", "grab_confirm", "grab_axis", "grab_push", "select_by_knob", "camera_move", "view_move", "view_projection", "orbit_selection_toggle"}
+BUNDLED_ACTIONS = {"rotate_tip", "add_menu_toggle", "add_menu_step", "add_menu_back", "add_menu_cancel", "delete_selected", "cage_step", "tool_toggle", "move_start", "sync_cycle", "grab_start", "grab_confirm", "grab_axis", "grab_push", "select_by_knob", "camera_move", "view_move", "view_projection", "orbit_selection_toggle"}
 BUNDLED_STATES = {"add_menu", "cage", "rotate_mode", "sync_mode", "scale_mode", "grabbing", "grab_axis", "object_mode", "view_axis", "view_perspective", "orbit_selection"}
 
 
@@ -728,3 +728,14 @@ def test_bundled_deck_a_add_menu_in_platter_out():
     assert led_values(sent, (0x91, 0x02))[-1] == LED_ON
     out = led_values(sent, (0x91, 0x03))  # OUT blinks while the menu is open
     assert LED_ON in out[-3:] and LED_OFF in out[-3:]
+
+
+def test_bundled_shift_platter_tips_during_a_rotation_else_steps_the_cage():
+    e, fb, _ = make_bundled()
+    fb.view.update(rotate_mode="RUNNING", cage=True)
+    e.handle(0xB3, 0x4F, 0x41)
+    e.handle(0xB3, 0x4F, 0x3F)
+    fb.view.update(rotate_mode="ARMED")
+    e.handle(0xB3, 0x4F, 0x41)
+    assert fb.actions == [("rotate_tip", {"pulses": 1}), ("rotate_tip", {"pulses": -1}),
+                          ("cage_step", {"delta": 1})]

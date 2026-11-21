@@ -235,6 +235,7 @@ ACTIONS = {
     "move_start": move_start,
     "sync_cycle": lambda: grab.sync_cycle(),
     "cage_step": lambda delta: grab.cage_step(delta),
+    "rotate_tip": lambda pulses: grab.rotate_tip(pulses),
     "grab_start": grab_start,
     "grab_confirm": lambda: grab.request("confirm"),
     "grab_axis": lambda axis: grab.request("axis", axis=axis),

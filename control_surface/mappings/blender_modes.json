@@ -534,6 +534,28 @@
   {
    "control": "PLATTER L/C+SHIFT",
    "event": "cw",
+   "action": "rotate_tip",
+   "args": {
+    "pulses": 1
+   },
+   "when": {
+    "rotate_mode": "RUNNING"
+   }
+  },
+  {
+   "control": "PLATTER L/C+SHIFT",
+   "event": "ccw",
+   "action": "rotate_tip",
+   "args": {
+    "pulses": -1
+   },
+   "when": {
+    "rotate_mode": "RUNNING"
+   }
+  },
+  {
+   "control": "PLATTER L/C+SHIFT",
+   "event": "cw",
    "action": "cage_step",
    "args": {
     "delta": 1

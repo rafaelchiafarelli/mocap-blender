@@ -234,6 +234,11 @@ Blender state → LED messages to the controller.
       bounding box (`_cage_points`: centre, faces, edges, corners), drawn
       by a `SpaceView3D` draw handler; SHIFT + left platter → `cage_step` (one point per ~14 pulses: one turn = 27 points)
       (state `cage`); a change during a grab rebases it (`_rebase`);
+    - **tip over** (task 29): SHIFT + left platter while a rotation runs →
+      `rotate_tip` (before the cage binding): every `PULSES_PER_TIP` (a
+      quarter platter turn, ~97 pulses) the total angle jumps to the next
+      multiple of 90° counted from the rotation's start
+      (`_take_tips`); Object and Edit Mode;
     - left platter: during a grab → `grab_push` (move: along the axis, free
       = view right; scale ×(1 ± step); rotate ± step × 100 degrees); SYNC
       on → up/down, blinking → right/left (`camera_move` in camera view,

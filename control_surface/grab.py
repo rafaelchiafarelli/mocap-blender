@@ -36,7 +36,8 @@ DEG_PER_PUSH_UNIT = 100.0
 # walks through all 27 cage points.
 PLATTER_PULSES_PER_TURN = 390
 CAGE_POINTS = 27
-PULSES_PER_CAGE_POINT = PLATTER_PULSES_PER_TURN / CAGE_POINTS  # a rotate push of `step` (0.01-0.10) = 1-10 degrees
+PULSES_PER_CAGE_POINT = PLATTER_PULSES_PER_TURN / CAGE_POINTS
+PULSES_PER_TIP = PLATTER_PULSES_PER_TURN / 4  # SHIFT + platter in a rotation: a quarter turn = 90°  # a rotate push of `step` (0.01-0.10) = 1-10 degrees
 ARMABLE = ("SCALE", "ROTATE")
 SYNC_VALUES = ("off", "on", "blink")
 
@@ -224,6 +225,23 @@ def sync_cycle():
     return {"FINISHED"}
 
 
+def rotate_tip(pulses):
+    """SHIFT + platter during a rotation: every quarter platter turn, the total
+    angle jumps to the next multiple of 90° from where the rotation started
+    (a "tip over"); the mouse's share is absorbed."""
+    if _running is None or _running["mode"] != "ROTATE":
+        raise RuntimeError("no rotation running")
+    acc = _running.get("tip_acc", 0.0)
+    if acc * pulses < 0:
+        acc = 0.0
+    acc += pulses
+    n = int(acc / PULSES_PER_TIP)
+    _running["tip_acc"] = acc - n * PULSES_PER_TIP
+    if n:
+        _running["tips"] = _running.get("tips", 0) + n
+    return {"FINISHED"}
+
+
 def request(what, **kw):
     """From the controller: confirm / cancel / axis=<A> / push.
 
@@ -403,6 +421,29 @@ class CONTROLSURFACE_OT_grab(bpy.types.Operator):
                 self.push_move += (self.rv3d.view_rotation @ v) * amount
         self.shared["pushes"].clear()
 
+    def _rotation_angle(self):
+        """The rotation's total angle now (pushes + mouse), as _apply computes it."""
+        angle = self.push_angle
+        c = self._pivot_2d()
+        if self.mouse0 is not None and c is not None and min((self.mouse0 - c).length, (self.mouse - c).length) > 1:
+            toward_viewer = self.rv3d.view_rotation @ Vector((0, 0, 1))
+            rot_axis = toward_viewer if self.shared["axis"] == "FREE" else AXES[self.shared["axis"]]
+            a = math.atan2(*(self.mouse - c).yx) - math.atan2(*(self.mouse0 - c).yx)
+            angle += a if rot_axis.dot(toward_viewer) >= 0 else -a
+        return angle
+
+    def _take_tips(self):
+        """Tip over: the total angle to the next multiple of 90° (per tip),
+        counted from the rotation's start."""
+        n = self.shared.pop("tips", 0)
+        if not n or self.shared["mode"] != "ROTATE":
+            return
+        quarter = math.pi / 2
+        now = self._rotation_angle()
+        k = math.floor(now / quarter + 1e-6) + 1 if n > 0 else math.ceil(now / quarter - 1e-6) - 1
+        k += n - 1 if n > 0 else n + 1
+        self.push_angle += k * quarter - now
+
     def _end(self, context, confirm):
         global _running
         context.window_manager.event_timer_remove(self.timer)
@@ -434,6 +475,7 @@ class CONTROLSURFACE_OT_grab(bpy.types.Operator):
         if self.shared["rebase"]:
             self._rebase(context)
         self._take_pushes()
+        self._take_tips()
         self._apply()
         if context.area:
             context.area.tag_redraw()
