@@ -552,6 +552,24 @@
    "when": {
     "cage": true
    }
+  },
+  {
+   "control": "CUP L/C",
+   "event": "press",
+   "operator": "object.location_clear",
+   "flash_ms": 2000
+  },
+  {
+   "control": "CUE L/C",
+   "event": "press",
+   "operator": "object.rotation_clear",
+   "flash_ms": 2000
+  },
+  {
+   "control": "PLAY/PAUSE L/C",
+   "event": "press",
+   "operator": "object.scale_clear",
+   "flash_ms": 2000
   }
  ],
  "indicators": [

@@ -70,6 +70,9 @@ Blender state → LED messages to the controller.
   - **Deck animation** (task 18): a deck switch press plays `start_intro`
     on that deck's LEDs only (`_deck_animation`, from the layer's
     `channels`); a deck learned from a message's channel plays none.
+  - **Flash** (task 23): a binding's `flash_ms` lights its button's LED for
+    that long after it worked (not after an error or `CANCELLED`), over
+    the indicators (`Engine._flash`).
   - **`value` bindings** (task 16): an absolute control's value goes to an
     action as `value=` (validated: absolute control + action).
   - **`_fire()`** (`engine.py:231`) runs the operator or action and reports a
@@ -177,6 +180,9 @@ Blender state → LED messages to the controller.
       Front, Top), blinking 200/200 ms on the opposite side, off in any
       other view, so they go off once the view is orbited away.
   - **C FILTER** (`value`) → `select_by_knob`.
+  - **Deck C clears** (task 23): CUP → `object.location_clear`, CUE →
+    `object.rotation_clear`, PLAY/PAUSE → `object.scale_clear`, each with
+    `flash_ms` 2000.
   - **CUE D:** unbound (the Properties editor rule was cancelled).
   - **VINYL MODE R/B and R/D** → `orbit_selection_toggle`; their LED blinks
     200/200 ms while Orbit Around Selection is on.

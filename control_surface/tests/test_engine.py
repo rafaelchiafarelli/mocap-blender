@@ -367,7 +367,8 @@ def test_intro_lights_every_led_then_clears_and_holds_indicators():
     assert meters[0][2] > 0 and meters[-1][2] == 0 and max(m[2] for m in meters) == 127
     assert not e.intro_running
     # indicators were held during the intro and come back after it
-    assert sent[-1][:2] in {e.profile.led(i["control"]) for i in e.mapping.indicators}
+    assert sent[-1][:2] in {e.profile.led(r["control"])
+                            for r in e.mapping.indicators + [b for b in e.mapping.bindings if "flash_ms" in b]}
 
 
 def test_intro_holds_indicators_while_running():
@@ -648,3 +649,37 @@ def test_bundled_re_blinks_while_the_cage_is_on():
     fb.now = 1200
     e.update()
     assert led_values(sent, RE_C)[-1] == LED_ON
+
+
+@pytest.mark.parametrize("note, op", [(0x0A, "object.location_clear"), (0x0B, "object.rotation_clear"),
+                                      (0x0C, "object.scale_clear")])
+def test_bundled_deck_c_clears_and_its_led_stays_lit_for_2_s(note, op):
+    e, fb, sent = make_bundled()
+    e.update()
+    press(e, (0x93, note))
+    assert fb.calls == [(op, {})]
+    fb.now = 100
+    e.update()
+    assert led_values(sent, (0x93, note))[-1] == LED_ON
+    fb.now = 1990
+    e.update()
+    assert led_values(sent, (0x93, note))[-1] == LED_ON
+    fb.now = 2010
+    e.update()
+    assert led_values(sent, (0x93, note))[-1] == LED_OFF
+
+
+def test_flash_not_lit_when_the_operator_is_cancelled():
+    e, fb, sent = make_bundled()
+    e._run = lambda op, args, call="EXEC_DEFAULT": {"CANCELLED"}
+    e.update()
+    press(e, (0x93, 0x0A))
+    fb.now = 100
+    e.update()
+    assert LED_ON not in led_values(sent, (0x93, 0x0A))
+
+
+def test_flash_needs_an_led():
+    with pytest.raises(MappingError):
+        Mapping({"device": "dj_tech_4mix", "bindings": [
+            {"control": "A", "event": "press", "operator": "a.b", "flash_ms": 2000}]}).validate(PROFILE, set())

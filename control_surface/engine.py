@@ -13,7 +13,9 @@ Mapping JSON:
                                                # function given by the Blender side)
        "call": "EXEC_DEFAULT",                 # optional; INVOKE_DEFAULT for invoke-only
                                                # operators such as view3d.view_pan
-       "when": {"shift_left": false}}          # optional: every state must match
+       "when": {"shift_left": false},          # optional: every state must match
+       "flash_ms": 2000}                       # optional: after it succeeds, the button's
+                                               # LED stays lit this long, then indicators again
     ],
     "toggles": {                               # optional: a button steps through values
       "sync_c": {"control": "SYNC L/C", "values": ["off", "on", "blink"]}
@@ -109,6 +111,9 @@ class Mapping:
                 raise MappingError(f"binding {b['control']!r}: event 'value' needs an absolute control and an action")
             if "scale" in b and b["scale"] not in self.scales:
                 raise MappingError(f"binding {b['control']!r}: unknown scale {b['scale']!r}")
+            if "flash_ms" in b and (profile.led(b["control"]) is None
+                                    or not isinstance(b["flash_ms"], int) or b["flash_ms"] <= 0):
+                raise MappingError(f"binding {b['control']!r}: flash_ms needs a control with an LED and ms > 0")
             check_when(b, f"binding {b['control']!r}")
         for ind in self.indicators:
             cid = ind.get("control")
@@ -172,12 +177,13 @@ class Engine:
             else:
                 self.layers[name] = False
                 self._held[name] = set()
-        # Physical LEDs with indicators, in mapping order, no repeats.
+        # Physical LEDs with indicators or flashes, in mapping order, no repeats.
         self._leds = []
-        for ind in mapping.indicators:
-            addr = profile.led(ind["control"])
+        for rule in mapping.indicators + [b for b in mapping.bindings if "flash_ms" in b]:
+            addr = profile.led(rule["control"])
             if addr not in self._leds:
                 self._leds.append(addr)
+        self._flash = {}  # LED address -> clock ms until which it stays lit
 
     def state(self, name, cache=None):
         """A layer state, or a Blender state (cached per call site)."""
@@ -305,6 +311,9 @@ class Engine:
             # Blender only logs some failures (e.g. "Invalid operator call")
             # and returns {'CANCELLED'}: show them too.
             self.last_error = f"{cid} {event} -> {what}: cancelled"
+            return
+        if "flash_ms" in b:
+            self._flash[self.profile.led(cid)] = self._clock() + b["flash_ms"]
 
     def start_intro(self, leds=None):
         """Light every LED one by one (level meters rising), hold, then all off.
@@ -363,6 +372,11 @@ class Engine:
         cache = {}
         for addr in self._leds:
             look = None
+            if addr in self._flash:
+                if now < self._flash[addr]:
+                    self.leds.set(addr, ("on",), now)
+                    continue
+                del self._flash[addr]
             for ind in self.mapping.indicators:
                 if self.profile.led(ind["control"]) != addr:
                     continue

@@ -3,7 +3,7 @@
 The DJ-Tech 4-Mix as an extension of Blender's interface: its controls run
 Blender commands, its LEDs show Blender's state. The add-on code is described
 file by file in [`CLAUDE.md`](CLAUDE.md); this page is the quick start for the
-next change. State on 2026-11-20: version 0.1.25, installed in the portable
+next change. State on 2026-11-20: version 0.1.26, installed in the portable
 Blender on G:.
 
 ## Use it
@@ -57,6 +57,9 @@ All of this comes from [`mappings/blender_modes.json`](mappings/blender_modes.js
 | IN (deck C) | rotation, the same logic as RE | on while rotation is on (running or armed); blinking while the cage is on |
 | 1 / 2 / 3 / 4 (deck C) | move (or scale while RE is lit, rotate while IN is lit): free / X / Y / Z; a move turns the other tools off; the same button again confirms; another one changes the axis | on while that grab runs |
 | Left platter, deck C, during a grab | move: pushes by `step` along the axis (free: view right); scale: ×(1 ± `step`); rotate: ±1–10° (`step` × 100) | — |
+| CUP (deck C) | Clear Location (Alt+G) | lit 2 s after it worked |
+| CUE (deck C) | Clear Rotation (Alt+R) | lit 2 s after it worked |
+| PLAY/PAUSE (deck C) | Clear Scale (Alt+S) | lit 2 s after it worked |
 | Right platter | nothing (free) | — |
 | Deck switch | plays an animation on that deck's LEDs, then the LEDs show the state again | — |
 
@@ -90,6 +93,8 @@ All of this comes from [`mappings/blender_modes.json`](mappings/blender_modes.js
 - `when` (optional): every listed state must match. **The first matching
   binding wins** for one control event, so put the conditional one first and
   the "otherwise" one (without `when`) after it.
+- `flash_ms` (optional): after the binding worked, the button's LED stays
+  lit that long, then follows the indicators again (none → off).
 - `scale` (optional): the name of a `scales` entry. It multiplies the numeric
   `args` (use `1`/`-1` as directions).
 
