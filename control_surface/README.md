@@ -3,7 +3,7 @@
 The DJ-Tech 4-Mix as an extension of Blender's interface: its controls run
 Blender commands, its LEDs show Blender's state. The add-on code is described
 file by file in [`CLAUDE.md`](CLAUDE.md); this page is the quick start for the
-next change. State on 2026-11-20: version 0.1.26, installed in the portable
+next change. State on 2026-11-20: version 0.1.27, installed in the portable
 Blender on G:.
 
 ## Use it
@@ -60,6 +60,9 @@ All of this comes from [`mappings/blender_modes.json`](mappings/blender_modes.js
 | CUP (deck C) | Clear Location (Alt+G) | lit 2 s after it worked |
 | CUE (deck C) | Clear Rotation (Alt+R) | lit 2 s after it worked |
 | PLAY/PAUSE (deck C) | Clear Scale (Alt+S) | lit 2 s after it worked |
+| SHIFT + CUP (deck C) | Apply Location (Ctrl+A) | lit 2 s after it worked |
+| SHIFT + CUE (deck C) | Apply Rotation | lit 2 s after it worked |
+| SHIFT + PLAY/PAUSE (deck C) | Apply Scale | lit 2 s after it worked |
 | Right platter | nothing (free) | — |
 | Deck switch | plays an animation on that deck's LEDs, then the LEDs show the state again | — |
 

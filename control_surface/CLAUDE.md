@@ -183,6 +183,9 @@ Blender state → LED messages to the controller.
   - **Deck C clears** (task 23): CUP → `object.location_clear`, CUE →
     `object.rotation_clear`, PLAY/PAUSE → `object.scale_clear`, each with
     `flash_ms` 2000.
+  - **Deck C applies** (task 24): SHIFT + CUP / CUE / PLAY/PAUSE →
+    `object.transform_apply` with only `location` / `rotation` / `scale`
+    true, `flash_ms` 2000 (the SHIFT note shares the unshifted LED).
   - **CUE D:** unbound (the Properties editor rule was cancelled).
   - **VINYL MODE R/B and R/D** → `orbit_selection_toggle`; their LED blinks
     200/200 ms while Orbit Around Selection is on.

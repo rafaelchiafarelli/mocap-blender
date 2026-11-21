@@ -683,3 +683,19 @@ def test_flash_needs_an_led():
     with pytest.raises(MappingError):
         Mapping({"device": "dj_tech_4mix", "bindings": [
             {"control": "A", "event": "press", "operator": "a.b", "flash_ms": 2000}]}).validate(PROFILE, set())
+
+
+@pytest.mark.parametrize("note, which", [(0x4A, "location"), (0x4B, "rotation"), (0x4C, "scale")])
+def test_bundled_deck_c_shift_applies_and_its_led_stays_lit_for_2_s(note, which):
+    e, fb, sent = make_bundled()
+    e.update()
+    press(e, (0x93, note))  # + 40H: the SHIFT note
+    args = {"location": False, "rotation": False, "scale": False}
+    args[which] = True
+    assert fb.calls == [("object.transform_apply", args)]
+    fb.now = 100
+    e.update()
+    assert led_values(sent, (0x93, note - 0x40))[-1] == LED_ON  # shares the unshifted LED
+    fb.now = 2010
+    e.update()
+    assert led_values(sent, (0x93, note - 0x40))[-1] == LED_OFF

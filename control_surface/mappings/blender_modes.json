@@ -570,6 +570,39 @@
    "event": "press",
    "operator": "object.scale_clear",
    "flash_ms": 2000
+  },
+  {
+   "control": "CUP L/C+SHIFT",
+   "event": "press",
+   "operator": "object.transform_apply",
+   "args": {
+    "location": true,
+    "rotation": false,
+    "scale": false
+   },
+   "flash_ms": 2000
+  },
+  {
+   "control": "CUE L/C+SHIFT",
+   "event": "press",
+   "operator": "object.transform_apply",
+   "args": {
+    "location": false,
+    "rotation": true,
+    "scale": false
+   },
+   "flash_ms": 2000
+  },
+  {
+   "control": "PLAY/PAUSE L/C+SHIFT",
+   "event": "press",
+   "operator": "object.transform_apply",
+   "args": {
+    "location": false,
+    "rotation": false,
+    "scale": true
+   },
+   "flash_ms": 2000
   }
  ],
  "indicators": [
