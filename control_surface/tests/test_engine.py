@@ -12,14 +12,15 @@ MODES = ROOT / "mappings" / "blender_modes.json"
 # Test mapping: the bundled bindings plus mode LEDs on CUE A-D (A-D have no LED).
 CUE_LEDS = Path(__file__).resolve().parent / "data" / "modes_cue_leds.json"
 A_LED, B_LED = (0x90, 0x27), (0x90, 0x28)  # CUE A, CUE B
-BUNDLED_ACTIONS = {"select_by_knob", "camera_move", "view_move", "view_projection", "orbit_selection_toggle"}
-BUNDLED_STATES = {"object_mode", "view_axis", "view_perspective", "orbit_selection"}
+BUNDLED_ACTIONS = {"grab_start", "grab_confirm", "grab_axis", "grab_push", "select_by_knob", "camera_move", "view_move", "view_projection", "orbit_selection_toggle"}
+BUNDLED_STATES = {"grabbing", "grab_axis", "object_mode", "view_axis", "view_perspective", "orbit_selection"}
 
 
 class FakeBlender:
     def __init__(self):
         self.mode = "OBJECT"
-        self.view = {"view_axis": "NONE", "view_perspective": "PERSP", "orbit_selection": False}
+        self.view = {"view_axis": "NONE", "view_perspective": "PERSP", "orbit_selection": False,
+                     "grabbing": False, "grab_axis": "NONE"}
         self.actions = []
         self.calls = []
         self.contexts = []
@@ -163,55 +164,86 @@ def test_bundled_s1_object_s2_edit_and_their_leds_blink():
     assert fb.calls[-1] == ("object.mode_set", {"mode": "OBJECT"})
 
 
-def cb(e):
-    """Decks C + B known (the switches, or any message on their channels)."""
-    e.handle(0x90, 0x3B, 0x7F)  # DECK A/C to C
-    e.handle(0x90, 0x3C, 0x7F)  # DECK B/D to B
+SYNC_C, RE_C = (0x93, 0x05), (0x93, 0x04)
+NUM_C = {"FREE": 0x06, "X": 0x07, "Y": 0x08, "Z": 0x09}  # buttons 1-4, deck C
 
 
-@pytest.mark.parametrize(
-    "cc, value, move",
-    [
-        (0xB3, 0x41, {"y": 0.01}), (0xB3, 0x3F, {"y": -0.01}),   # left platter, deck C
-        (0xB3, 0x45, {"y": 0.01}),                               # fast turn: same step
-        (0xB2, 0x41, {"x": 0.01}), (0xB2, 0x3F, {"x": -0.01}),   # right platter, deck B
-    ],
-)
-def test_bundled_platters_move_the_view_with_decks_c_and_b(cc, value, move):
+def press(e, addr):
+    e.handle(addr[0], addr[1], 0x7F)
+    e.handle(addr[0], addr[1], 0x00)
+
+
+def test_bundled_left_platter_does_nothing_with_sync_off():
     e, fb, _ = make_bundled()
-    cb(e)
-    e.handle(cc, 0x0F, value)
-    assert fb.actions == [("view_move", move)] and fb.calls == []
-
-
-@pytest.mark.parametrize("left, right", [(0xB1, 0xB2), (0xB1, 0xB4), (0xB3, 0xB4)])
-def test_bundled_platters_do_nothing_with_other_deck_pairs(left, right):
-    e, fb, _ = make_bundled()
-    e.handle(left, 0x0F, 0x41)
-    e.handle(right, 0x0F, 0x41)
-    e.handle(left, 0x0F, 0x41)
+    e.handle(0xB3, 0x0F, 0x41)
+    e.handle(0xB2, 0x0F, 0x41)  # right platter: free now
     assert fb.calls == [] and fb.actions == []
 
 
-def test_bundled_platter_needs_the_other_side_known():
-    e, fb, _ = make_bundled()
-    e.handle(0xB3, 0x0F, 0x41)  # left on deck C, right side still UNKNOWN
-    assert fb.actions == []
-    e.handle(0x92, 0x02, 0x00)  # anything on deck B's channel
+@pytest.mark.parametrize("persp, action", [("PERSP", "view_move"), ("CAMERA", "camera_move")])
+def test_bundled_sync_cycles_vertical_horizontal_off(persp, action):
+    e, fb, sent = make_bundled()
+    fb.view["view_perspective"] = persp
+    press(e, SYNC_C)
+    assert e.toggles["sync_c"] == "on"
     e.handle(0xB3, 0x0F, 0x41)
-    assert fb.actions == [("view_move", {"y": 0.01})]
+    e.handle(0xB3, 0x0F, 0x3F)
+    press(e, SYNC_C)
+    assert e.toggles["sync_c"] == "blink"
+    e.handle(0xB3, 0x0F, 0x45)  # fast turn: same step
+    press(e, SYNC_C)
+    assert e.toggles["sync_c"] == "off"
+    e.handle(0xB3, 0x0F, 0x41)
+    assert fb.actions == [(action, {"y": 0.01}), (action, {"y": -0.01}), (action, {"x": 0.01})]
 
 
-@pytest.mark.parametrize("cc, value, move", [
-    (0xB3, 0x41, {"y": 0.01}), (0xB3, 0x3F, {"y": -0.01}),
-    (0xB2, 0x41, {"x": 0.01}), (0xB2, 0x3F, {"x": -0.01}),
-])
-def test_bundled_platters_move_the_camera_in_camera_view(cc, value, move):
+def test_bundled_sync_and_re_leds():
+    e, fb, sent = make_bundled()
+    press(e, SYNC_C)
+    press(e, RE_C)
+    e.update()
+    assert led_values(sent, SYNC_C)[-1] == LED_ON and led_values(sent, RE_C)[-1] == LED_ON
+    press(e, SYNC_C)
+    for t in range(0, 600, 20):
+        fb.now = t
+        e.update()
+    blink = led_values(sent, SYNC_C)
+    assert LED_OFF in blink[-3:] and LED_ON in blink[-3:]
+
+
+@pytest.mark.parametrize("axis", ["FREE", "X", "Y", "Z"])
+@pytest.mark.parametrize("scale, mode", [(False, "MOVE"), (True, "SCALE")])
+def test_bundled_number_buttons_start_grab_or_scale(axis, scale, mode):
     e, fb, _ = make_bundled()
-    cb(e)
-    fb.view["view_perspective"] = "CAMERA"
-    e.handle(cc, 0x0F, value)
-    assert fb.actions == [("camera_move", move)] and fb.calls == []
+    if scale:
+        press(e, RE_C)
+    press(e, (0x93, NUM_C[axis]))
+    assert fb.actions == [("grab_start", {"mode": mode, "axis": axis})]
+
+
+def test_bundled_while_grabbing_same_button_confirms_other_changes_axis_and_platter_pushes():
+    e, fb, sent = make_bundled()
+    fb.view.update(grabbing=True, grab_axis="X")
+    e.update()
+    assert led_values(sent, (0x93, 0x07))[-1] == LED_ON  # button 2: X
+    press(e, (0x93, NUM_C["Y"]))
+    press(e, (0x93, NUM_C["X"]))
+    e.handle(0xB3, 0x0F, 0x3F)
+    press(e, SYNC_C)
+    e.handle(0xB3, 0x0F, 0x41)
+    assert fb.actions == [("grab_axis", {"axis": "Y"}), ("grab_confirm", {}),
+                          ("grab_push", {"amount": -0.01, "along": "right"}),
+                          ("grab_push", {"amount": 0.01, "along": "up"})]
+    fb.view.update(grabbing=False, grab_axis="NONE")
+    fb.now = 20
+    e.update()
+    assert led_values(sent, (0x93, 0x07))[-1] == LED_OFF
+
+
+def test_toggle_needs_a_button_and_two_values():
+    for t in ({"control": "S1 VOL", "values": [1, 2]}, {"control": "RE L/C", "values": [1]}):
+        with pytest.raises(MappingError):
+            Mapping({"device": "dj_tech_4mix", "toggles": {"t": t}}).validate(PROFILE, set())
 
 
 @pytest.mark.parametrize("note, first, second", [
@@ -356,12 +388,13 @@ def approx_actions(actions):
 
 def test_s1_vol_scales_the_step_from_1_to_10_cm():
     e, fb, _ = make_bundled()
-    cb(e)
     assert e.scales == {"step": 0.01}  # default until the fader moves
+    press(e, SYNC_C)           # left platter: vertical
     e.handle(0xB0, 0x01, 127)  # S1 VOL at the top
     e.handle(0xB3, 0x0F, 0x41)
+    press(e, SYNC_C)           # horizontal
     e.handle(0xB0, 0x01, 0)    # at the bottom
-    e.handle(0xB2, 0x0F, 0x3F)
+    e.handle(0xB3, 0x0F, 0x3F)
     e.handle(0xB0, 0x01, 64)   # about half way
     fb.view["view_perspective"] = "CAMERA"
     e.handle(0xB0, 0x1F, 0x41)  # encoder dolly
@@ -515,3 +548,22 @@ def test_value_event_needs_an_absolute_control_and_an_action():
               {"control": "C FILTER", "event": "value", "operator": "a.b"}):
         with pytest.raises(MappingError):
             Mapping({"device": "dj_tech_4mix", "bindings": [b]}).validate(PROFILE, set(), {"camera_move"})
+
+
+@pytest.mark.parametrize("switch, channel", [(0x3A, 0x91), (0x3B, 0x93), (0x3C, 0x92), (0x3D, 0x94)])
+def test_deck_switch_plays_the_intro_on_that_decks_leds(switch, channel):
+    e, fb, sent = make_bundled()
+    e.handle(0x90, switch, 0x7F)
+    assert e.intro_running
+    fb.now = 10_000
+    e.update()
+    lit = {m[:2] for m in sent if m[2] == 0x7F}
+    deck = {led for led in PROFILE.all_leds() if led[0] == channel}
+    assert len(deck) > 10 and deck <= lit and all(b0 == channel for b0, _ in lit - {(0x90, 0x22)})
+    assert not e.intro_running
+
+
+def test_deck_learned_from_a_channel_plays_no_animation():
+    e, fb, sent = make_bundled()
+    e.handle(0x93, 0x02, 0x00)  # a release on deck C's channel
+    assert e.layers["deck_left"] == "C" and not e.intro_running

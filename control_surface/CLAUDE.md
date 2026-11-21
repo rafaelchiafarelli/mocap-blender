@@ -64,6 +64,12 @@ Blender state → LED messages to the controller.
     two messages fall on opposite sides of it (`Engine._tap_ok`); then it is
     in `Engine.armed` for the rest of the session. Today: A/B/C/D FILTER
     and HI/MID/LOW (task 16), 64.
+  - **Toggles** (task 18, `toggles` in the mapping): a button press steps
+    to the next value (wrapping) before the bindings run; a state for `when`
+    and indicators; first value at Connect.
+  - **Deck animation** (task 18): a deck switch press plays `start_intro`
+    on that deck's LEDs only (`_deck_animation`, from the layer's
+    `channels`); a deck learned from a message's channel plays none.
   - **`value` bindings** (task 16): an absolute control's value goes to an
     action as `value=` (validated: absolute control + action).
   - **`_fire()`** (`engine.py:231`) runs the operator or action and reports a
@@ -88,6 +94,13 @@ Blender state → LED messages to the controller.
   - A blink's phase restarts only when its look changes (`leds.py:18`).
   - `resend()` (`leds.py:40`) forgets what was sent, so the next tick sends
     every LED again.
+- `grab.py` — the add-on's own modal grab/scale (`control_surface.grab`,
+  task 18): follows the mouse like G/S (the start is the first real mouse
+  move, since an invoke from the timer may carry a stale position), adds the
+  controller's pushes, ends on click/Enter/right click/Esc or
+  `request("confirm")`. Places objects through `location` (parent-aware),
+  not `matrix_world`, which is stale right after a scale change. `state()`
+  feeds the `grabbing`/`grab_axis` states.
 - `knob_select.py` — `pick(n, anchor, value)`: the object index for a
   centre-tap knob's position, proportional (the travel is split evenly over
   the objects; the ends land on the last/first). Pure.
@@ -172,12 +185,16 @@ Blender state → LED messages to the controller.
     `view3d.zoom` `delta=1` (in) / `delta=-1` (out). Press →
     `view3d.view_camera`, which toggles the camera view. The encoder's LED
     is on while the camera view is on.
-  - **Platters, only with decks C + B** (`when` on `deck_left`/`deck_right`;
-    A+B, A+D and C+D do nothing yet, Rafael defines them later). One step of
-    `step` metres per message, whatever the turning speed:
-    - in camera view: `camera_move`, left platter right/left → up/down,
-      right platter right/left → right/left;
-    - otherwise: `view_move`, the same directions for the view.
+  - **Deck C** (task 18; the right platter and decks A, B, D are free).
+    One platter step = `step` metres per message, whatever the speed:
+    - toggles `sync_c` (SYNC: `off`/`on`/`blink`, LED on/blinking) and
+      `scale_c` (RE: `false`/`true`, LED on);
+    - left platter: during a grab → `grab_push` (free grab: `along` up with
+      SYNC on, else right); SYNC on → up/down, SYNC blinking → right/left
+      (`camera_move` in camera view, else `view_move`); SYNC off → nothing;
+    - buttons 1–4 → free/X/Y/Z: the running axis's button → `grab_confirm`;
+      during a grab → `grab_axis`; else `grab_start` with `SCALE` (RE on)
+      or `MOVE`; each LED is on while `grab_axis` is its axis.
 - `tools/` — hardware test scripts, run in the pinned Blender with the add-on
   disconnected (usage at the top of each):
   - `probe_echo.py` echoes every message back to the controller and logs it

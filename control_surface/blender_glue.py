@@ -12,7 +12,7 @@ from pathlib import Path
 import bpy
 from mathutils import Matrix, Vector
 
-from . import knob_select
+from . import grab, knob_select
 from .engine import Engine, Mapping
 from .profile import Profile
 
@@ -63,7 +63,14 @@ def _orbit_selection():
     return bool(bpy.context.preferences.inputs.use_rotate_around_active)
 
 
+def _grab_axis():
+    g = grab.state()
+    return g["axis"] if g else "NONE"
+
+
 STATES = {
+    "grabbing": lambda: grab.state() is not None,
+    "grab_axis": _grab_axis,
     "object_mode": _object_mode, "view_perspective": _view_perspective,
     "view_axis": _view_axis, "orbit_selection": _orbit_selection,
 }
@@ -164,7 +171,16 @@ def select_by_knob(value, knob="", center=knob_select.CENTER):
     return {"FINISHED"}
 
 
+def grab_start(mode="MOVE", axis="FREE"):
+    """Start the add-on's grab/scale (grab.py), invoked in the 3D View."""
+    return run_operator("control_surface.grab", {"mode": mode, "axis": axis}, "INVOKE_DEFAULT")
+
+
 ACTIONS = {
+    "grab_start": grab_start,
+    "grab_confirm": lambda: grab.request("confirm"),
+    "grab_axis": lambda axis: grab.request("axis", axis=axis),
+    "grab_push": lambda amount, along="right": grab.request("push", amount=amount, along=along),
     "select_by_knob": select_by_knob,
     "camera_move": camera_move, "view_move": view_move,
     "view_projection": view_projection, "orbit_selection_toggle": orbit_selection_toggle,
@@ -351,7 +367,7 @@ class CONTROLSURFACE_PT_panel(bpy.types.Panel):
                 col.label(text=_session.engine.last_error, icon="ERROR")
 
 
-CLASSES = (CONTROLSURFACE_OT_connect, CONTROLSURFACE_OT_disconnect, CONTROLSURFACE_PT_panel)
+CLASSES = grab.CLASSES + (CONTROLSURFACE_OT_connect, CONTROLSURFACE_OT_disconnect, CONTROLSURFACE_PT_panel)
 
 
 def register():

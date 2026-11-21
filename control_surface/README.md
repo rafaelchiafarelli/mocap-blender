@@ -3,7 +3,7 @@
 The DJ-Tech 4-Mix as an extension of Blender's interface: its controls run
 Blender commands, its LEDs show Blender's state. The add-on code is described
 file by file in [`CLAUDE.md`](CLAUDE.md); this page is the quick start for the
-next change. State on 2026-11-20: version 0.1.13, installed in the portable
+next change. State on 2026-11-20: version 0.1.14, installed in the portable
 Blender on G:.
 
 ## Use it
@@ -42,9 +42,14 @@ All of this comes from [`mappings/blender_modes.json`](mappings/blender_modes.js
 | Encoder (PRESS TO ENTER), turn | zoom in (right) / out (left); in camera view: dolly the camera forward/back by `step` | — |
 | Encoder, press | toggle the camera view | on while in camera view |
 | S1 VOL | sets `step`: 1 cm (bottom) to 10 cm (top); 1 cm until moved | — |
-| Left platter, decks C + B | view up/down by `step`; in camera view: camera up/down | — |
-| Right platter, decks C + B | view right/left by `step`; in camera view: camera right/left | — |
-| Platters, decks A+B, A+D, C+D | nothing yet (to be defined) | — |
+| SYNC (deck C) | cycles off → on → blinking → off; sets what the left platter does | on / blinking |
+| Left platter, deck C, SYNC on | view up/down by `step`; in camera view: camera up/down | — |
+| Left platter, deck C, SYNC blinking | view right/left by `step`; in camera view: camera right/left | — |
+| RE (deck C) | scale on/off for buttons 1–4 | on while scale is on |
+| 1 / 2 / 3 / 4 (deck C) | grab (or scale with RE): free / X / Y / Z; the same button again confirms; another one changes the axis | on while that grab runs |
+| Left platter, deck C, during a grab | pushes by `step` along the axis (free: view up with SYNC on, else view right); scale: ×(1 ± `step`) | — |
+| Right platter | nothing (free) | — |
+| Deck switch | plays an animation on that deck's LEDs, then the LEDs show the state again | — |
 
 ## Where to change what
 
@@ -85,7 +90,9 @@ All of this comes from [`mappings/blender_modes.json`](mappings/blender_modes.js
   `BACK`, `RIGHT`, `LEFT`, `TOP`, `BOTTOM`, `NONE`), `orbit_selection`
   (`true`/`false`);
 - from the controller: `deck_left` (`A`/`C`), `deck_right` (`B`/`D`),
-  `shift_left`, `shift_right` (`true`/`false`).
+  `shift_left`, `shift_right` (`true`/`false`);
+- from the add-on: `grabbing` (`true`/`false`), `grab_axis` (`NONE`,
+  `FREE`, `X`, `Y`, `Z`), and every toggle.
 
 **An LED** goes under `indicators`:
 
@@ -126,6 +133,19 @@ then on it works normally. This avoids a jump to an unknown position.
 
 A binding with `"event": "value"` passes an absolute control's value to an
 action as `value=`.
+
+**The grab (buttons 1–4)** is the add-on's own (`grab.py`), not Blender's G:
+the mouse moves/scales like G/S and the platter adds on top. Left click /
+Enter confirms, right click / Esc cancels. No snapping or typed values (use
+G/S on the keyboard for that). Object Mode, every selected object, scale
+around their median point.
+
+**Toggles** (`toggles` in the mapping): a button that steps through values
+on each press, usable in `when` and in indicators:
+
+```json
+"sync_c": {"control": "SYNC L/C", "values": ["off", "on", "blink"]}
+```
 
 **A new Blender state or action:** add a function to `STATES` or `ACTIONS` in
 [`blender_glue.py`](blender_glue.py). The mapping is validated against those
@@ -178,8 +198,7 @@ Blender must be restarted to load a reinstalled version.
   manufacturer SysEx? A button-press test with `probe_sysex.py` would tell.
 - **Idea (Rafael, 2026-11-20):** a way to step through the Properties
   editor's tabs (the column of icons on its left) from the controller.
-- **To define:** the platters for decks A+B, A+D and C+D; Rafael is drawing a
-  new set of actions.
+- **To define:** the right platter and the decks A, B and D.
 - **Mapping file:** it lives inside the add-on, so changing it means rebuild
   and reinstall. Choosing an external file plus a Reload button is the next
   convenience.

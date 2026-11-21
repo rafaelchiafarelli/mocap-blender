@@ -92,18 +92,19 @@ def test_shared_led_first_matching_indicator_wins():
 
 
 def test_indicator_on_a_layer_state():
-    e, _, sent, _ = make(indicators=[
+    e, _, sent, now = make(indicators=[
         {"control": "CUE C", "state": "deck_left", "equals": "C", "led": "on"},
     ])
     e.update()
     assert sent == [(0x90, 0x26, LED_OFF)]
     msg(e, TO_C, 0x7F)
+    now[0] = 10_000  # after the deck animation
     e.update()
     assert sent[-1] == (0x90, 0x26, LED_ON)
 
 
 def test_layer_change_resends_every_led():
-    e, _, sent, _ = make(indicators=[
+    e, _, sent, now = make(indicators=[
         {"control": "IN L/C", "state": "object_mode", "equals": "OBJECT", "led": "on"},
         {"control": "CUE A", "state": "object_mode", "equals": "EDIT", "led": "on"},
     ])
@@ -112,8 +113,10 @@ def test_layer_change_resends_every_led():
     e.update()
     assert sent == []  # nothing changed
     msg(e, TO_C, 0x7F)  # deck C now visible: its LEDs must be sent again
+    now[0] = 10_000  # the deck animation plays out, then every LED is resent
+    sent.clear()
     e.update()
-    assert sorted(sent) == [(0x90, 0x27, LED_OFF), (0x93, 0x02, LED_ON)]
+    assert sorted(sent[-2:]) == [(0x90, 0x27, LED_OFF), (0x93, 0x02, LED_ON)]
 
 
 def test_validation_knows_layers():
