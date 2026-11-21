@@ -240,6 +240,12 @@ class Engine:
                 for name, sc in self.mapping.scales.items():
                     if sc["control"] == cid:
                         self.scales[name] = sc["min"] + (sc["max"] - sc["min"]) * event[1] / 127
+            if event in (PRESS, RELEASE):
+                # The 4-Mix may change a button's LED by itself when it is
+                # pressed or released: send that LED again on the next tick.
+                led = self.profile.led(cid)
+                if led is not None:
+                    self.leds.forget(led)
             if event == PRESS:
                 for name, t in self.mapping.toggles.items():
                     if t["control"] == cid:

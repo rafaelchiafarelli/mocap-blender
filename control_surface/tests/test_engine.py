@@ -599,3 +599,17 @@ def test_bundled_re_toggles_scale_and_blinks_while_armed():
     fb.now = 600
     e.update()
     assert led_values(sent, RE_C)[-1] == LED_OFF
+
+
+def test_a_pressed_buttons_led_is_sent_again_even_if_its_state_did_not_change():
+    e, fb, sent = make_bundled()
+    fb.view["scale_mode"] = "RUNNING"
+    e.update()
+    assert led_values(sent, RE_C) == [LED_ON]
+    e.update()
+    assert led_values(sent, RE_C) == [LED_ON]  # nothing changed: nothing sent
+    e.handle(0x93, 0x04, 0x7F)  # RE pressed: the 4-Mix may have changed its LED
+    e.update()
+    e.handle(0x93, 0x04, 0x00)  # released
+    e.update()
+    assert led_values(sent, RE_C) == [LED_ON, LED_ON, LED_ON]

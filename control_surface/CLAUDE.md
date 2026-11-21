@@ -260,6 +260,10 @@ Blender state → LED messages to the controller.
   `90 3A…3D` (with `7F`, with `00`, and as the pair it sends itself; tested
   2026-11-20, no LED change and no answer). The add-on only learns them.
   The flip-back seen in the echo test was not caused by the echo.
+- **The 4-Mix changes a button's LED by itself on press/release** (seen
+  2026-11-21: RE's LED went dark on a press that did not change the state).
+  The engine forgets what it sent to a pressed/released button's LED, so the
+  next tick sends it again (`LedDriver.forget`).
 - **LEDs show state, not presses:** a button press only runs its binding.
   The LED changes because the state changed, so pressing Tab on the keyboard
   moves the blinking LED too (`engine.py:278`).
