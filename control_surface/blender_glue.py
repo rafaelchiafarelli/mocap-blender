@@ -70,6 +70,7 @@ def _grab_axis():
 
 STATES = {
     "grabbing": lambda: grab.state() is not None,
+    "scale_mode": grab.scale_mode,
     "grab_axis": _grab_axis,
     "object_mode": _object_mode, "view_perspective": _view_perspective,
     "view_axis": _view_axis, "orbit_selection": _orbit_selection,
@@ -176,7 +177,22 @@ def grab_start(mode="MOVE", axis="FREE"):
     return run_operator("control_surface.grab", {"mode": mode, "axis": axis}, "INVOKE_DEFAULT")
 
 
+def scale_toggle():
+    """RE: scale off -> on, starting a free scale at once; on -> off (a
+    running scale is confirmed)."""
+    if grab.scale_mode() != "OFF":
+        if grab.state() is not None and grab.state()["mode"] == "SCALE":
+            grab.request("confirm")
+        grab.scale_disarm()
+        return {"FINISHED"}
+    result = grab_start("SCALE", "FREE")
+    if "RUNNING_MODAL" in result:
+        grab.scale_arm()
+    return result
+
+
 ACTIONS = {
+    "scale_toggle": scale_toggle,
     "grab_start": grab_start,
     "grab_confirm": lambda: grab.request("confirm"),
     "grab_axis": lambda axis: grab.request("axis", axis=axis),

@@ -3,7 +3,7 @@
 The DJ-Tech 4-Mix as an extension of Blender's interface: its controls run
 Blender commands, its LEDs show Blender's state. The add-on code is described
 file by file in [`CLAUDE.md`](CLAUDE.md); this page is the quick start for the
-next change. State on 2026-11-20: version 0.1.14, installed in the portable
+next change. State on 2026-11-20: version 0.1.15, installed in the portable
 Blender on G:.
 
 ## Use it
@@ -45,8 +45,8 @@ All of this comes from [`mappings/blender_modes.json`](mappings/blender_modes.js
 | SYNC (deck C) | cycles off → on → blinking → off; sets what the left platter does | on / blinking |
 | Left platter, deck C, SYNC on | view up/down by `step`; in camera view: camera up/down | — |
 | Left platter, deck C, SYNC blinking | view right/left by `step`; in camera view: camera right/left | — |
-| RE (deck C) | scale on/off for buttons 1–4 | on while scale is on |
-| 1 / 2 / 3 / 4 (deck C) | grab (or scale with RE): free / X / Y / Z; the same button again confirms; another one changes the axis | on while that grab runs |
+| RE (deck C) | scale on: starts a free scale at once (button 1 lit); scale off (a running scale is confirmed) | on while a scale runs; blinking while scale is on with no grab |
+| 1 / 2 / 3 / 4 (deck C) | grab (or scale while RE blinks): free / X / Y / Z; the same button again confirms; another one changes the axis | on while that grab runs |
 | Left platter, deck C, during a grab | pushes by `step` along the axis (free: view up with SYNC on, else view right); scale: ×(1 ± `step`) | — |
 | Right platter | nothing (free) | — |
 | Deck switch | plays an animation on that deck's LEDs, then the LEDs show the state again | — |
@@ -91,7 +91,7 @@ All of this comes from [`mappings/blender_modes.json`](mappings/blender_modes.js
   (`true`/`false`);
 - from the controller: `deck_left` (`A`/`C`), `deck_right` (`B`/`D`),
   `shift_left`, `shift_right` (`true`/`false`);
-- from the add-on: `grabbing` (`true`/`false`), `grab_axis` (`NONE`,
+- from the add-on: `scale_mode` (`OFF`, `ARMED`, `RUNNING`), `grabbing` (`true`/`false`), `grab_axis` (`NONE`,
   `FREE`, `X`, `Y`, `Z`), and every toggle.
 
 **An LED** goes under `indicators`:
@@ -139,6 +139,9 @@ the mouse moves/scales like G/S and the platter adds on top. Left click /
 Enter confirms, right click / Esc cancels. No snapping or typed values (use
 G/S on the keyboard for that). Object Mode, every selected object, scale
 around their median point.
+
+**Scale stays on** after a scale ends (RE blinking), until RE is pressed or
+the selection changes (another object, or none): then RE goes off.
 
 **Toggles** (`toggles` in the mapping): a button that steps through values
 on each press, usable in `when` and in indicators:

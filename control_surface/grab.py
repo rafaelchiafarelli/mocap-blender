@@ -23,6 +23,38 @@ AXES = {"X": Vector((1, 0, 0)), "Y": Vector((0, 1, 0)), "Z": Vector((0, 0, 1))}
 TIMER_S = 0.02
 
 _running = None  # the running operator's shared state, or None
+_scale = None    # scale mode armed (RE): {"selection": names selected when armed}, or None
+
+
+def _selection():
+    return frozenset(o.name for o in bpy.context.selected_objects)
+
+
+def scale_mode():
+    """OFF / RUNNING (a scale grab runs) / ARMED (scale on, no grab).
+
+    An armed scale turns off as soon as the selection differs from the one
+    it was armed with (another object selected, or none).
+    """
+    global _scale
+    if _scale is None:
+        return "OFF"
+    if _running is not None and _running["mode"] == "SCALE":
+        return "RUNNING"
+    if _running is None and _selection() != _scale["selection"]:
+        _scale = None
+        return "OFF"
+    return "ARMED"
+
+
+def scale_arm():
+    global _scale
+    _scale = {"selection": _selection()}
+
+
+def scale_disarm():
+    global _scale
+    _scale = None
 
 
 def state():
@@ -53,7 +85,13 @@ class CONTROLSURFACE_OT_grab(bpy.types.Operator):
 
     @classmethod
     def poll(cls, context):
-        return context.mode == "OBJECT" and context.selected_objects and context.region_data
+        if context.mode != "OBJECT":
+            cls.poll_message_set("grab/scale works in Object Mode only")
+            return False
+        if not context.selected_objects:
+            cls.poll_message_set("select an object first")
+            return False
+        return context.region_data is not None
 
     def invoke(self, context, event):
         global _running

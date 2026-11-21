@@ -187,14 +187,19 @@ Blender state → LED messages to the controller.
     is on while the camera view is on.
   - **Deck C** (task 18; the right platter and decks A, B, D are free).
     One platter step = `step` metres per message, whatever the speed:
-    - toggles `sync_c` (SYNC: `off`/`on`/`blink`, LED on/blinking) and
-      `scale_c` (RE: `false`/`true`, LED on);
+    - toggle `sync_c` (SYNC: `off`/`on`/`blink`, LED on/blinking);
+    - RE → `scale_toggle` (task 19): off → arms scale and starts a free
+      scale; on → disarms (a running scale is confirmed). State
+      `scale_mode` (`grab.scale_mode`): `RUNNING` (LED on), `ARMED` (LED
+      blinking; 1–4 start scales), `OFF`. An armed scale turns off when the
+      selection differs from the one it was armed with;
     - left platter: during a grab → `grab_push` (free grab: `along` up with
       SYNC on, else right); SYNC on → up/down, SYNC blinking → right/left
       (`camera_move` in camera view, else `view_move`); SYNC off → nothing;
     - buttons 1–4 → free/X/Y/Z: the running axis's button → `grab_confirm`;
       during a grab → `grab_axis`; else `grab_start` with `SCALE` (RE on)
-      or `MOVE`; each LED is on while `grab_axis` is its axis.
+      (`scale_mode` ARMED) or `MOVE`; each LED is on while `grab_axis` is
+      its axis.
 - `tools/` — hardware test scripts, run in the pinned Blender with the add-on
   disconnected (usage at the top of each):
   - `probe_echo.py` echoes every message back to the controller and logs it

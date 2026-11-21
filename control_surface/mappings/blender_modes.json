@@ -10,6 +10,11 @@
  },
  "bindings": [
   {
+   "control": "RE L/C",
+   "event": "press",
+   "action": "scale_toggle"
+  },
+  {
    "control": "C FILTER",
    "event": "value",
    "action": "select_by_knob",
@@ -210,7 +215,7 @@
     "axis": "FREE"
    },
    "when": {
-    "scale_c": true
+    "scale_mode": "ARMED"
    }
   },
   {
@@ -250,7 +255,7 @@
     "axis": "X"
    },
    "when": {
-    "scale_c": true
+    "scale_mode": "ARMED"
    }
   },
   {
@@ -290,7 +295,7 @@
     "axis": "Y"
    },
    "when": {
-    "scale_c": true
+    "scale_mode": "ARMED"
    }
   },
   {
@@ -330,7 +335,7 @@
     "axis": "Z"
    },
    "when": {
-    "scale_c": true
+    "scale_mode": "ARMED"
    }
   },
   {
@@ -593,12 +598,6 @@
    "off_ms": 200
   },
   {
-   "control": "RE L/C",
-   "state": "scale_c",
-   "equals": true,
-   "led": "on"
-  },
-  {
    "control": "1 L/C",
    "state": "grab_axis",
    "equals": "FREE",
@@ -621,6 +620,20 @@
    "state": "grab_axis",
    "equals": "Z",
    "led": "on"
+  },
+  {
+   "control": "RE L/C",
+   "state": "scale_mode",
+   "equals": "RUNNING",
+   "led": "on"
+  },
+  {
+   "control": "RE L/C",
+   "state": "scale_mode",
+   "equals": "ARMED",
+   "led": "blink",
+   "on_ms": 200,
+   "off_ms": 200
   }
  ],
  "toggles": {
@@ -630,13 +643,6 @@
     "off",
     "on",
     "blink"
-   ]
-  },
-  "scale_c": {
-   "control": "RE L/C",
-   "values": [
-    false,
-    true
    ]
   }
  }

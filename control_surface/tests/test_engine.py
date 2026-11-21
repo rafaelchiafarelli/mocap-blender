@@ -12,15 +12,15 @@ MODES = ROOT / "mappings" / "blender_modes.json"
 # Test mapping: the bundled bindings plus mode LEDs on CUE A-D (A-D have no LED).
 CUE_LEDS = Path(__file__).resolve().parent / "data" / "modes_cue_leds.json"
 A_LED, B_LED = (0x90, 0x27), (0x90, 0x28)  # CUE A, CUE B
-BUNDLED_ACTIONS = {"grab_start", "grab_confirm", "grab_axis", "grab_push", "select_by_knob", "camera_move", "view_move", "view_projection", "orbit_selection_toggle"}
-BUNDLED_STATES = {"grabbing", "grab_axis", "object_mode", "view_axis", "view_perspective", "orbit_selection"}
+BUNDLED_ACTIONS = {"scale_toggle", "grab_start", "grab_confirm", "grab_axis", "grab_push", "select_by_knob", "camera_move", "view_move", "view_projection", "orbit_selection_toggle"}
+BUNDLED_STATES = {"scale_mode", "grabbing", "grab_axis", "object_mode", "view_axis", "view_perspective", "orbit_selection"}
 
 
 class FakeBlender:
     def __init__(self):
         self.mode = "OBJECT"
         self.view = {"view_axis": "NONE", "view_perspective": "PERSP", "orbit_selection": False,
-                     "grabbing": False, "grab_axis": "NONE"}
+                     "grabbing": False, "grab_axis": "NONE", "scale_mode": "OFF"}
         self.actions = []
         self.calls = []
         self.contexts = []
@@ -200,7 +200,7 @@ def test_bundled_sync_cycles_vertical_horizontal_off(persp, action):
 def test_bundled_sync_and_re_leds():
     e, fb, sent = make_bundled()
     press(e, SYNC_C)
-    press(e, RE_C)
+    fb.view["scale_mode"] = "RUNNING"
     e.update()
     assert led_values(sent, SYNC_C)[-1] == LED_ON and led_values(sent, RE_C)[-1] == LED_ON
     press(e, SYNC_C)
@@ -216,7 +216,7 @@ def test_bundled_sync_and_re_leds():
 def test_bundled_number_buttons_start_grab_or_scale(axis, scale, mode):
     e, fb, _ = make_bundled()
     if scale:
-        press(e, RE_C)
+        fb.view["scale_mode"] = "ARMED"
     press(e, (0x93, NUM_C[axis]))
     assert fb.actions == [("grab_start", {"mode": mode, "axis": axis})]
 
@@ -567,3 +567,19 @@ def test_deck_learned_from_a_channel_plays_no_animation():
     e, fb, sent = make_bundled()
     e.handle(0x93, 0x02, 0x00)  # a release on deck C's channel
     assert e.layers["deck_left"] == "C" and not e.intro_running
+
+
+def test_bundled_re_toggles_scale_and_blinks_while_armed():
+    e, fb, sent = make_bundled()
+    press(e, RE_C)
+    assert fb.actions == [("scale_toggle", {})]
+    fb.view["scale_mode"] = "ARMED"
+    for t in range(0, 600, 20):
+        fb.now = t
+        e.update()
+    blink = led_values(sent, RE_C)
+    assert LED_ON in blink[-3:] and LED_OFF in blink[-3:]
+    fb.view["scale_mode"] = "OFF"
+    fb.now = 600
+    e.update()
+    assert led_values(sent, RE_C)[-1] == LED_OFF
