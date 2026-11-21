@@ -14,7 +14,7 @@ from pathlib import Path
 import bpy
 from mathutils import Matrix, Vector
 
-from . import grab, knob_select
+from . import add_menu, grab, knob_select
 from .engine import Engine, Mapping
 from .profile import Profile
 
@@ -76,6 +76,7 @@ STATES = {
     "rotate_mode": lambda: grab.tool_mode("ROTATE"),
     "sync_mode": grab.sync_mode,
     "cage": grab.cage_on,
+    "add_menu": add_menu.is_open,
     "grab_axis": _grab_axis,
     "object_mode": _object_mode, "view_perspective": _view_perspective,
     "view_axis": _view_axis, "orbit_selection": _orbit_selection,
@@ -213,7 +214,17 @@ def delete_selected():
     return run_operator("object.delete", {"use_global": False, "confirm": False})
 
 
+def add_menu_toggle():
+    """Deck A IN: the Add menu (add_menu.py). Running an item ends the deck's tools first."""
+    if add_menu.is_open():
+        grab.end_tools()
+    return add_menu.toggle()
+
+
 ACTIONS = {
+    "add_menu_toggle": add_menu_toggle,
+    "add_menu_step": lambda pulses: add_menu.step(pulses),
+    "add_menu_back": lambda: add_menu.back(),
     "delete_selected": delete_selected,
     "tool_toggle": tool_toggle,
     "move_start": move_start,
@@ -526,6 +537,7 @@ def register():
 
 def unregister():
     disconnect()
-    grab.end_tools()  # release the ports, or they stay locked until Blender quits
+    grab.end_tools()
+    add_menu.close()  # release the ports, or they stay locked until Blender quits
     for c in reversed(CLASSES):
         bpy.utils.unregister_class(c)

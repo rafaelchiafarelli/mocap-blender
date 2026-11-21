@@ -609,6 +609,41 @@
    "event": "press",
    "action": "delete_selected",
    "flash_ms": 2000
+  },
+  {
+   "control": "IN L/A",
+   "event": "press",
+   "action": "add_menu_toggle"
+  },
+  {
+   "control": "OUT L/A",
+   "event": "press",
+   "action": "add_menu_back",
+   "when": {
+    "add_menu": true
+   }
+  },
+  {
+   "control": "PLATTER L/A",
+   "event": "cw",
+   "action": "add_menu_step",
+   "args": {
+    "pulses": 1
+   },
+   "when": {
+    "add_menu": true
+   }
+  },
+  {
+   "control": "PLATTER L/A",
+   "event": "ccw",
+   "action": "add_menu_step",
+   "args": {
+    "pulses": -1
+   },
+   "when": {
+    "add_menu": true
+   }
   }
  ],
  "indicators": [
@@ -796,6 +831,12 @@
    "control": "IN L/C",
    "state": "rotate_mode",
    "equals": "ARMED",
+   "led": "on"
+  },
+  {
+   "control": "IN L/A",
+   "state": "add_menu",
+   "equals": true,
    "led": "on"
   }
  ]

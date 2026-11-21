@@ -3,7 +3,7 @@
 The DJ-Tech 4-Mix as an extension of Blender's interface: its controls run
 Blender commands, its LEDs show Blender's state. The add-on code is described
 file by file in [`CLAUDE.md`](CLAUDE.md); this page is the quick start for the
-next change. State on 2026-11-20: version 0.1.28, installed in the portable
+next change. State on 2026-11-20: version 0.1.29, installed in the portable
 Blender on G:.
 
 ## Use it
@@ -64,6 +64,9 @@ All of this comes from [`mappings/blender_modes.json`](mappings/blender_modes.js
 | SHIFT + CUE (deck C) | Apply Rotation | lit 2 s after it worked |
 | SHIFT + PLAY/PAUSE (deck C) | Apply Scale | lit 2 s after it worked |
 | OUT (deck C) | deletes the selected objects (no confirmation; a running grab is confirmed first) | lit 2 s after it worked |
+| IN (deck A) | opens the Add menu (Shift+A) drawn in the viewport; on a submenu: enters it; on an item: adds it (at the 3D Cursor) and closes | on while the menu is open |
+| Left platter (deck A), menu open | moves through the items (~14 pulses per item) | — |
+| OUT (deck A), menu open | one level back; at the top: closes | — |
 | Right platter | nothing (free) | — |
 | Deck switch | plays an animation on that deck's LEDs, then the LEDs show the state again | — |
 
@@ -178,6 +181,11 @@ on each press, usable in `when` and in indicators:
 ```json
 "sync_c": {"control": "SYNC L/C", "values": ["off", "on", "blink"]}
 ```
+
+**The Add menu (deck A)** is Blender's own: the add-on reads the menu
+classes (`VIEW3D_MT_add`, or the mode's Shift+A menu: mesh in Edit Mode,
+…) through a recording layout, so add-ons' items appear too. Items with
+"..." open their usual dialog.
 
 **A new Blender state or action:** add a function to `STATES` or `ACTIONS` in
 [`blender_glue.py`](blender_glue.py). The mapping is validated against those

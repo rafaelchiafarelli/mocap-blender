@@ -12,8 +12,8 @@ MODES = ROOT / "mappings" / "blender_modes.json"
 # Test mapping: the bundled bindings plus mode LEDs on CUE A-D (A-D have no LED).
 CUE_LEDS = Path(__file__).resolve().parent / "data" / "modes_cue_leds.json"
 A_LED, B_LED = (0x90, 0x27), (0x90, 0x28)  # CUE A, CUE B
-BUNDLED_ACTIONS = {"delete_selected", "cage_step", "tool_toggle", "move_start", "sync_cycle", "grab_start", "grab_confirm", "grab_axis", "grab_push", "select_by_knob", "camera_move", "view_move", "view_projection", "orbit_selection_toggle"}
-BUNDLED_STATES = {"cage", "rotate_mode", "sync_mode", "scale_mode", "grabbing", "grab_axis", "object_mode", "view_axis", "view_perspective", "orbit_selection"}
+BUNDLED_ACTIONS = {"add_menu_toggle", "add_menu_step", "add_menu_back", "delete_selected", "cage_step", "tool_toggle", "move_start", "sync_cycle", "grab_start", "grab_confirm", "grab_axis", "grab_push", "select_by_knob", "camera_move", "view_move", "view_projection", "orbit_selection_toggle"}
+BUNDLED_STATES = {"add_menu", "cage", "rotate_mode", "sync_mode", "scale_mode", "grabbing", "grab_axis", "object_mode", "view_axis", "view_perspective", "orbit_selection"}
 
 
 class FakeBlender:
@@ -21,7 +21,8 @@ class FakeBlender:
         self.mode = "OBJECT"
         self.view = {"view_axis": "NONE", "view_perspective": "PERSP", "orbit_selection": False,
                      "grabbing": False, "grab_axis": "NONE", "scale_mode": "OFF",
-                     "rotate_mode": "OFF", "sync_mode": "off", "cage": False}
+                     "rotate_mode": "OFF", "sync_mode": "off", "cage": False,
+                     "add_menu": False}
         self.actions = []
         self.calls = []
         self.contexts = []
@@ -709,3 +710,17 @@ def test_bundled_deck_c_out_deletes_the_selection_and_flashes():
     fb.now = 100
     e.update()
     assert led_values(sent, (0x93, 0x03))[-1] == LED_ON
+
+
+def test_bundled_deck_a_add_menu_in_platter_out():
+    e, fb, sent = make_bundled()
+    press(e, (0x91, 0x02))          # IN L/A
+    e.handle(0xB1, 0x0F, 0x41)       # platter, menu closed: nothing
+    fb.view["add_menu"] = True
+    e.handle(0xB1, 0x0F, 0x41)
+    e.handle(0xB1, 0x0F, 0x3F)
+    press(e, (0x91, 0x03))          # OUT L/A
+    assert fb.actions == [("add_menu_toggle", {}), ("add_menu_step", {"pulses": 1}),
+                          ("add_menu_step", {"pulses": -1}), ("add_menu_back", {})]
+    e.update()
+    assert led_values(sent, (0x91, 0x02))[-1] == LED_ON
