@@ -603,6 +603,12 @@
     "scale": true
    },
    "flash_ms": 2000
+  },
+  {
+   "control": "OUT L/C",
+   "event": "press",
+   "action": "delete_selected",
+   "flash_ms": 2000
   }
  ],
  "indicators": [

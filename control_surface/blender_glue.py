@@ -206,7 +206,15 @@ def move_start(axis):
     return grab_start("MOVE", axis)
 
 
+def delete_selected():
+    """Delete the selected objects (no confirmation, like X > Delete). The deck's
+    tools end first: a running grab must not hold deleted objects."""
+    grab.end_tools()
+    return run_operator("object.delete", {"use_global": False, "confirm": False})
+
+
 ACTIONS = {
+    "delete_selected": delete_selected,
     "tool_toggle": tool_toggle,
     "move_start": move_start,
     "sync_cycle": lambda: grab.sync_cycle(),

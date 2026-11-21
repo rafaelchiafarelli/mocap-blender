@@ -12,7 +12,7 @@ MODES = ROOT / "mappings" / "blender_modes.json"
 # Test mapping: the bundled bindings plus mode LEDs on CUE A-D (A-D have no LED).
 CUE_LEDS = Path(__file__).resolve().parent / "data" / "modes_cue_leds.json"
 A_LED, B_LED = (0x90, 0x27), (0x90, 0x28)  # CUE A, CUE B
-BUNDLED_ACTIONS = {"cage_step", "tool_toggle", "move_start", "sync_cycle", "grab_start", "grab_confirm", "grab_axis", "grab_push", "select_by_knob", "camera_move", "view_move", "view_projection", "orbit_selection_toggle"}
+BUNDLED_ACTIONS = {"delete_selected", "cage_step", "tool_toggle", "move_start", "sync_cycle", "grab_start", "grab_confirm", "grab_axis", "grab_push", "select_by_knob", "camera_move", "view_move", "view_projection", "orbit_selection_toggle"}
 BUNDLED_STATES = {"cage", "rotate_mode", "sync_mode", "scale_mode", "grabbing", "grab_axis", "object_mode", "view_axis", "view_perspective", "orbit_selection"}
 
 
@@ -699,3 +699,13 @@ def test_bundled_deck_c_shift_applies_and_its_led_stays_lit_for_2_s(note, which)
     fb.now = 2010
     e.update()
     assert led_values(sent, (0x93, note - 0x40))[-1] == LED_OFF
+
+
+def test_bundled_deck_c_out_deletes_the_selection_and_flashes():
+    e, fb, sent = make_bundled()
+    e.update()
+    press(e, (0x93, 0x03))
+    assert fb.actions == [("delete_selected", {})]
+    fb.now = 100
+    e.update()
+    assert led_values(sent, (0x93, 0x03))[-1] == LED_ON
