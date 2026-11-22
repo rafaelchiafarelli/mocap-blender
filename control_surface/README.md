@@ -3,7 +3,7 @@
 The DJ-Tech 4-Mix as an extension of Blender's interface: its controls run
 Blender commands, its LEDs show Blender's state. The add-on code is described
 file by file in [`CLAUDE.md`](CLAUDE.md); this page is the quick start for the
-next change. State on 2026-11-20: version 0.1.42, installed in the portable
+next change. State on 2026-11-20: version 0.1.43, installed in the portable
 Blender on G:.
 
 ## Use it
@@ -67,7 +67,8 @@ All of this comes from [`mappings/blender_modes.json`](mappings/blender_modes.js
 | OUT (deck C) | 1st press arms the delete; 2nd press deletes the selected objects (Edit Mode: vertices/edges/faces by the select mode). A change of selection or mode, or another deck tool, disarms it. A running grab is confirmed first | blinks fast while armed; lit 2 s after it deleted |
 | IN (deck A) | opens the Add menu (Shift+A) drawn in the viewport; on a submenu: enters it; on an item: adds it (at the 3D Cursor) and closes | on while the menu is open |
 | Left platter (deck A), menu open | moves through the items (~14 pulses per item) | — |
-| OUT (deck A), menu open | cancel: closes the menu without adding | blinks while the menu is open |
+| OUT (deck A), menu open | short: one level back (at the top, closes); held 0.5 s: closes | blinks while the menu is open |
+| SYNC (deck A), menu open | closes the menu from any level | on while the menu is open |
 | Right platter | nothing (free) | — |
 | Deck switch | plays an animation on that deck's LEDs, then the LEDs show the state again | — |
 
@@ -205,12 +206,14 @@ on each press, usable in `when` and in indicators:
 "sync_c": {"control": "SYNC L/C", "values": ["off", "on", "blink"]}
 ```
 
-**The Add menu (deck A)** is Blender's own: the add-on reads the menu
+**The Add menu (deck A)** works like the Properties menu (OUT back, held
+OUT or SYNC close) and also shows in the 4-Mix window with Shift+A's icons.
+It is Blender's own: the add-on reads the menu
 classes (`VIEW3D_MT_add`, or the mode's Shift+A menu: mesh in Edit Mode,
 …) through a recording layout, so add-ons' items appear too. Items with
 "..." open their usual dialog.
 
-**The Properties menu (deck B)**, drawn on the right of the viewport:
+**The Properties menu (deck B)**, drawn on the right of the viewport (or in the 4-Mix window):
 IN opens it on the tabs of the Properties editor, in Blender's order and
 only those the active object has, each tab's panels in Blender's
 registration order, as the editor draws them (Render, Output, View Layer, Scene, World,

@@ -26,9 +26,10 @@ ação funciona; "—" = sem efeito nesse modo.
 
 | # | Controle | Ação | LED | Object | Edit |
 |---|---|---|---|---|---|
-| 15 | IN | abre o menu Add (o mesmo do Shift+A, desenhado no viewport); com o menu aberto: entra no submenu ou insere o item no 3D Cursor e fecha | aceso com o menu aberto | ✔ | ✔ (menu de malha) |
+| 15 | IN | abre o menu Add (o mesmo do Shift+A, desenhado no viewport, ou na janela do 4-Mix com os ícones do Blender); com o menu aberto: entra no submenu ou insere o item no 3D Cursor e fecha | aceso com o menu aberto | ✔ | ✔ (menu de malha) |
 | 16 | Platter esquerdo, menu aberto | anda pelos itens (~14 pulsos por item) | — | ✔ | ✔ |
-| 17 | OUT, menu aberto | cancelar: fecha o menu sem adicionar | pisca enquanto o menu está aberto | ✔ | ✔ |
+| 17 | OUT, menu aberto | toque curto: volta um nível (no primeiro nível, fecha); segurado 0,5 s: fecha | pisca enquanto o menu está aberto | ✔ | ✔ |
+| 17b | SYNC (deck A), menu aberto | fecha o menu de qualquer nível | aceso com o menu aberto | ✔ | ✔ |
 
 ## Deck C (lado esquerdo)
 

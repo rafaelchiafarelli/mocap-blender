@@ -872,7 +872,7 @@ def _draw_row(layout, item, current):
 
 
 class CONTROLSURFACE_PT_props_window(bpy.types.Panel):
-    bl_label = "Properties"
+    bl_label = "4-Mix"
     bl_space_type = "IMAGE_EDITOR"
     bl_region_type = "UI"
     bl_category = "4-Mix"
@@ -883,8 +883,22 @@ class CONTROLSURFACE_PT_props_window(bpy.types.Panel):
 
     def draw(self, context):
         layout = self.layout
+        if add_menu.is_open():  # deck A's Add menu, with Shift+A's icons
+            lv = add_menu._stack[-1]
+            layout.label(text=" › ".join(l["title"] for l in add_menu._stack), icon="ADD")
+            col = layout.column()
+            for i, it in enumerate(lv["items"]):
+                row = col.row(align=True)
+                row.alert = i == lv["index"]
+                row.label(text="", icon="TRIA_RIGHT" if i == lv["index"] else "BLANK1")
+                icon = it.get("icon") or ("RIGHTARROW_THIN" if "items" in it else "NONE")
+                row.label(text=it["text"] + ("  ›" if "items" in it else ""), icon=icon)
+            layout.label(text="Deck A: IN open/insert · OUT back (hold: close) · SYNC close")
+            if _stack:
+                layout.separator()
         if not _stack:
-            layout.label(text="Deck B: IN opens the Properties", icon="INFO")
+            if not add_menu.is_open():
+                layout.label(text="Deck B: IN opens the Properties · Deck A: IN opens Add", icon="INFO")
             return
         level = _stack[-1]
         crumbs = " › ".join(lv["title"] for lv in _stack)

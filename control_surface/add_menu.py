@@ -10,8 +10,8 @@ items included, for the current mode. The list is drawn in the 3D View
   highlighted submenu, or run the highlighted item (in the 3D View, like the
   menu) and close.
 - `step(pulses)` (deck A platter): one item every PULSES_PER_ITEM pulses.
-- `close()` (deck A OUT): cancel, the menu closes without adding.
-- `back()`: one level up; at the top, close (not bound now).
+- `back()` (deck A OUT, short): one level up; at the top, close.
+- `close_all()` (deck A SYNC, or OUT held 0.5 s): close from any level.
 """
 
 import types
@@ -60,14 +60,14 @@ class _Recorder:
 
     def operator(self, op, text=None, icon=None, **kw):
         p = _Props()
-        self.out.append(("op", op, text, p))
+        self.out.append(("op", op, text, p, icon))
         return p
 
     def menu(self, name, text=None, icon=None, **kw):
-        self.out.append(("menu", name, text))
+        self.out.append(("menu", name, text, icon))
 
     def menu_contents(self, name):
-        self.out.append(("menu", name, None))
+        self.out.append(("menu", name, None, None))
 
     def operator_enum(self, op, prop, **kw):
         self.out.append(("enum_flat", op, prop, None))
@@ -111,6 +111,15 @@ def bind_like_instance(cls, name, fake):
     return getattr(cls, name)
 
 
+def _enum_icons(op, prop):
+    try:
+        mod, name = op.split(".", 1)
+        p = getattr(getattr(bpy.ops, mod), name).get_rna_type().properties[prop]
+        return {e.identifier: e.icon for e in p.enum_items}
+    except Exception:
+        return {}
+
+
 def read_menu(name, depth=0):
     """[{"text", "op", "props"} | {"text", "items": [...]}] for Blender menu `name`."""
     cls = getattr(bpy.types, name, None)
@@ -135,15 +144,17 @@ def read_menu(name, depth=0):
     for rec in out:
         kind = rec[0]
         if kind == "op":
-            items.append({"text": rec[2] or _op_label(rec[1]), "op": rec[1], "props": dict(rec[3]._d)})
+            items.append({"text": rec[2] or _op_label(rec[1]), "op": rec[1], "props": dict(rec[3]._d),
+                          "icon": rec[4]})
         elif kind == "menu":
             sub = read_menu(rec[1], depth + 1)
             if sub:
                 label = rec[2] or getattr(getattr(bpy.types, rec[1], None), "bl_label", rec[1])
-                items.append({"text": label, "items": sub})
+                items.append({"text": label, "items": sub, "icon": rec[3]})
         else:
             _, op, prop, text = rec
-            enum = [{"text": n, "op": op, "props": {prop: i}} for i, n in _enum_items(op, prop)]
+            icons = _enum_icons(op, prop)
+            enum = [{"text": n, "op": op, "props": {prop: i}, "icon": icons.get(i)} for i, n in _enum_items(op, prop)]
             if kind == "enum_flat":
                 items.extend(enum)
             elif enum:
@@ -216,6 +227,12 @@ def back():
     return {"FINISHED"}
 
 
+def close_all():
+    """SYNC (deck A), or OUT held 0.5 s: close from any level."""
+    close()
+    return {"FINISHED"}
+
+
 def close():
     global _handle
     _stack.clear()
@@ -238,7 +255,7 @@ def _redraw():
     wm = bpy.context.window_manager
     for win in (wm.windows if wm else ()):
         for area in win.screen.areas:
-            if area.type == "VIEW_3D":
+            if area.type in {"VIEW_3D", "IMAGE_EDITOR"}:
                 area.tag_redraw()
 
 
@@ -299,9 +316,10 @@ def draw_list(title, rows, idx, footer, side="left", editing=False):
 
 
 def _draw():
-    if not _stack:
+    from . import props_menu
+    if not _stack or props_menu.window_open():  # the 4-Mix window shows it with icons
         return
     level = _stack[-1]
     rows = [(it["text"], None, "items" in it) for it in level["items"]]
     draw_list(" › ".join(lv["title"] for lv in _stack), rows, level["index"],
-              "IN: open/insert   OUT: cancel")
+              "IN: open/insert   OUT: back   SYNC: close")

@@ -854,7 +854,15 @@
   {
    "control": "OUT L/A",
    "event": "press",
-   "action": "add_menu_cancel",
+   "action": "add_out_down",
+   "when": {
+    "add_menu": true
+   }
+  },
+  {
+   "control": "OUT L/A",
+   "event": "release",
+   "action": "add_out_up",
    "when": {
     "add_menu": true
    }
@@ -934,6 +942,14 @@
    "action": "props_close",
    "when": {
     "props_menu": true
+   }
+  },
+  {
+   "control": "SYNC L/A",
+   "event": "press",
+   "action": "add_menu_close",
+   "when": {
+    "add_menu": true
    }
   }
  ],
@@ -1255,6 +1271,12 @@
   {
    "control": "SYNC R/B",
    "state": "props_menu",
+   "equals": true,
+   "led": "on"
+  },
+  {
+   "control": "SYNC L/A",
+   "state": "add_menu",
    "equals": true,
    "led": "on"
   }

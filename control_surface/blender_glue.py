@@ -344,6 +344,23 @@ def _props_out_down():
     return {"FINISHED"}
 
 
+_add_out_at = None  # when OUT (deck A) went down, while the Add menu is open
+
+
+def _add_out_down():
+    global _add_out_at
+    _add_out_at = time.monotonic()
+    return {"FINISHED"}
+
+
+def _add_out_up():
+    """OUT (deck A) released: held >= 0.5 s closes the Add menu; a short press goes back."""
+    global _add_out_at
+    held = time.monotonic() - _add_out_at if _add_out_at is not None else 0.0
+    _add_out_at = None
+    return add_menu.close_all() if held >= LONG_PRESS_S else add_menu.back()
+
+
 def _props_out_up():
     """OUT released: held >= 0.5 s closes the menu; a short press goes one level back."""
     global _props_out_at
@@ -369,6 +386,9 @@ ACTIONS = {
     "add_menu_step": lambda pulses: add_menu.step(pulses),
     "add_menu_back": lambda: add_menu.back(),
     "add_menu_cancel": lambda: (add_menu.close(), {"FINISHED"})[1],
+    "add_menu_close": lambda: add_menu.close_all(),
+    "add_out_down": lambda: _add_out_down(),
+    "add_out_up": lambda: _add_out_up(),
     "delete_selected": delete_selected,
     "delete_arm": delete_arm,
     "delete_confirm": delete_confirm,

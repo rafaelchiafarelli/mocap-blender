@@ -120,7 +120,9 @@ Blender state → LED messages to the controller.
   class's own helper methods are bound to the fake), so the items
   are Blender's (and add-ons'); `ROOT_MENUS` picks Shift+A's menu per mode.
   `toggle` (IN: open / enter / run with INVOKE_DEFAULT and close), `step`
-  (platter, ~14 pulses per item), `close` (OUT = cancel; `back` kept, unbound); drawn with `blf`/`gpu` in a
+  (platter, ~14 pulses per item), `back` (OUT short), `close_all` (SYNC L/A, or
+  OUT held 0.5 s via `_add_out_down`/`_add_out_up`; task 40); items keep their
+  Shift+A icons, drawn in the 4-Mix window above the Properties menu; drawn with `blf`/`gpu` in a
   POST_PIXEL handler right of the toolbar. State `add_menu`.
 - `adjust.py` — Inset / Bevel / Loop Cut adjusted by the platter (task 32):
   `start` keeps a copy of every Edit Mode mesh (`_snapshot`, a temporary
