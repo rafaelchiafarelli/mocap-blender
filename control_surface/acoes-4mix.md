@@ -1,4 +1,4 @@
-# DJ-Tech 4-Mix no Blender — ações (add-on control_surface 0.1.35)
+# DJ-Tech 4-Mix no Blender — ações (add-on control_surface 0.1.36)
 
 Atualizado em 2026-11-21. "Object" e "Edit" indicam o modo do Blender em que a
 ação funciona; "—" = sem efeito nesse modo.
@@ -53,7 +53,17 @@ ação funciona; "—" = sem efeito nesse modo.
 
 | 32b | VINYL MODE (deck C) | Edit: modo de seleção vértice → aresta → face | apagado = vértice, aceso = aresta, piscando = face | — | ✔ |
 
-## Deck direito
+## Deck B (lado direito)
+
+| # | Controle | Ação | LED | Object | Edit |
+|---|---|---|---|---|---|
+| 33a | IN | abre o menu do Properties (desenhado à direita do viewport): abas Object e Modifiers; com o menu aberto: entra no nível, executa a ação, liga/desliga, ou começa a editar um número/lista; IN de novo mantém o valor | aceso com o menu aberto; piscando editando | ✔ | ✔ |
+| 33b | Platter direito, menu aberto | anda pelas linhas (~14 pulsos por linha); editando: muda o valor (passo do S1 VOL; ângulos 1–10°; inteiros e listas a cada ~14 pulsos) | — | ✔ | ✔ |
+| 33c | OUT, menu aberto | editando: volta o valor anterior; senão: fecha o menu | pisca com o menu aberto | ✔ | ✔ |
+| 33d | Modifiers › Add Modifier | o menu Add Modifier do Blender (Edit / Generate / Deform / …); IN no modificador adiciona e volta para a lista | — | ✔ | ✔ |
+| 33e | Modifiers › (um modificador) | os campos do modificador com o valor ao lado, e Apply / Delete; o Properties de verdade vai para a aba Modifiers com esse painel aberto | — | ✔ | ✔ |
+
+## Decks B e D (direito)
 
 | # | Controle | Ação | LED | Object | Edit |
 |---|---|---|---|---|---|
@@ -77,8 +87,8 @@ ação funciona; "—" = sem efeito nesse modo.
 
 | # | Controle |
 |---|---|
-| 43 | Platter direito |
+| 43 | Platter direito com o deck D, ou com o deck B e o menu fechado |
 | 44 | A, B e D FILTER; knobs HI, MID, LOW |
-| 45 | Deck A: todos os botões exceto IN e OUT; decks B e D (exceto VINYL MODE) |
+| 45 | Deck A: todos os botões exceto IN e OUT; deck B exceto IN, OUT, platter e VINYL MODE; deck D exceto VINYL MODE |
 | 46 | CUE D |
 | 47 | Deck C: SHIFT + os outros botões; VINYL MODE no Object Mode |

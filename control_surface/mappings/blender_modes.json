@@ -872,6 +872,45 @@
    "when": {
     "add_menu": true
    }
+  },
+  {
+   "control": "IN R/B",
+   "event": "press",
+   "action": "props_toggle"
+  },
+  {
+   "control": "OUT R/B",
+   "event": "press",
+   "action": "props_cancel",
+   "when": {
+    "props_menu": true
+   }
+  },
+  {
+   "control": "PLATTER R/B",
+   "event": "cw",
+   "action": "props_step",
+   "args": {
+    "pulses": 1,
+    "amount": 1
+   },
+   "scale": "step",
+   "when": {
+    "props_menu": true
+   }
+  },
+  {
+   "control": "PLATTER R/B",
+   "event": "ccw",
+   "action": "props_step",
+   "args": {
+    "pulses": -1,
+    "amount": -1
+   },
+   "scale": "step",
+   "when": {
+    "props_menu": true
+   }
   }
  ],
  "indicators": [
@@ -1155,6 +1194,28 @@
    "control": "VINYL MODE L/C",
    "state": "mesh_select_mode",
    "equals": "FACE",
+   "led": "blink",
+   "on_ms": 200,
+   "off_ms": 200
+  },
+  {
+   "control": "IN R/B",
+   "state": "props_editing",
+   "equals": true,
+   "led": "blink",
+   "on_ms": 200,
+   "off_ms": 200
+  },
+  {
+   "control": "IN R/B",
+   "state": "props_menu",
+   "equals": true,
+   "led": "on"
+  },
+  {
+   "control": "OUT R/B",
+   "state": "props_menu",
+   "equals": true,
    "led": "blink",
    "on_ms": 200,
    "off_ms": 200

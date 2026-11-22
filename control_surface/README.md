@@ -3,7 +3,7 @@
 The DJ-Tech 4-Mix as an extension of Blender's interface: its controls run
 Blender commands, its LEDs show Blender's state. The add-on code is described
 file by file in [`CLAUDE.md`](CLAUDE.md); this page is the quick start for the
-next change. State on 2026-11-20: version 0.1.35, installed in the portable
+next change. State on 2026-11-20: version 0.1.36, installed in the portable
 Blender on G:.
 
 ## Use it
@@ -209,6 +209,23 @@ on each press, usable in `when` and in indicators:
 classes (`VIEW3D_MT_add`, or the mode's Shift+A menu: mesh in Edit Mode,
 …) through a recording layout, so add-ons' items appear too. Items with
 "..." open their usual dialog.
+
+**The Properties menu (deck B)**, drawn on the right of the viewport:
+IN opens it (tabs **Object** and **Modifiers**), enters a level, runs an
+action, flips an on/off, or starts editing a number or a list; IN again
+keeps the new value. The right platter moves through the rows, or changes
+the edited value (numbers by the S1 VOL step, angles 1–10° per pulse, whole
+numbers and lists one per ~14 pulses). OUT, while editing, puts the old
+value back; otherwise it closes the menu. IN lit while open (blinking while
+editing), OUT blinking while open.
+- Object tab: the fields of Blender's own Properties panels (Transform,
+  Relations, Visibility, …), read from their draw code.
+- Modifiers tab: **Add Modifier ›** (Blender's menu: Edit / Generate /
+  Deform / …), then each modifier's fields (from its RNA, since modifier
+  panels are drawn in C) and Apply / Delete.
+- The real Properties editor follows: its tab changes, and the chosen
+  modifier becomes active with its panel expanded.
+- Value changes do not create undo steps.
 
 **A new Blender state or action:** add a function to `STATES` or `ACTIONS` in
 [`blender_glue.py`](blender_glue.py). The mapping is validated against those

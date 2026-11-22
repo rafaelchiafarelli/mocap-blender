@@ -116,7 +116,8 @@ Blender state → LED messages to the controller.
   feeds the `grabbing`/`grab_axis` states.
 - `add_menu.py` — the Add menu on deck A (task 26): `read_menu` calls the
   Blender menu classes' `draw()` with a recording fake layout (`_Recorder`:
-  `operator`, `menu`, `operator_enum`, `operator_menu_enum`), so the items
+  `operator`, `menu`, `operator_enum`, `operator_menu_enum`; the menu
+  class's own helper methods are bound to the fake), so the items
   are Blender's (and add-ons'); `ROOT_MENUS` picks Shift+A's menu per mode.
   `toggle` (IN: open / enter / run with INVOKE_DEFAULT and close), `step`
   (platter, ~14 pulses per item), `close` (OUT = cancel; `back` kept, unbound); drawn with `blf`/`gpu` in a
@@ -130,6 +131,15 @@ Blender state → LED messages to the controller.
   copies (also from `grab.end_tools` through `END_TOOLS_HOOKS`). States
   `adjusting` (operator id or NONE), `adjust_active`. Not Blender's undo:
   `ed.undo` from the timer fails its poll or crashes Blender (2026-11-21).
+- `props_menu.py` — the Properties menu on deck B (task 33): rows built when
+  a level is entered (`_root_rows`: Object, Modifiers; `_panel_rows` calls
+  the PROPERTIES panels' `draw()` through `_FakePanel` + `_PropRecorder`,
+  which keeps `layout.prop` calls with `invert_checkbox`; `_modifier_rows`
+  lists a modifier's RNA fields plus Apply/Delete; `_add_modifier_rows`
+  reads `OBJECT_MT_modifier_add`). `toggle` / `step` / `cancel`; editing
+  state `_edit`; `_sync_properties` sets the real editor's tab and expands
+  the chosen modifier. Drawn with `add_menu.draw_list(side="right")`.
+  States `props_menu`, `props_editing`.
 - `knob_select.py` — `pick(n, anchor, value)`: the object index for a
   centre-tap knob's position, proportional (the travel is split evenly over
   the objects; the ends land on the last/first). Pure.
@@ -225,6 +235,9 @@ Blender state → LED messages to the controller.
     VINYL MODE L/C → `select_mode_cycle` (state `mesh_select_mode`, LED
     off/on/blink for vertex/edge/face). While adjusting, the left platter
     → `adjust_change` main, SHIFT + platter → second.
+  - **Deck B** (task 33): IN R/B → `props_toggle`, OUT R/B →
+    `props_cancel` and the right platter → `props_step` (scaled by `step`)
+    while the menu is open; IN lit (blinking while editing), OUT blinking.
   - **OUT** (task 25) → `delete_selected`: `grab.end_tools()` first (a
     running grab must not hold deleted objects), then `object.delete`
     without confirmation (Edit Mode: `mesh.delete` by the select mode,

@@ -14,6 +14,8 @@ items included, for the current mode. The list is drawn in the 3D View
 - `back()`: one level up; at the top, close (not bound now).
 """
 
+import types
+
 import bpy
 import blf
 import gpu
@@ -105,11 +107,15 @@ def read_menu(name, depth=0):
     out = []
 
     class Fake:
-        pass
+        """Stands in for the menu instance: the layout is the recorder, and the
+        menu class's own helpers (e.g. operator_modifier_add) are bound to it."""
+
+        def __getattr__(self, k):
+            v = getattr(cls, k)
+            return types.MethodType(v, self) if isinstance(v, types.FunctionType) else v
 
     fake = Fake()
     fake.layout = _Recorder(out)
-    fake.bl_label = getattr(cls, "bl_label", name)
     try:
         cls.draw(fake, bpy.context)
     except Exception:
@@ -231,40 +237,60 @@ def _rect(shader, x, y, w, h, color):
                      ).draw(shader)
 
 
-def _draw():
-    if not _stack:
-        return
+def draw_list(title, rows, idx, footer, side="left", editing=False):
+    """Draw a menu box in the current 3D View region.
+
+    rows: [(text, value or None, has_submenu)]; idx: the highlighted row;
+    side: "left" (right of the toolbar) or "right" (left of the sidebar);
+    editing: the highlighted row's value is being changed (another colour).
+    """
     scale = bpy.context.preferences.system.ui_scale
     size, line, pad = int(13 * scale), int(20 * scale), int(10 * scale)
     region = bpy.context.region
-    level = _stack[-1]
-    items, idx = level["items"], level["index"]
-    first = max(0, min(idx - VISIBLE // 2, len(items) - VISIBLE))
-    shown = items[first:first + VISIBLE]
-    width = int(260 * scale)
+    first = max(0, min(idx - VISIBLE // 2, len(rows) - VISIBLE))
+    shown = rows[first:first + VISIBLE]
+    values = any(r[1] is not None for r in rows)
+    width = int((360 if values else 260) * scale)
     height = line * (len(shown) + 2) + pad
-    # Right of the toolbar and below the view's name text (they overlap the region).
-    tools = next((r.width for r in bpy.context.area.regions if r.type == "TOOLS"), 0)
-    x = tools + int(16 * scale)
+    regions = bpy.context.area.regions
+    if side == "left":
+        # Right of the toolbar and below the view's name text (they overlap the region).
+        x = next((r.width for r in regions if r.type == "TOOLS"), 0) + int(16 * scale)
+    else:
+        ui = next((r.width for r in regions if r.type == "UI" and r.width > 1), 0)
+        x = region.width - ui - width - int(70 * scale)  # clear of the navigation gizmo
     y_top = region.height - int(110 * scale)
     shader = gpu.shader.from_builtin("UNIFORM_COLOR")
     gpu.state.blend_set("ALPHA")
     _rect(shader, x, y_top - height, width, height, (0.1, 0.1, 0.1, 0.85))
     font = 0
     blf.size(font, size)
-    title = " › ".join(lv["title"] for lv in _stack)
     blf.color(font, 1.0, 0.6, 0.1, 1.0)
     blf.position(font, x + pad, y_top - line, 0)
     blf.draw(font, title)
-    for i, item in enumerate(shown):
+    for i, (text, value, sub) in enumerate(shown):
         y = y_top - line * (i + 2)
         current = first + i == idx
         if current:
-            _rect(shader, x + 4, y - int(5 * scale), width - 8, line, (0.28, 0.45, 0.75, 0.9))
+            colour = (0.75, 0.45, 0.15, 0.9) if editing else (0.28, 0.45, 0.75, 0.9)
+            _rect(shader, x + 4, y - int(5 * scale), width - 8, line, colour)
         blf.color(font, 1.0, 1.0, 1.0, 1.0 if current else 0.8)
         blf.position(font, x + pad, y, 0)
-        blf.draw(font, item["text"] + ("  ›" if "items" in item else ""))
+        blf.draw(font, text + ("  ›" if sub else ""))
+        if value is not None:
+            blf.color(font, 0.85, 0.9, 1.0, 1.0 if current else 0.75)
+            blf.position(font, x + int(width * 0.62), y, 0)
+            blf.draw(font, value)
     blf.color(font, 0.7, 0.7, 0.7, 0.8)
     blf.position(font, x + pad, y_top - height + int(6 * scale), 0)
-    blf.draw(font, f"{idx + 1}/{len(items)}   IN: open/insert   OUT: cancel")
+    blf.draw(font, f"{idx + 1}/{len(rows)}   {footer}")
     gpu.state.blend_set("NONE")
+
+
+def _draw():
+    if not _stack:
+        return
+    level = _stack[-1]
+    rows = [(it["text"], None, "items" in it) for it in level["items"]]
+    draw_list(" › ".join(lv["title"] for lv in _stack), rows, level["index"],
+              "IN: open/insert   OUT: cancel")

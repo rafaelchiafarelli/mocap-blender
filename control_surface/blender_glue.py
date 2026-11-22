@@ -14,7 +14,7 @@ from pathlib import Path
 import bpy
 from mathutils import Matrix, Vector
 
-from . import add_menu, adjust, grab, knob_select
+from . import add_menu, adjust, grab, knob_select, props_menu
 
 grab.END_TOOLS_HOOKS.append(adjust.end)
 from .engine import Engine, Mapping
@@ -77,6 +77,8 @@ STATES = {
     "scale_mode": lambda: grab.tool_mode("SCALE"),
     "rotate_mode": lambda: grab.tool_mode("ROTATE"),
     "grab_snap": grab.snap_on,
+    "props_menu": props_menu.is_open,
+    "props_editing": props_menu.editing,
     "adjusting": adjust.adjusting,
     "adjust_active": adjust.active,
     "mesh_select_mode": lambda: _mesh_select_mode(),
@@ -287,6 +289,9 @@ def select_mode_cycle():
 
 
 ACTIONS = {
+    "props_toggle": lambda: props_menu.toggle(),
+    "props_step": lambda pulses, amount=0.01: props_menu.step(pulses, amount),
+    "props_cancel": lambda: props_menu.cancel(),
     "extrude_start": extrude_start,
     "adjust_start": adjust_start,
     "adjust_change": lambda which, amount: adjust.change(which, amount),
@@ -617,6 +622,7 @@ def register():
 def unregister():
     disconnect()
     grab.end_tools()
-    add_menu.close()  # release the ports, or they stay locked until Blender quits
+    add_menu.close()
+    props_menu.close()  # release the ports, or they stay locked until Blender quits
     for c in reversed(CLASSES):
         bpy.utils.unregister_class(c)
