@@ -3,7 +3,7 @@
 The DJ-Tech 4-Mix as an extension of Blender's interface: its controls run
 Blender commands, its LEDs show Blender's state. The add-on code is described
 file by file in [`CLAUDE.md`](CLAUDE.md); this page is the quick start for the
-next change. State on 2026-11-22: version 0.1.46, installed in the portable
+next change. State on 2026-11-22: version 0.1.47, installed in the portable
 Blender on G:.
 
 ## Use it
@@ -42,11 +42,11 @@ All of this comes from [`mappings/blender_modes.json`](mappings/blender_modes.js
 | CUE C | Right view; pressed again in Right → Left | on in Right, blinks in Left, off in any other view |
 | CUE A | Front view; again → Back | on in Front, blinks in Back, off otherwise |
 | CUE B | Top view; again → Bottom | on in Top, blinks in Bottom, off otherwise |
-| CUE D | nothing (the Properties editor rule was cancelled) | — |
+| CUE D | toggles the camera view | on while in camera view |
 | C FILTER (after reaching its centre) | selects one object (and makes it active), see below | — |
 | VINYL MODE, right deck (B or D) | toggles Preferences → Navigation → Orbit Around Selection | blinks while it is on |
 | Encoder (PRESS TO ENTER), turn | zoom in (right) / out (left); in camera view: dolly the camera forward/back by `step` | — |
-| Encoder, press | toggle the camera view | on while in camera view |
+| Encoder, press | nothing (the camera view moved to CUE D) | — |
 | S1 VOL | sets `step`: 1 cm (bottom) to 10 cm (top); 1 cm until moved | — |
 | SYNC (deck C) | cycles off → on → blinking → off; sets what the left platter does; on turns the other tools off | on / blinking |
 | Left platter, deck C, SYNC on | view up/down by `step`; in camera view: camera up/down | — |
@@ -65,10 +65,12 @@ All of this comes from [`mappings/blender_modes.json`](mappings/blender_modes.js
 | SHIFT + CUE (deck C) | Apply Rotation | lit 2 s after it worked |
 | SHIFT + PLAY/PAUSE (deck C) | Apply Scale | lit 2 s after it worked |
 | OUT (deck C) | 1st press arms the delete; 2nd press deletes the selected objects (Edit Mode: vertices/edges/faces by the select mode). A change of selection or mode, or another deck tool, disarms it. A running grab is confirmed first | blinks fast while armed; lit 2 s after it deleted |
-| IN (deck A) | opens the Add menu (Shift+A) drawn in the viewport; on a submenu: enters it; on an item: adds it (at the 3D Cursor) and closes | on while the menu is open |
+| IN (deck A) | opens the Add menu (Shift+A) in the 4-Mix window; on a submenu: enters it; on an item: adds it (at the 3D Cursor) and closes | on while the menu is open |
 | Left platter (deck A), menu open | moves through the items (~14 pulses per item) | — |
 | OUT (deck A), menu open | short: one level back (at the top, closes); held 0.5 s: closes | blinks while the menu is open |
 | SYNC (deck A), menu open | closes the menu from any level | on while the menu is open |
+| 1 (deck A) | the 3D cursor to the mouse (like Shift + right click: on the surface under it) | lit 1 s after it worked |
+| 2 / 3 / 4 (deck A) | the left platter moves the 3D cursor along X / Y / Z by `step`; the same button again: off | on while that axis is chosen |
 | Right platter | nothing (free) | — |
 | Deck switch | plays an animation on that deck's LEDs, then the LEDs show the state again | — |
 

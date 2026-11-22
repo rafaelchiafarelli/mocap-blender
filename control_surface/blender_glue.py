@@ -87,6 +87,7 @@ STATES = {
     "cage": grab.cage_on,
     "add_menu": add_menu.is_open,
     "grab_axis": _grab_axis,
+    "cursor_axis": lambda: _cursor_axis,
     "object_mode": _object_mode, "view_perspective": _view_perspective,
     "view_axis": _view_axis, "orbit_selection": _orbit_selection,
 }
@@ -208,6 +209,54 @@ def tool_toggle(mode):
     if "RUNNING_MODAL" in result:
         grab.arm(mode)
     return result
+
+
+# --- 3D cursor (deck A, task 43) ----------------------------------------------
+
+_cursor_axis = "NONE"  # X / Y / Z: the axis the left platter (deck A) moves the 3D cursor along
+
+
+def cursor_to_mouse():
+    """1 (deck A): the 3D cursor to the mouse, like Shift + right click."""
+    return run_operator("control_surface.cursor_to_mouse", {}, "INVOKE_DEFAULT")
+
+
+def cursor_axis_toggle(axis):
+    """2/3/4 (deck A): the platter moves the 3D cursor along X/Y/Z; the same button again: off."""
+    global _cursor_axis
+    _cursor_axis = "NONE" if _cursor_axis == axis else axis
+    return {"FINISHED"}
+
+
+def cursor_move(amount):
+    """Left platter (deck A): the 3D cursor along the chosen global axis, in metres."""
+    if _cursor_axis not in ("X", "Y", "Z"):
+        return {"FINISHED"}
+    bpy.context.scene.cursor.location["XYZ".index(_cursor_axis)] += amount
+    _redraw()
+    return {"FINISHED"}
+
+
+class CONTROLSURFACE_OT_cursor_to_mouse(bpy.types.Operator):
+    """The 3D cursor to the mouse (Blender's Shift + right click), from the controller"""
+    bl_idname = "control_surface.cursor_to_mouse"
+    bl_label = "3D Cursor to Mouse"
+    bl_options = {"INTERNAL"}
+
+    def invoke(self, context, event):
+        # Invoked from the timer: the event is the window's last known mouse
+        # position. Blender's own operator needs the 3D View region under it.
+        mx, my = event.mouse_x, event.mouse_y
+        for area in context.window.screen.areas:
+            if area.type != "VIEW_3D":
+                continue
+            for region in area.regions:
+                if (region.type == "WINDOW" and region.x <= mx < region.x + region.width
+                        and region.y <= my < region.y + region.height):
+                    with context.temp_override(area=area, region=region):
+                        return bpy.ops.view3d.cursor3d("INVOKE_DEFAULT")
+        self.report({"WARNING"}, "the mouse is not over a 3D View")
+        return {"CANCELLED"}
 
 
 def move_start(axis):
@@ -394,6 +443,9 @@ ACTIONS = {
     "delete_confirm": delete_confirm,
     "tool_toggle": tool_toggle,
     "move_start": move_start,
+    "cursor_to_mouse": cursor_to_mouse,
+    "cursor_axis_toggle": cursor_axis_toggle,
+    "cursor_move": cursor_move,
     "sync_cycle": lambda: grab.sync_cycle(),
     "cage_step": lambda delta: grab.cage_step(delta),
     "rotate_tip": lambda pulses: grab.rotate_tip(pulses),
@@ -700,7 +752,7 @@ class CONTROLSURFACE_PT_panel(bpy.types.Panel):
                 col.label(text=_session.engine.last_error, icon="ERROR")
 
 
-CLASSES = grab.CLASSES + menu_window.CLASSES + (CONTROLSURFACE_OT_debug, CONTROLSURFACE_OT_connect, CONTROLSURFACE_OT_disconnect, CONTROLSURFACE_PT_panel)
+CLASSES = grab.CLASSES + menu_window.CLASSES + (CONTROLSURFACE_OT_cursor_to_mouse, CONTROLSURFACE_OT_debug, CONTROLSURFACE_OT_connect, CONTROLSURFACE_OT_disconnect, CONTROLSURFACE_PT_panel)
 
 
 def register():

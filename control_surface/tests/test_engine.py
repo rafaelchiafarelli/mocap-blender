@@ -12,8 +12,8 @@ MODES = ROOT / "mappings" / "blender_modes.json"
 # Test mapping: the bundled bindings plus mode LEDs on CUE A-D (A-D have no LED).
 CUE_LEDS = Path(__file__).resolve().parent / "data" / "modes_cue_leds.json"
 A_LED, B_LED = (0x90, 0x27), (0x90, 0x28)  # CUE A, CUE B
-BUNDLED_ACTIONS = {"add_menu_close", "add_out_down", "add_out_up", "props_close", "props_out_down", "props_out_up", "delete_arm", "delete_confirm", "props_toggle", "props_step", "props_cancel", "extrude_start", "adjust_start", "adjust_change", "adjust_end", "loopcut_start", "select_mode_cycle", "rotate_snap_on", "rotate_tip", "add_menu_toggle", "add_menu_step", "add_menu_back", "add_menu_cancel", "delete_selected", "cage_step", "tool_toggle", "move_start", "sync_cycle", "grab_start", "grab_confirm", "grab_axis", "grab_push", "select_by_knob", "camera_move", "view_move", "view_projection", "orbit_selection_toggle"}
-BUNDLED_STATES = {"delete_armed", "props_menu", "props_editing", "adjusting", "adjust_active", "mesh_select_mode", "grab_snap", "add_menu", "cage", "rotate_mode", "sync_mode", "scale_mode", "grabbing", "grab_axis", "object_mode", "view_axis", "view_perspective", "orbit_selection"}
+BUNDLED_ACTIONS = {"add_menu_close", "add_out_down", "add_out_up", "props_close", "props_out_down", "props_out_up", "delete_arm", "delete_confirm", "props_toggle", "props_step", "props_cancel", "extrude_start", "adjust_start", "adjust_change", "adjust_end", "loopcut_start", "select_mode_cycle", "rotate_snap_on", "rotate_tip", "add_menu_toggle", "add_menu_step", "add_menu_back", "add_menu_cancel", "delete_selected", "cage_step", "tool_toggle", "move_start", "sync_cycle", "grab_start", "grab_confirm", "grab_axis", "grab_push", "select_by_knob", "camera_move", "view_move", "view_projection", "orbit_selection_toggle", "cursor_to_mouse", "cursor_axis_toggle", "cursor_move"}
+BUNDLED_STATES = {"delete_armed", "props_menu", "props_editing", "adjusting", "adjust_active", "mesh_select_mode", "grab_snap", "add_menu", "cage", "rotate_mode", "sync_mode", "scale_mode", "grabbing", "grab_axis", "object_mode", "view_axis", "view_perspective", "orbit_selection", "cursor_axis"}
 
 
 class FakeBlender:
@@ -24,7 +24,8 @@ class FakeBlender:
                      "rotate_mode": "OFF", "sync_mode": "off", "cage": False,
                      "add_menu": False, "grab_snap": False,
                      "adjusting": "NONE", "adjust_active": False, "mesh_select_mode": "NONE",
-                     "props_menu": False, "props_editing": False, "delete_armed": False}
+                     "props_menu": False, "props_editing": False, "delete_armed": False,
+                     "cursor_axis": "NONE"}
         self.actions = []
         self.calls = []
         self.contexts = []
@@ -271,13 +272,12 @@ def test_bundled_cue_buttons_toggle_axis_views(note, first, second):
     assert len(fb.calls) == 3
 
 
-def test_bundled_encoder_zooms_and_its_press_toggles_camera_view():
+def test_bundled_encoder_zooms_and_its_press_is_free():
     e, fb, _ = make_bundled()
     e.handle(0xB0, 0x1F, 0x41)
     e.handle(0xB0, 0x1F, 0x3F)
-    e.handle(0x90, 0x1F, 0x7F)
-    assert fb.calls == [("view3d.zoom", {"delta": 1}), ("view3d.zoom", {"delta": -1}),
-                        ("view3d.view_camera", {})]
+    e.handle(0x90, 0x1F, 0x7F)  # the camera view moved to CUE D (task 43)
+    assert fb.calls == [("view3d.zoom", {"delta": 1}), ("view3d.zoom", {"delta": -1})]
 
 
 def test_mode_buttons_use_exec():
@@ -441,14 +441,14 @@ def test_scale_validation(scales, binding):
         Mapping(data).validate(PROFILE, set(), {"camera_move"})
 
 
-def test_bundled_encoder_led_is_on_in_camera_view():
+def test_bundled_cue_d_led_is_on_in_camera_view():
     e, fb, sent = make_bundled()
     e.update()
-    assert led_values(sent, (0x90, 0x1F)) == [LED_OFF]
+    assert led_values(sent, (0x90, 0x29)) == [LED_OFF]
     fb.view["view_perspective"] = "CAMERA"
     fb.now = 20
     e.update()
-    assert led_values(sent, (0x90, 0x1F)) == [LED_OFF, LED_ON]
+    assert led_values(sent, (0x90, 0x29)) == [LED_OFF, LED_ON]
 
 
 @pytest.mark.parametrize("note, positive, negative", [
@@ -726,7 +726,6 @@ def test_bundled_deck_c_out_deletes_the_selection_and_flashes():
 def test_bundled_deck_a_add_menu_in_platter_out():
     e, fb, sent = make_bundled()
     press(e, (0x91, 0x02))          # IN L/A
-    e.handle(0xB1, 0x0F, 0x41)       # platter, menu closed: nothing
     fb.view["add_menu"] = True
     e.handle(0xB1, 0x0F, 0x41)
     e.handle(0xB1, 0x0F, 0x3F)
@@ -810,3 +809,30 @@ def test_bundled_deck_b_properties_menu():
     press(e, (0x92, 0x05))                  # SYNC R/B: close
     assert fb.actions == [("props_toggle", {}), ("props_step", {"pulses": 0.01, "amount": 0.01}),
                           ("props_out_down", {}), ("props_out_up", {}), ("props_close", {})]
+
+
+def test_bundled_deck_a_3d_cursor():
+    e, fb, sent = make_bundled()
+    press(e, (0x91, 0x06))                  # 1 L/A: the 3D cursor to the mouse
+    press(e, (0x91, 0x08))                  # 3 L/A: platter along Y
+    fb.view["cursor_axis"] = "Y"
+    e.handle(0xB1, 0x0F, 0x41)               # platter: + step
+    e.handle(0xB1, 0x0F, 0x3F)               # platter: - step
+    assert fb.actions == [("cursor_to_mouse", {}), ("cursor_axis_toggle", {"axis": "Y"}),
+                          ("cursor_move", {"amount": 0.01}), ("cursor_move", {"amount": -0.01})]
+    e.update()
+    assert led_values(sent, (0x91, 0x08))[-1] == LED_ON   # 3 lit while Y is chosen
+    assert led_values(sent, (0x91, 0x07))[-1] == 0        # 2 off
+
+
+def test_bundled_deck_a_platter_runs_the_add_menu_first():
+    e, fb, _ = make_bundled()
+    fb.view.update(add_menu=True, cursor_axis="X")
+    e.handle(0xB1, 0x0F, 0x41)
+    assert fb.actions == [("add_menu_step", {"pulses": 1})]
+
+
+def test_bundled_cue_d_toggles_the_camera_view():
+    e, fb, _ = make_bundled()
+    press(e, (0x90, 0x29))                  # CUE D
+    assert fb.calls == [("view3d.view_camera", {})]

@@ -755,7 +755,7 @@
    }
   },
   {
-   "control": "NAVIGATION push",
+   "control": "CUE D",
    "event": "press",
    "operator": "view3d.view_camera"
   },
@@ -890,6 +890,54 @@
    }
   },
   {
+   "control": "PLATTER L/A",
+   "event": "cw",
+   "action": "cursor_move",
+   "args": {
+    "amount": 1
+   },
+   "scale": "step"
+  },
+  {
+   "control": "PLATTER L/A",
+   "event": "ccw",
+   "action": "cursor_move",
+   "args": {
+    "amount": -1
+   },
+   "scale": "step"
+  },
+  {
+   "control": "1 L/A",
+   "event": "press",
+   "action": "cursor_to_mouse",
+   "flash_ms": 1000
+  },
+  {
+   "control": "2 L/A",
+   "event": "press",
+   "action": "cursor_axis_toggle",
+   "args": {
+    "axis": "X"
+   }
+  },
+  {
+   "control": "3 L/A",
+   "event": "press",
+   "action": "cursor_axis_toggle",
+   "args": {
+    "axis": "Y"
+   }
+  },
+  {
+   "control": "4 L/A",
+   "event": "press",
+   "action": "cursor_axis_toggle",
+   "args": {
+    "axis": "Z"
+   }
+  },
+  {
    "control": "IN R/B",
    "event": "press",
    "action": "props_toggle"
@@ -971,7 +1019,7 @@
    "off_ms": 200
   },
   {
-   "control": "NAVIGATION push",
+   "control": "CUE D",
    "state": "view_perspective",
    "equals": "CAMERA",
    "led": "on"
@@ -1278,6 +1326,24 @@
    "control": "SYNC L/A",
    "state": "add_menu",
    "equals": true,
+   "led": "on"
+  },
+  {
+   "control": "2 L/A",
+   "state": "cursor_axis",
+   "equals": "X",
+   "led": "on"
+  },
+  {
+   "control": "3 L/A",
+   "state": "cursor_axis",
+   "equals": "Y",
+   "led": "on"
+  },
+  {
+   "control": "4 L/A",
+   "state": "cursor_axis",
+   "equals": "Z",
    "led": "on"
   }
  ]

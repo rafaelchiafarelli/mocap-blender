@@ -253,6 +253,14 @@ Blender state → LED messages to the controller.
       `knob_select.pick`; the anchor (active selected object or none) is
       taken when the knob leaves the centre and dropped at the centre and
       at Connect;
+    - `cursor_to_mouse()` (task 43) invokes
+      `CONTROLSURFACE_OT_cursor_to_mouse`: its `invoke` reads the window's
+      last known mouse position (`event.mouse_x/y`), finds the 3D View
+      region under it and runs Blender's `view3d.cursor3d` (Shift + right
+      click: surface projection) there; elsewhere a warning, `CANCELLED`;
+    - `cursor_axis_toggle(axis)` / `cursor_move(amount)` (task 43): the
+      left platter moves `scene.cursor.location` along the chosen global
+      axis; module state `_cursor_axis`;
     - `orbit_selection_toggle()` flips Orbit Around Selection. Actions, not
       `wm.context_set_enum`/`wm.context_toggle`: those return
       `{'CANCELLED'}` for non-undo data and would show as an error.
@@ -300,6 +308,11 @@ Blender state → LED messages to the controller.
     (task 28: closes the menu; it blinks while the menu is open) and the
     left platter → `add_menu_step` while the menu is open; IN's LED on while
     it is open.
+  - **Deck A, 3D cursor** (task 43): 1 → `cursor_to_mouse` (flash 1 s);
+    2/3/4 → `cursor_axis_toggle` X/Y/Z (state `cursor_axis`, that button's
+    LED on); the left platter (after the Add menu's bindings) →
+    `cursor_move` ±1 × `step` along that global axis (nothing while
+    `cursor_axis` is NONE).
   - **Deck C in Edit Mode** (task 32; bindings with `when` object_mode EDIT
     placed first): CUP → `extrude_start` (`mesh.extrude_region`, then the
     grab on axis `NORMAL`, the selection's mean world normal; CUP again →
@@ -322,16 +335,16 @@ Blender state → LED messages to the controller.
     running grab must not hold deleted objects), then `object.delete`
     without confirmation (Edit Mode: `mesh.delete` by the select mode,
     task 27); `flash_ms` 2000.
-  - **CUE D:** unbound (the Properties editor rule was cancelled).
+  - **CUE D** (task 43): → `view3d.view_camera` (toggles the camera view);
+    its LED is on while the camera view is on.
   - **VINYL MODE R/B and R/D** → `orbit_selection_toggle`; their LED blinks
     200/200 ms while Orbit Around Selection is on.
   - **Step scale** `step`: S1 VOL sets 0.01–0.10 m (1–10 cm), 0.01 until
     it moves. It sizes every platter step and the encoder's dolly.
   - **PRESS TO ENTER encoder** (`NAVIGATION`): in camera view, turned
     right/left → `camera_move` `forward` ±1 × `step` (dolly); otherwise
-    `view3d.zoom` `delta=1` (in) / `delta=-1` (out). Press →
-    `view3d.view_camera`, which toggles the camera view. The encoder's LED
-    is on while the camera view is on.
+    `view3d.zoom` `delta=1` (in) / `delta=-1` (out). Press: free (the
+    camera view moved to CUE D in task 43).
   - **Deck C** (task 18; the right platter and decks A, B, D are free).
     One platter step = `step` metres per message, whatever the speed:
     - **one tool at a time** (task 20, `grab.py`): SYNC (`sync_cycle`,

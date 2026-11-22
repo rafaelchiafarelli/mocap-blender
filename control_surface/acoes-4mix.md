@@ -1,4 +1,4 @@
-# DJ-Tech 4-Mix no Blender — ações (add-on control_surface 0.1.46)
+# DJ-Tech 4-Mix no Blender — ações (add-on control_surface 0.1.47)
 
 Atualizado em 2026-11-22. "Object" e "Edit" indicam o modo do Blender em que a
 ação funciona; "—" = sem efeito nesse modo.
@@ -16,9 +16,9 @@ ação funciona; "—" = sem efeito nesse modo.
 | 7 | CUE A | vista Front; de novo → Back | aceso em Front, piscando em Back, apagado fora | ✔ | ✔ |
 | 8 | CUE B | vista Top; de novo → Bottom | aceso em Top, piscando em Bottom, apagado fora | ✔ | ✔ |
 | 9 | CUE C | vista Right; de novo → Left | aceso em Right, piscando em Left, apagado fora | ✔ | ✔ |
-| 10 | CUE D | — | — | | |
+| 10 | CUE D | liga/desliga a vista da câmera | aceso na vista da câmera | ✔ | ✔ |
 | 11 | Encoder (PRESS TO ENTER), girar | zoom; na vista da câmera: câmera para frente/trás (dolly) | — | ✔ | ✔ |
-| 12 | Encoder, apertar | liga/desliga a vista da câmera | aceso na vista da câmera | ✔ | ✔ |
+| 12 | Encoder, apertar | — (a vista da câmera foi para o CUE D) | — | | |
 | 13 | S1 VOL | tamanho do passo do platter: 1–10 cm (mover, vista, câmera), 1–10 % (scale), 1–10° (rotação); 1 até ser mexido | — | ✔ | ✔ |
 | 14 | C FILTER (depois de passar pelo centro) | seleciona um objeto na ordem do Outliner, proporcional ao curso do knob | — | ✔ | — |
 
@@ -30,6 +30,9 @@ ação funciona; "—" = sem efeito nesse modo.
 | 16 | Platter esquerdo, menu aberto | anda pelos itens (~14 pulsos por item) | — | ✔ | ✔ |
 | 17 | OUT, menu aberto | toque curto: volta um nível (no primeiro nível, fecha); segurado 0,5 s: fecha | pisca enquanto o menu está aberto | ✔ | ✔ |
 | 17b | SYNC (deck A), menu aberto | fecha o menu de qualquer nível | aceso com o menu aberto | ✔ | ✔ |
+| 17c | 1 (deck A) | leva o 3D Cursor para o mouse (o mesmo do Shift + botão direito: na superfície embaixo do mouse) | aceso 1 s depois de funcionar | ✔ | ✔ |
+| 17d | 2 / 3 / 4 (deck A) | escolhe o eixo X / Y / Z: o platter esquerdo move o 3D Cursor nesse eixo, pelo `step` do S1 VOL; o mesmo botão de novo desliga | aceso enquanto o eixo está escolhido | ✔ | ✔ |
+| 17e | Platter esquerdo, menu fechado, eixo escolhido | move o 3D Cursor no eixo escolhido (1–10 cm por pulso, pelo S1 VOL) | — | ✔ | ✔ |
 
 ## Deck C (lado esquerdo)
 
@@ -98,6 +101,5 @@ ação funciona; "—" = sem efeito nesse modo.
 |---|---|
 | 43 | Platter direito com o deck D, ou com o deck B e o menu fechado |
 | 44 | A, B e D FILTER; knobs HI, MID, LOW |
-| 45 | Deck A: todos os botões exceto IN e OUT; deck B exceto IN, OUT, platter e VINYL MODE; deck D exceto VINYL MODE |
-| 46 | CUE D |
+| 45 | Deck A: RE, CUP, CUE, PLAY/PAUSE, VINYL MODE e os SHIFT; deck B exceto IN, OUT, platter e VINYL MODE; deck D exceto VINYL MODE |
 | 47 | Deck C: SHIFT + os outros botões; VINYL MODE no Object Mode |
