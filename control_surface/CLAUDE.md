@@ -337,10 +337,13 @@ Blender state → LED messages to the controller.
     LED on); the left platter (after the Add menu's bindings) →
     `cursor_move` ±1 × `step` along that global axis (nothing while
     `cursor_axis` is NONE).
-  - **Snapping** (task 45): VINYL MODE L/A, and VINYL MODE L/C in Object
-    Mode (after its Edit Mode select-mode binding) → `snap_cycle`; their
-    LEDs: on for `snap_mode` grid, blinking for geometry (L/C only in
-    Object Mode).
+  - **VINYL MODE by side, not by deck** (task 46, Rafael 2026-11-22: the
+    button sits apart from the deck buttons): left (L/A, L/C) →
+    `snap_cycle` in every mode (task 45), LED on for `snap_mode` grid,
+    blinking for geometry; right (R/B, R/D) → `select_mode_cycle` in Edit
+    Mode (LED off/on/blink for vertex/edge/face, `mesh_select_mode`), and
+    `orbit_selection_toggle` in Object Mode (LED blinking while it is on,
+    shown in Object Mode only).
   - **Deck A, Snap menu** (task 44; Blender's Shift+S operators, run in
     the 3D View, `flash_ms` 1000): SYNC → `view3d.snap_cursor_to_selected`,
     CUP → `snap_cursor_to_active`, CUE → `snap_cursor_to_grid`, PLAY/PAUSE
@@ -357,9 +360,7 @@ Blender state → LED messages to the controller.
     CUP → `loopcut_start` (`mesh.loopcut` on the active/first selected
     edge; number_cuts); the same button again → `adjust_end`; SHIFT + CUE →
     `mesh.subdivide`, SHIFT + PLAY → `mesh.merge` CENTER (flash 2 s);
-    VINYL MODE L/C → `select_mode_cycle` (state `mesh_select_mode`, LED
-    off/on/blink for vertex/edge/face; in Object Mode it is the snap, task
-    45). While adjusting, the left platter
+    the select mode moved to the right VINYL (task 46). While adjusting, the left platter
     → `adjust_change` main, SHIFT + platter → second.
   - **Deck B** (task 33): IN R/B → `props_toggle`, OUT R/B →
     `props_cancel` and the right platter → `props_step` (scaled by `step`)
@@ -374,8 +375,7 @@ Blender state → LED messages to the controller.
     task 27); `flash_ms` 2000.
   - **CUE D** (task 43): → `view3d.view_camera` (toggles the camera view);
     its LED is on while the camera view is on.
-  - **VINYL MODE R/B and R/D** → `orbit_selection_toggle`; their LED blinks
-    200/200 ms while Orbit Around Selection is on.
+  - **VINYL MODE R/B and R/D**: see "VINYL MODE by side" above.
   - **Step scale** `step`: S1 VOL sets 0.01–0.10 m (1–10 cm), 0.01 until
     it moves. It sizes every platter step and the encoder's dolly.
   - **PRESS TO ENTER encoder** (`NAVIGATION`): in camera view, turned

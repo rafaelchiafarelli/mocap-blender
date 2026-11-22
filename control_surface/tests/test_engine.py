@@ -774,7 +774,7 @@ def test_bundled_deck_c_edit_mode_tools():
     press(e, (0x93, 0x4A))                  # SHIFT + CUP: loop cut
     press(e, (0x93, 0x4B))                  # SHIFT + CUE: subdivide
     press(e, (0x93, 0x4C))                  # SHIFT + PLAY: merge
-    press(e, (0x93, 0x01))                  # VINYL: select mode
+    press(e, (0x92, 0x01))                  # VINYL right side (B): select mode (task 46)
     names = [a[0] for a in fb.actions] + [c[0] for c in fb.calls]
     assert names == ["extrude_start", "adjust_start", "adjust_start", "loopcut_start",
                      "select_mode_cycle", "mesh.subdivide", "mesh.merge"]
@@ -869,12 +869,28 @@ def test_bundled_vinyl_cycles_the_snap_on_deck_a_and_on_deck_c_in_object_mode():
     assert led_values(sent, (0x93, 0x01))[-1] == LED_ON
 
 
-def test_bundled_vinyl_deck_c_keeps_the_select_mode_in_edit_mode():
+@pytest.mark.parametrize("left", [0x91, 0x93])
+def test_bundled_left_vinyl_is_the_snap_in_edit_mode_too(left):
     e, fb, sent = make_bundled("EDIT")
-    press(e, (0x93, 0x01))
-    assert fb.actions == [("select_mode_cycle", {})]
-    fb.view["snap_mode"] = "grid"
-    fb.view["mesh_select_mode"] = "VERT"
+    press(e, (left, 0x01))
+    assert fb.actions == [("snap_cycle", {})]
+    fb.view["snap_mode"] = "geometry"
+    fb.view["mesh_select_mode"] = "FACE"
     e.update()
-    assert led_values(sent, (0x93, 0x01))[-1] == 0  # the LED shows the select mode, not the snap
+    assert led_values(sent, (left, 0x01))[-1] == LED_ON  # blink starts lit: the snap, not the select mode
+
+
+@pytest.mark.parametrize("right", [0x92, 0x94])
+def test_bundled_right_vinyl_is_the_select_mode_in_edit_mode(right):
+    e, fb, sent = make_bundled("EDIT")
+    fb.view["orbit_selection"] = True
+    fb.view["mesh_select_mode"] = "VERT"
+    press(e, (right, 0x01))
+    assert fb.actions == [("select_mode_cycle", {})]
+    e.update()
+    assert led_values(sent, (right, 0x01))[-1] == 0  # vertex: off, not the orbit's blink
+    fb.view["mesh_select_mode"] = "EDGE"
+    fb.now = 20
+    e.update()
+    assert led_values(sent, (right, 0x01))[-1] == LED_ON
 
