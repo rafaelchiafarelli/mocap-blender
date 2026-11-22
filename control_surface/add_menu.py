@@ -99,6 +99,18 @@ def _enum_items(op, prop):
         return []
 
 
+def bind_like_instance(cls, name, fake):
+    """cls.<name> as an instance would see it, with `fake` as self: plain
+    functions are bound, static and class methods are left as Python makes them."""
+    for klass in cls.__mro__:
+        if name in vars(klass):
+            raw = vars(klass)[name]
+            if isinstance(raw, types.FunctionType):
+                return types.MethodType(raw, fake)
+            return getattr(cls, name)  # staticmethod, classmethod, plain values
+    return getattr(cls, name)
+
+
 def read_menu(name, depth=0):
     """[{"text", "op", "props"} | {"text", "items": [...]}] for Blender menu `name`."""
     cls = getattr(bpy.types, name, None)
@@ -111,8 +123,7 @@ def read_menu(name, depth=0):
         menu class's own helpers (e.g. operator_modifier_add) are bound to it."""
 
         def __getattr__(self, k):
-            v = getattr(cls, k)
-            return types.MethodType(v, self) if isinstance(v, types.FunctionType) else v
+            return bind_like_instance(cls, k, self)
 
     fake = Fake()
     fake.layout = _Recorder(out)

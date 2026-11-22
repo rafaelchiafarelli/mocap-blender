@@ -168,6 +168,15 @@ Blender state → LED messages to the controller.
   and dropped: a panel inside a Properties editor (Blender keeps the
   panels' stored order, so it lands among the originals) and pinning a
   Properties editor to a Text (only the Tool tab is left).
+  Task 39 (a survey drawing every panel of every tab for a cube with cloth
+  and particles, a camera and a light): `_ButtonsContext` answers None for
+  members only the editor has (e.g. `particle_system_editable`) and has
+  `path_resolve` (Custom Properties); fake panels and menus bind methods
+  like an instance would (`add_menu.bind_like_instance`: static and class
+  methods untouched — Output › Format's `draw_framerate` broke before);
+  header-less panels sort first, as in the editor (Physics' "Enable physics
+  for" buttons above Cloth). Remaining draw failures are only polls of
+  panels that do not apply to the object.
 - `knob_select.py` — `pick(n, anchor, value)`: the object index for a
   centre-tap knob's position, proportional (the travel is split evenly over
   the objects; the ends land on the last/first). Pure.

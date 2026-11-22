@@ -100,7 +100,17 @@ class _ButtonsContext:
     def __getattr__(self, k):
         if k in self._x:
             return self._x[k]
-        return getattr(bpy.context, k)
+        # A member only the Properties editor provides (e.g.
+        # particle_system_editable): None, so the panel goes on drawing.
+        return getattr(bpy.context, k, None)
+
+    def path_resolve(self, path, coerce=True):
+        """Custom Properties panels resolve their data by a context path."""
+        head = path.split(".", 1)[0]
+        if head in self._x and self._x[head] is not None:
+            obj = self._x[head]
+            return obj.path_resolve(path.split(".", 1)[1], coerce) if "." in path else obj
+        return bpy.context.path_resolve(path, coerce)
 
 
 # --- Recording a panel ------------------------------------------------------------
@@ -161,8 +171,7 @@ class _FakePanel:
         self._cls = cls
 
     def __getattr__(self, k):
-        v = getattr(self._cls, k)
-        return types.MethodType(v, self) if isinstance(v, types.FunctionType) else v
+        return add_menu.bind_like_instance(self._cls, k, self)
 
 
 def _module_rank(module_name):
@@ -184,7 +193,9 @@ def _panel_order(cls):
     import sys
     mod = sys.modules.get(cls.__module__)
     classes = list(getattr(mod, "classes", ()) or ())
-    return (getattr(cls, "bl_order", 0), _module_rank(cls.__module__),
+    headerless = "HIDE_HEADER" in getattr(cls, "bl_options", set())
+    return (not headerless,  # header-less panels (context, "Enable physics for") come first
+            getattr(cls, "bl_order", 0), _module_rank(cls.__module__),
             classes.index(cls) if cls in classes else len(classes))
 
 
