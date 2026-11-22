@@ -1,4 +1,4 @@
-# DJ-Tech 4-Mix no Blender — ações (add-on control_surface 0.1.36)
+# DJ-Tech 4-Mix no Blender — ações (add-on control_surface 0.1.37)
 
 Atualizado em 2026-11-21. "Object" e "Edit" indicam o modo do Blender em que a
 ação funciona; "—" = sem efeito nesse modo.
@@ -57,11 +57,15 @@ ação funciona; "—" = sem efeito nesse modo.
 
 | # | Controle | Ação | LED | Object | Edit |
 |---|---|---|---|---|---|
-| 33a | IN | abre o menu do Properties (desenhado à direita do viewport): abas Object e Modifiers; com o menu aberto: entra no nível, executa a ação, liga/desliga, ou começa a editar um número/lista; IN de novo mantém o valor | aceso com o menu aberto; piscando editando | ✔ | ✔ |
-| 33b | Platter direito, menu aberto | anda pelas linhas (~14 pulsos por linha); editando: muda o valor (passo do S1 VOL; ângulos 1–10°; inteiros e listas a cada ~14 pulsos) | — | ✔ | ✔ |
+| 33a | IN | abre o menu do Properties (desenhado à direita do viewport) com as abas do Properties do Blender, na mesma ordem e só as que existem para o objeto (Render, Output, View Layer, Scene, World, Collection, Object, Modifiers, Particles, Physics, Constraints, Mesh/Camera/Light…, Material, Texture); com o menu aberto: entra no nível, executa a ação, liga/desliga, ou começa a editar um número/lista; IN de novo mantém o valor | aceso com o menu aberto; piscando editando | ✔ | ✔ |
+| 33b | Platter direito, menu aberto | anda pelas linhas (~14 pulsos por linha); editando: muda o valor (o passo do próprio Blender para aquele campo — ex.: 1 mm na lente, 0,01 no roughness — vezes 1 a 10 pelo S1 VOL; ângulos 1–10°; inteiros e listas a cada ~14 pulsos) | — | ✔ | ✔ |
 | 33c | OUT, menu aberto | editando: volta o valor anterior; senão: fecha o menu | pisca com o menu aberto | ✔ | ✔ |
 | 33d | Modifiers › Add Modifier | o menu Add Modifier do Blender (Edit / Generate / Deform / …); IN no modificador adiciona e volta para a lista | — | ✔ | ✔ |
 | 33e | Modifiers › (um modificador) | os campos do modificador com o valor ao lado, e Apply / Delete; o Properties de verdade vai para a aba Modifiers com esse painel aberto | — | ✔ | ✔ |
+| 33f | Constraints › Add Constraint / (uma constraint) | igual aos modificadores: adicionar, campos (alvo, influência…), Apply / Delete | — | ✔ | ✔ |
+| 33g | Physics | os botões (Cloth, Collision, Rigid Body…) adicionam a física; depois aparecem os campos dela | — | ✔ | ✔ |
+| 33h | Material / World › Surface | as entradas do shader ligado à saída (Base Color, Roughness, Metallic…; no World: Color, Strength) | — | ✔ | ✔ |
+| 33i | Listas e escolhas (vertex groups, UV maps, slots, Active Material, World…) | IN numa linha da lista a torna ativa; nas escolhas, IN escolhe o datablock ou "New" cria um | — | ✔ | ✔ |
 
 ## Decks B e D (direito)
 

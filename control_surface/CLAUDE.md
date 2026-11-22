@@ -131,15 +131,21 @@ Blender state → LED messages to the controller.
   copies (also from `grab.end_tools` through `END_TOOLS_HOOKS`). States
   `adjusting` (operator id or NONE), `adjust_active`. Not Blender's undo:
   `ed.undo` from the timer fails its poll or crashes Blender (2026-11-21).
-- `props_menu.py` — the Properties menu on deck B (task 33): rows built when
-  a level is entered (`_root_rows`: Object, Modifiers; `_panel_rows` calls
-  the PROPERTIES panels' `draw()` through `_FakePanel` + `_PropRecorder`,
-  which keeps `layout.prop` calls with `invert_checkbox`; `_modifier_rows`
-  lists a modifier's RNA fields plus Apply/Delete; `_add_modifier_rows`
-  reads `OBJECT_MT_modifier_add`). `toggle` / `step` / `cancel`; editing
-  state `_edit`; `_sync_properties` sets the real editor's tab and expands
-  the chosen modifier. Drawn with `add_menu.draw_list(side="right")`.
-  States `props_menu`, `props_editing`.
+- `props_menu.py` — the Properties menu on deck B (tasks 33–34): `_root_rows`
+  lists the editor's tabs (`TABS`, Blender's order, filtered by the active
+  object). Python-drawn tabs: `_panel_rows(bl_context, tab)` runs each
+  PROPERTIES panel's `draw_header`/`draw` through `_FakePanel` +
+  `_PropRecorder` (keeps `prop` with `invert_checkbox`, `operator` → action,
+  `operator_menu_enum` → submenu of actions, `template_list` → pick the
+  active item, `template_ID`/`prop_search`/ID pointers → datablock picker
+  with New) and the context stand-in `_ButtonsContext` (context.camera,
+  .material, .cloth, …); header-less panels are inlined. C-drawn:
+  `_modifiers_rows` / `_constraints_rows` (RNA fields, Add menu, Apply /
+  Delete). Nodes: `_surface_rows` (inputs of the shader plugged into the
+  output). `toggle` / `step` (a float field moves by its RNA `step`/100 ×
+  the S1 VOL factor, factors capped at 0.01; angles 1–10°) / `cancel`;
+  `_sync_properties` sets the real editor's tab and expands the chosen
+  modifier/constraint. States `props_menu`, `props_editing`.
 - `knob_select.py` — `pick(n, anchor, value)`: the object index for a
   centre-tap knob's position, proportional (the travel is split evenly over
   the objects; the ends land on the last/first). Pure.
