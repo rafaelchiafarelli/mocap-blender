@@ -137,6 +137,9 @@ class _PropRecorder:
                       active_propname="", *a, **kw):
         self.out.append(("list", dataptr, propname, active_dataptr, active_propname))
 
+    def template_curve_mapping(self, data, prop, *a, **kw):
+        self.out.append(("curve", data, prop))
+
     def template_ID(self, data, prop, new="", *a, **kw):
         self.out.append(("id", data, prop, new))
 
@@ -376,6 +379,11 @@ def _panel_rows(context_name, tab):
                                            [_action_row(n, op, {prop: i}) for i, n in items])})
             elif kind == "list":
                 rows += _list_rows(*rec[1:])
+            elif kind == "curve":
+                _, data, prop = rec
+                if data is not None:
+                    rows.append({"text": _rna_prop(data, prop).name if _rna_prop(data, prop) else prop,
+                                 "curve": (data, prop)})
             elif kind == "id":
                 _, data, prop, new = rec
                 if data is not None:
@@ -563,8 +571,12 @@ def _root_rows():
             build = (lambda c=ctx_name, t=tab: _panel_rows(c, t))
         if tab == "TEXTURE" and not build():
             continue  # nothing to show there for this object
-        rows.append({"text": label, "build": build, "tab": tab})
+        rows.append({"text": label, "build": build, "tab": tab, "icon": _TAB_ICONS.get(tab, "NONE")})
     return rows
+
+
+_TAB_ICONS = {e.identifier: e.icon for e in bpy.types.SpaceProperties.bl_rna.properties["context"].enum_items}
+_TAB_ICONS["DATA"] = "MESH_DATA"
 
 
 # --- Values ----------------------------------------------------------------------
@@ -688,6 +700,7 @@ def toggle():
         except Exception as e:
             raise RuntimeError(f"{item['text']}: {e}")
         _stack.append({"title": item["text"], "build": item["build"], "items": items, "index": 0,
+                       "icon": item.get("icon") if item.get("tab") else None,
                        "tab": item.get("tab"), "modifier": item.get("modifier"),
                        "constraint": item.get("constraint")})
         _acc = 0.0
@@ -804,6 +817,121 @@ def close():
     _redraw()
 
 
+# --- The 4-Mix Properties window (Blender's own widgets) -----------------------
+# A separate window whose single area is an empty Image Editor; its sidebar
+# shows the current level with Blender's widgets (icons, dropdowns, curve
+# widgets). While such a window exists, the viewport overlay is not drawn.
+
+WINDOW_SCREEN = "4-Mix Properties"
+
+
+def window_open():
+    wm = bpy.context.window_manager
+    return any(w.screen.name == WINDOW_SCREEN for w in (wm.windows if wm else ()))
+
+
+def _draw_row(layout, item, current):
+    row = layout.row(align=True)
+    row.alert = current
+    row.label(text="", icon="TRIA_RIGHT" if current else "BLANK1")
+    icon = item.get("icon") or "NONE"
+    if "data" in item:
+        kw = {"text": item["text"]}
+        if item["index"] is not None:
+            kw["index"] = item["index"]
+        if item.get("invert"):
+            kw["invert_checkbox"] = True
+        try:
+            row.prop(item["data"], item["prop"], **kw)
+        except Exception:
+            row.label(text=f"{item['text']}: ?")
+    elif "curve" in item:
+        row.label(text=item["text"], icon="FCURVE")
+        try:
+            layout.template_curve_mapping(*item["curve"])
+        except Exception:
+            layout.label(text="(curve)")
+    elif "build" in item:
+        value = _value_text(item)
+        row.label(text=item["text"], icon=icon if icon != "NONE" else "RIGHTARROW_THIN")
+        if value:
+            row.label(text=value)
+    else:  # an action
+        row.label(text=item["text"], icon=icon if icon != "NONE" else "PLAY")
+
+
+class CONTROLSURFACE_PT_props_window(bpy.types.Panel):
+    bl_label = "Properties"
+    bl_space_type = "IMAGE_EDITOR"
+    bl_region_type = "UI"
+    bl_category = "4-Mix"
+
+    @classmethod
+    def poll(cls, context):
+        return context.screen is not None and context.screen.name == WINDOW_SCREEN
+
+    def draw(self, context):
+        layout = self.layout
+        if not _stack:
+            layout.label(text="Deck B: IN opens the Properties", icon="INFO")
+            return
+        level = _stack[-1]
+        crumbs = " › ".join(lv["title"] for lv in _stack)
+        top = layout.row()
+        top.label(text=crumbs, icon=next((lv.get("icon") for lv in _stack if lv.get("icon")), "PROPERTIES"))
+        if _edit is not None:
+            layout.label(text="editing: platter = value, IN keep, OUT undo", icon="GREASEPENCIL")
+        col = layout.column(align=False)
+        for i, item in enumerate(level["items"]):
+            _draw_row(col, item, i == level["index"])
+        layout.separator()
+        layout.label(text="IN open/set · OUT back (hold: close) · SYNC close")
+
+
+class CONTROLSURFACE_OT_props_window(bpy.types.Operator):
+    bl_idname = "control_surface.props_window"
+    bl_label = "Open 4-Mix Properties window"
+    bl_description = "A separate window that shows the deck B Properties menu with Blender's own widgets"
+
+    def execute(self, context):
+        if window_open():
+            self.report({"INFO"}, "the 4-Mix Properties window is already open")
+            return {"CANCELLED"}
+        win = context.window
+        area = next((a for a in win.screen.areas if a.type == "VIEW_3D"), win.screen.areas[0])
+        region = next(r for r in area.regions if r.type == "WINDOW")
+        with context.temp_override(window=win, area=area, region=region):
+            bpy.ops.screen.area_dupli("INVOKE_DEFAULT")
+        new = context.window_manager.windows[-1]
+        new.screen.name = WINDOW_SCREEN
+        target = new.screen.areas[0]
+        target.type = "IMAGE_EDITOR"
+        target.spaces.active.show_region_ui = True
+        # The sidebar's tab can only be chosen once it has been drawn: a moment later.
+        bpy.app.timers.register(_select_sidebar_tab, first_interval=0.3)
+        _redraw()
+        return {"FINISHED"}
+
+
+def _select_sidebar_tab(tries=[0]):
+    wm = bpy.context.window_manager
+    for w in wm.windows:
+        if w.screen.name == WINDOW_SCREEN:
+            for r in w.screen.areas[0].regions:
+                if r.type == "UI":
+                    try:
+                        r.active_panel_category = "4-Mix"
+                        w.screen.areas[0].tag_redraw()
+                        return None
+                    except (AttributeError, TypeError, ValueError):
+                        pass
+    tries[0] += 1
+    return 0.3 if tries[0] < 10 else None
+
+
+CLASSES = (CONTROLSURFACE_PT_props_window, CONTROLSURFACE_OT_props_window)
+
+
 # --- Drawing -----------------------------------------------------------------
 
 def _show():
@@ -817,15 +945,16 @@ def _redraw():
     wm = bpy.context.window_manager
     for win in (wm.windows if wm else ()):
         for area in win.screen.areas:
-            if area.type in {"VIEW_3D", "PROPERTIES"}:
+            if area.type in {"VIEW_3D", "PROPERTIES", "IMAGE_EDITOR"}:
                 area.tag_redraw()
 
 
 def _draw():
-    if not _stack:
+    if not _stack or window_open():  # the 4-Mix window shows it with Blender's widgets
         return
     level = _stack[-1]
-    rows = [(it["text"], _value_text(it), "build" in it) for it in level["items"]] or [("(empty)", None, False)]
+    rows = [(it["text"], "(curve: see the 4-Mix window)" if "curve" in it else _value_text(it), "build" in it)
+            for it in level["items"]] or [("(empty)", None, False)]
     footer = ("platter: value   IN: keep   OUT: undo" if _edit
               else "IN: open/set   OUT: back   SYNC: close")
     add_menu.draw_list(" › ".join(lv["title"] for lv in _stack), rows, level["index"], footer,

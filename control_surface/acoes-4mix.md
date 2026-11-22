@@ -1,4 +1,4 @@
-# DJ-Tech 4-Mix no Blender — ações (add-on control_surface 0.1.40)
+# DJ-Tech 4-Mix no Blender — ações (add-on control_surface 0.1.41)
 
 Atualizado em 2026-11-21. "Object" e "Edit" indicam o modo do Blender em que a
 ação funciona; "—" = sem efeito nesse modo.
@@ -61,6 +61,7 @@ ação funciona; "—" = sem efeito nesse modo.
 | 33b | Platter direito, menu aberto | anda pelas linhas (~14 pulsos por linha); editando: muda o valor (o passo do próprio Blender para aquele campo — ex.: 1 mm na lente, 0,01 no roughness — vezes 1 a 10 pelo S1 VOL; ângulos 1–10°; inteiros e listas a cada ~14 pulsos) | — | ✔ | ✔ |
 | 33c | OUT, menu aberto | toque curto: editando, volta o valor anterior; senão, volta um nível (no primeiro nível, fecha). Segurado 0,5 s: fecha | pisca com o menu aberto | ✔ | ✔ |
 | 33c2 | SYNC (deck B), menu aberto | fecha o menu de qualquer nível | aceso com o menu aberto | ✔ | ✔ |
+| 33j | Painel DJ-Tech › Open 4-Mix Properties window | abre uma janela separada com o menu do Properties desenhado pelo próprio Blender (ícones, dropdowns, checkboxes, sliders, gráficos de curva), cursor em vermelho; com ela aberta, o menu sobre o viewport não aparece | — | ✔ | ✔ |
 | 33d | Modifiers › Add Modifier | o menu Add Modifier do Blender (Edit / Generate / Deform / …); IN no modificador adiciona e volta para a lista | — | ✔ | ✔ |
 | 33e | Modifiers › (um modificador) | os campos do modificador com o valor ao lado, e Apply / Delete; o Properties de verdade vai para a aba Modifiers com esse painel aberto | — | ✔ | ✔ |
 | 33f | Constraints › Add Constraint / (uma constraint) | igual aos modificadores: adicionar, campos (alvo, influência…), Apply / Delete | — | ✔ | ✔ |

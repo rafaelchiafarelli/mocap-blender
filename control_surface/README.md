@@ -3,7 +3,7 @@
 The DJ-Tech 4-Mix as an extension of Blender's interface: its controls run
 Blender commands, its LEDs show Blender's state. The add-on code is described
 file by file in [`CLAUDE.md`](CLAUDE.md); this page is the quick start for the
-next change. State on 2026-11-20: version 0.1.40, installed in the portable
+next change. State on 2026-11-20: version 0.1.41, installed in the portable
 Blender on G:.
 
 ## Use it
@@ -233,6 +233,13 @@ open (blinking while editing), OUT blinking and SYNC lit while open.
   its RNA, since those panels are drawn in C), Apply / Delete.
 - Material and World: "Surface: <shader>" lists the inputs of the shader
   plugged into the output (Base Color, Roughness, Strength, …).
+- **The 4-Mix Properties window** (DJ-Tech panel → "Open 4-Mix Properties
+  window"): a separate window (an empty Image Editor) whose sidebar tab
+  "4-Mix" shows the current level with Blender's own widgets — icons,
+  dropdowns, checkboxes, sliders, curve widgets — the cursor row in red.
+  While it is open, the viewport overlay is not drawn. Python cannot size
+  the window or the sidebar: move/resize the window and drag the sidebar's
+  edge once, then File → Defaults → Save Startup File.
 - The real Properties editor follows: its tab changes, and the chosen
   modifier or constraint becomes active with its panel expanded.
 - Value changes do not create undo steps.

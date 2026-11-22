@@ -155,6 +155,19 @@ Blender state → LED messages to the controller.
   (`_button_label`, e.g. shutter curve presets); `cancel` goes one level
   back, `close_all` closes (SYNC R/B, or OUT held `LONG_PRESS_S` 0.5 s,
   timed by `_props_out_down`/`_props_out_up` in `blender_glue.py`).
+  Task 38: the **4-Mix Properties window** — `CONTROLSURFACE_OT_props_window`
+  duplicates an area into a new window (`screen.area_dupli`), names its
+  screen `WINDOW_SCREEN` ("4-Mix Properties"), makes it an Image Editor
+  and selects the sidebar tab "4-Mix" a moment later
+  (`_select_sidebar_tab`: `active_panel_category` is only settable once the
+  region has drawn). `CONTROLSURFACE_PT_props_window` (polls on the screen
+  name) draws the current level with real widgets (`_draw_row`:
+  `layout.prop` with `index`/`invert_checkbox`, `template_curve_mapping`
+  for recorded curves, icons for tabs/buttons/options), the cursor row with
+  `alert`. The viewport overlay is skipped while the window exists. Tried
+  and dropped: a panel inside a Properties editor (Blender keeps the
+  panels' stored order, so it lands among the originals) and pinning a
+  Properties editor to a Text (only the Tool tab is left).
 - `knob_select.py` — `pick(n, anchor, value)`: the object index for a
   centre-tap knob's position, proportional (the travel is split evenly over
   the objects; the ends land on the last/first). Pure.

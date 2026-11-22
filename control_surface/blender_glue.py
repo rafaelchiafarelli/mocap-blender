@@ -665,6 +665,7 @@ class CONTROLSURFACE_PT_panel(bpy.types.Panel):
             col.operator(CONTROLSURFACE_OT_connect.bl_idname, icon="PLUGIN")
         else:
             col.operator(CONTROLSURFACE_OT_disconnect.bl_idname, icon="CANCEL")
+            col.operator("control_surface.props_window", icon="WINDOW")
             col.operator(CONTROLSURFACE_OT_debug.bl_idname,
                          text="Debug log: ON (click to stop)" if _session.debug else "Debug log: off",
                          icon="REC" if _session.debug else "TEXT")
@@ -680,7 +681,7 @@ class CONTROLSURFACE_PT_panel(bpy.types.Panel):
                 col.label(text=_session.engine.last_error, icon="ERROR")
 
 
-CLASSES = grab.CLASSES + (CONTROLSURFACE_OT_debug, CONTROLSURFACE_OT_connect, CONTROLSURFACE_OT_disconnect, CONTROLSURFACE_PT_panel)
+CLASSES = grab.CLASSES + props_menu.CLASSES + (CONTROLSURFACE_OT_debug, CONTROLSURFACE_OT_connect, CONTROLSURFACE_OT_disconnect, CONTROLSURFACE_PT_panel)
 
 
 def register():
