@@ -145,7 +145,16 @@ Blender state → LED messages to the controller.
   output). `toggle` / `step` (a float field moves by its RNA `step`/100 ×
   the S1 VOL factor, factors capped at 0.01; angles 1–10°) / `cancel`;
   `_sync_properties` sets the real editor's tab and expands the chosen
-  modifier/constraint. States `props_menu`, `props_editing`.
+  modifier/constraint. States `props_menu`, `props_editing`. Task 37:
+  panels sorted by `_panel_order` (bl_order, bl_ui._modules rank, index in
+  the module's `classes` tuple = registration order, which is what the
+  editor shows); an enum field opens its options as a level
+  (`_enum_options`; the render engine is rebuilt from EEVEE, Workbench and
+  `RenderEngine` subclasses, since dynamic enums only list the current
+  value); text-less buttons are named by their enum argument
+  (`_button_label`, e.g. shutter curve presets); `cancel` goes one level
+  back, `close_all` closes (SYNC R/B, or OUT held `LONG_PRESS_S` 0.5 s,
+  timed by `_props_out_down`/`_props_out_up` in `blender_glue.py`).
 - `knob_select.py` — `pick(n, anchor, value)`: the object index for a
   centre-tap knob's position, proportional (the travel is split evenly over
   the objects; the ends land on the last/first). Pure.

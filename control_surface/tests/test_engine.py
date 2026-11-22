@@ -12,7 +12,7 @@ MODES = ROOT / "mappings" / "blender_modes.json"
 # Test mapping: the bundled bindings plus mode LEDs on CUE A-D (A-D have no LED).
 CUE_LEDS = Path(__file__).resolve().parent / "data" / "modes_cue_leds.json"
 A_LED, B_LED = (0x90, 0x27), (0x90, 0x28)  # CUE A, CUE B
-BUNDLED_ACTIONS = {"delete_arm", "delete_confirm", "props_toggle", "props_step", "props_cancel", "extrude_start", "adjust_start", "adjust_change", "adjust_end", "loopcut_start", "select_mode_cycle", "rotate_snap_on", "rotate_tip", "add_menu_toggle", "add_menu_step", "add_menu_back", "add_menu_cancel", "delete_selected", "cage_step", "tool_toggle", "move_start", "sync_cycle", "grab_start", "grab_confirm", "grab_axis", "grab_push", "select_by_knob", "camera_move", "view_move", "view_projection", "orbit_selection_toggle"}
+BUNDLED_ACTIONS = {"props_close", "props_out_down", "props_out_up", "delete_arm", "delete_confirm", "props_toggle", "props_step", "props_cancel", "extrude_start", "adjust_start", "adjust_change", "adjust_end", "loopcut_start", "select_mode_cycle", "rotate_snap_on", "rotate_tip", "add_menu_toggle", "add_menu_step", "add_menu_back", "add_menu_cancel", "delete_selected", "cage_step", "tool_toggle", "move_start", "sync_cycle", "grab_start", "grab_confirm", "grab_axis", "grab_push", "select_by_knob", "camera_move", "view_move", "view_projection", "orbit_selection_toggle"}
 BUNDLED_STATES = {"delete_armed", "props_menu", "props_editing", "adjusting", "adjust_active", "mesh_select_mode", "grab_snap", "add_menu", "cage", "rotate_mode", "sync_mode", "scale_mode", "grabbing", "grab_axis", "object_mode", "view_axis", "view_perspective", "orbit_selection"}
 
 
@@ -804,6 +804,7 @@ def test_bundled_deck_b_properties_menu():
     e.handle(0xB2, 0x0F, 0x41)               # platter, menu closed: nothing
     fb.view["props_menu"] = True
     e.handle(0xB2, 0x0F, 0x41)
-    press(e, (0x92, 0x03))                  # OUT R/B
+    press(e, (0x92, 0x03))                  # OUT R/B: down, up
+    press(e, (0x92, 0x05))                  # SYNC R/B: close
     assert fb.actions == [("props_toggle", {}), ("props_step", {"pulses": 0.01, "amount": 0.01}),
-                          ("props_cancel", {})]
+                          ("props_out_down", {}), ("props_out_up", {}), ("props_close", {})]

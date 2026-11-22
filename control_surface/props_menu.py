@@ -27,7 +27,9 @@ constraint becomes active with its panel expanded (the others collapsed).
   edited value (numbers by the field's own Blender increment times the S1
   VOL factor 1-10; angles 1-10°; whole numbers and list values one per ~14
   pulses).
-- `cancel()` (OUT): while editing, put the old value back; else close.
+- `cancel()` (OUT, short): while editing, put the old value back; else one
+  level back; at the top, close. `close_all()` (SYNC, or OUT held 0.5 s):
+  close from anywhere.
 """
 
 import math
@@ -125,7 +127,7 @@ class _PropRecorder:
 
     def operator(self, op, text=None, icon=None, **kw):
         p = _Props()
-        self.out.append(("op", op, text, p))
+        self.out.append(("op", op, text, p, icon))
         return p
 
     def operator_menu_enum(self, op, prop, text=None, **kw):
@@ -158,6 +160,59 @@ class _FakePanel:
     def __getattr__(self, k):
         v = getattr(self._cls, k)
         return types.MethodType(v, self) if isinstance(v, types.FunctionType) else v
+
+
+def _module_rank(module_name):
+    """Blender registers its UI modules in bl_ui._modules order, add-ons after."""
+    try:
+        import bl_ui
+        names = list(getattr(bl_ui, "_modules", []))
+    except ImportError:
+        names = []
+    short = module_name.rsplit(".", 1)[-1]
+    if module_name.startswith("bl_ui.") and short in names:
+        return names.index(short)
+    return len(names) + 1
+
+
+def _panel_order(cls):
+    """The order the Properties editor draws panels in: bl_order, then the order
+    of registration (the module's `classes` tuple), not of definition."""
+    import sys
+    mod = sys.modules.get(cls.__module__)
+    classes = list(getattr(mod, "classes", ()) or ())
+    return (getattr(cls, "bl_order", 0), _module_rank(cls.__module__),
+            classes.index(cls) if cls in classes else len(classes))
+
+
+def _button_label(op, props):
+    """A button without text (e.g. a curve preset): its enum argument's name."""
+    try:
+        mod, name = op.split(".", 1)
+        rna = getattr(getattr(bpy.ops, mod), name).get_rna_type()
+        for k, v in props.items():
+            p = rna.properties[k]
+            if p.type == "ENUM":
+                n = next((e.name for e in p.enum_items if e.identifier == v), "")
+                if n:
+                    return n
+    except Exception:
+        pass
+    return add_menu._op_label(op)
+
+
+def _enum_options(data, prop):
+    """[(identifier, name, icon)] of an enum field. Dynamic enums only list the
+    current value through RNA; the render engine is rebuilt from the engines."""
+    p = _rna_prop(data, prop)
+    items = [(e.identifier, e.name, e.icon) for e in p.enum_items]
+    if prop == "engine" and isinstance(data, bpy.types.RenderSettings):
+        items = [("BLENDER_EEVEE", "EEVEE", "NONE"), ("BLENDER_WORKBENCH", "Workbench", "NONE")]
+        for eng in bpy.types.RenderEngine.__subclasses__():
+            idn = getattr(eng, "bl_idname", "")
+            if idn and idn not in {i[0] for i in items}:
+                items.append((idn, getattr(eng, "bl_label", idn), "NONE"))
+    return items
 
 
 def _rna_prop(data, prop):
@@ -275,8 +330,8 @@ def _panel_rows(context_name, tab):
     ctx = _ButtonsContext(tab)
     panels = [c for c in bpy.types.Panel.__subclasses__()
               if getattr(c, "bl_space_type", "") == "PROPERTIES" and getattr(c, "bl_context", "") == context_name]
+    panels.sort(key=_panel_order)
     parents = [c for c in panels if not getattr(c, "bl_parent_id", "")]
-    parents.sort(key=lambda c: getattr(c, "bl_order", 0))
 
     def record(cls):
         out = []
@@ -307,8 +362,11 @@ def _panel_rows(context_name, tab):
                     r["invert"] = invert
                     rows.append(r)
             elif kind == "op":
-                _, op, text, p = rec
-                rows.append(_action_row(text or add_menu._op_label(op), op, dict(p._d)))
+                _, op, text, p, icon = rec
+                props = dict(p._d)
+                row = _action_row(text or _button_label(op, props), op, props)
+                row["icon"] = icon
+                rows.append(row)
             elif kind == "enum_menu":
                 _, op, prop, text = rec
                 items = add_menu._enum_items(op, prop)
@@ -640,6 +698,18 @@ def toggle():
         p = _rna_prop(item["data"], item["prop"])
         if p.type == "BOOLEAN":
             _set(item, not _get(item))
+        elif p.type == "ENUM":  # its options, as a level: IN picks one and goes back
+            def options(item=item):
+                cur = _get(item)
+                return [{"text": name, "icon": icon,
+                         "run": (lambda i=ident: (_set(item, i), _stack.pop(), _rebuild())),
+                         "value": (lambda i=ident: "●" if _get(item) == i else "")}
+                        for ident, name, icon in _enum_options(item["data"], item["prop"])]
+            opts = options()
+            cur = _get(item)
+            _stack.append({"title": item["text"], "build": options, "items": opts,
+                           "index": next((n for n, o in enumerate(opts) if o["value"]() == "●"), 0)})
+            _acc = 0.0
         else:
             _edit = {"item": item, "old": _get(item)}
             _acc = 0.0
@@ -696,13 +766,30 @@ def step(pulses, amount=0.01):
 
 
 def cancel():
-    """OUT: while editing, put the old value back; else close the menu."""
-    global _edit
+    """OUT (short press): while editing, put the old value back; else one level
+    back; at the top, close."""
+    global _edit, _acc
     if _edit is not None:
         _set(_edit["item"], _edit["old"])
         _edit = None
         _redraw()
         return {"FINISHED"}
+    if len(_stack) > 1:
+        _stack.pop()
+        _acc = 0.0
+        _rebuild()
+        _sync_properties()
+        return {"FINISHED"}
+    close()
+    return {"FINISHED"}
+
+
+def close_all():
+    """SYNC, or a long OUT press: close the menu from any level (an edit is undone)."""
+    global _edit
+    if _edit is not None:
+        _set(_edit["item"], _edit["old"])
+        _edit = None
     close()
     return {"FINISHED"}
 
@@ -739,6 +826,7 @@ def _draw():
         return
     level = _stack[-1]
     rows = [(it["text"], _value_text(it), "build" in it) for it in level["items"]] or [("(empty)", None, False)]
-    footer = "platter: value   IN: keep   OUT: undo" if _edit else "IN: open/set   OUT: close"
+    footer = ("platter: value   IN: keep   OUT: undo" if _edit
+              else "IN: open/set   OUT: back   SYNC: close")
     add_menu.draw_list(" › ".join(lv["title"] for lv in _stack), rows, level["index"], footer,
                        side="right", editing=_edit is not None)

@@ -3,7 +3,7 @@
 The DJ-Tech 4-Mix as an extension of Blender's interface: its controls run
 Blender commands, its LEDs show Blender's state. The add-on code is described
 file by file in [`CLAUDE.md`](CLAUDE.md); this page is the quick start for the
-next change. State on 2026-11-20: version 0.1.39, installed in the portable
+next change. State on 2026-11-20: version 0.1.40, installed in the portable
 Blender on G:.
 
 ## Use it
@@ -212,16 +212,19 @@ classes (`VIEW3D_MT_add`, or the mode's Shift+A menu: mesh in Edit Mode,
 
 **The Properties menu (deck B)**, drawn on the right of the viewport:
 IN opens it on the tabs of the Properties editor, in Blender's order and
-only those the active object has (Render, Output, View Layer, Scene, World,
+only those the active object has, each tab's panels in Blender's
+registration order, as the editor draws them (Render, Output, View Layer, Scene, World,
 Collection, Object, Modifiers, Particles, Physics, Constraints, Object Data —
 named Mesh / Camera / Light / … —, Material, Texture). IN enters a level,
 runs an action, flips an on/off, or starts editing a number or a list; IN
 again keeps the new value. The right platter moves through the rows, or
 changes the edited value (each number by Blender's own increment for that
 field — 1 mm for a lens, 0.01 for a roughness — times the S1 VOL factor
-1–10; angles 1–10°; whole numbers and lists one per ~14 pulses). OUT, while
-editing, puts the old value back; otherwise it closes the menu. IN lit while
-open (blinking while editing), OUT blinking while open.
+1–10; angles 1–10°; whole numbers and lists one per ~14 pulses). OUT (short), while
+editing, puts the old value back; otherwise it goes one level back, and at
+the top it closes. SYNC, or OUT held 0.5 s, closes from any level. IN on a
+list value (e.g. Render Engine) opens its options; IN picks one. IN lit while
+open (blinking while editing), OUT blinking and SYNC lit while open.
 - Python-drawn tabs: the fields of Blender's own panels, read from their
   draw code; their buttons become actions (e.g. Physics › Cloth); their
   lists (vertex groups, UV maps, material slots, particle systems) pick the

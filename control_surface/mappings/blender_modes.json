@@ -889,7 +889,15 @@
   {
    "control": "OUT R/B",
    "event": "press",
-   "action": "props_cancel",
+   "action": "props_out_down",
+   "when": {
+    "props_menu": true
+   }
+  },
+  {
+   "control": "OUT R/B",
+   "event": "release",
+   "action": "props_out_up",
    "when": {
     "props_menu": true
    }
@@ -916,6 +924,14 @@
     "amount": -1
    },
    "scale": "step",
+   "when": {
+    "props_menu": true
+   }
+  },
+  {
+   "control": "SYNC R/B",
+   "event": "press",
+   "action": "props_close",
    "when": {
     "props_menu": true
    }
@@ -1235,6 +1251,12 @@
    "led": "blink",
    "on_ms": 150,
    "off_ms": 150
+  },
+  {
+   "control": "SYNC R/B",
+   "state": "props_menu",
+   "equals": true,
+   "led": "on"
   }
  ]
 }

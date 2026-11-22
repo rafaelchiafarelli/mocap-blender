@@ -334,10 +334,31 @@ def select_mode_cycle():
     return run_operator("mesh.select_mode", {"type": nxt})
 
 
+LONG_PRESS_S = 0.5
+_props_out_at = None  # when OUT (deck B) went down, while the Properties menu is open
+
+
+def _props_out_down():
+    global _props_out_at
+    _props_out_at = time.monotonic()
+    return {"FINISHED"}
+
+
+def _props_out_up():
+    """OUT released: held >= 0.5 s closes the menu; a short press goes one level back."""
+    global _props_out_at
+    held = time.monotonic() - _props_out_at if _props_out_at is not None else 0.0
+    _props_out_at = None
+    return props_menu.close_all() if held >= LONG_PRESS_S else props_menu.cancel()
+
+
 ACTIONS = {
     "props_toggle": lambda: props_menu.toggle(),
     "props_step": lambda pulses, amount=0.01: props_menu.step(pulses, amount),
     "props_cancel": lambda: props_menu.cancel(),
+    "props_close": lambda: props_menu.close_all(),
+    "props_out_down": lambda: _props_out_down(),
+    "props_out_up": lambda: _props_out_up(),
     "extrude_start": extrude_start,
     "adjust_start": adjust_start,
     "adjust_change": lambda which, amount: adjust.change(which, amount),
