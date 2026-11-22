@@ -836,3 +836,24 @@ def test_bundled_cue_d_toggles_the_camera_view():
     e, fb, _ = make_bundled()
     press(e, (0x90, 0x29))                  # CUE D
     assert fb.calls == [("view3d.view_camera", {})]
+
+
+def test_bundled_deck_a_snap_menu_functions():
+    e, fb, sent = make_bundled()
+    for note in (0x05, 0x0A, 0x0B, 0x0C):        # SYNC, CUP, CUE, PLAY/PAUSE (deck A)
+        press(e, (0x91, note))
+    for note in (0x45, 0x4A, 0x4B, 0x4C):        # the same with SHIFT (note + 40H)
+        press(e, (0x91, note))
+    assert fb.calls == [
+        ("view3d.snap_cursor_to_selected", {}), ("view3d.snap_cursor_to_active", {}),
+        ("view3d.snap_cursor_to_grid", {}), ("view3d.snap_cursor_to_center", {}),
+        ("view3d.snap_selected_to_cursor", {"use_offset": False}), ("view3d.snap_selected_to_active", {}),
+        ("view3d.snap_selected_to_grid", {}), ("view3d.snap_selected_to_cursor", {"use_offset": True})]
+
+
+def test_bundled_deck_a_sync_closes_the_add_menu_first():
+    e, fb, _ = make_bundled()
+    fb.view["add_menu"] = True
+    press(e, (0x91, 0x05))
+    assert fb.actions == [("add_menu_close", {})] and fb.calls == []
+

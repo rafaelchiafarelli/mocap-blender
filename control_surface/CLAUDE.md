@@ -313,6 +313,14 @@ Blender state → LED messages to the controller.
     LED on); the left platter (after the Add menu's bindings) →
     `cursor_move` ±1 × `step` along that global axis (nothing while
     `cursor_axis` is NONE).
+  - **Deck A, Snap menu** (task 44; Blender's Shift+S operators, run in
+    the 3D View, `flash_ms` 1000): SYNC → `view3d.snap_cursor_to_selected`,
+    CUP → `snap_cursor_to_active`, CUE → `snap_cursor_to_grid`, PLAY/PAUSE
+    → `snap_cursor_to_center`; with SHIFT: `snap_selected_to_cursor`
+    (`use_offset` false), `snap_selected_to_active`, `snap_selected_to_grid`,
+    `snap_selected_to_cursor` (`use_offset` true). SYNC's Add menu close
+    (`when` add_menu) stays before it. "Grid" is Blender's: the view's grid
+    (1 m at the default grid scale).
   - **Deck C in Edit Mode** (task 32; bindings with `when` object_mode EDIT
     placed first): CUP → `extrude_start` (`mesh.extrude_region`, then the
     grab on axis `NORMAL`, the selection's mean world normal; CUP again →

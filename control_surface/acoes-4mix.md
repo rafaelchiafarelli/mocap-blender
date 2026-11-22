@@ -33,6 +33,14 @@ ação funciona; "—" = sem efeito nesse modo.
 | 17c | 1 (deck A) | leva o 3D Cursor para o mouse (o mesmo do Shift + botão direito: na superfície embaixo do mouse) | aceso 1 s depois de funcionar | ✔ | ✔ |
 | 17d | 2 / 3 / 4 (deck A) | escolhe o eixo X / Y / Z: o platter esquerdo move o 3D Cursor nesse eixo, pelo `step` do S1 VOL; o mesmo botão de novo desliga | aceso enquanto o eixo está escolhido | ✔ | ✔ |
 | 17e | Platter esquerdo, menu fechado, eixo escolhido | move o 3D Cursor no eixo escolhido (1–10 cm por pulso, pelo S1 VOL) | — | ✔ | ✔ |
+| 17f | SYNC (menu fechado) | Cursor to Selected: o cursor vai para o centro da seleção | aceso 1 s | ✔ | ✔ |
+| 17g | CUP | Cursor to Active: o cursor vai para o objeto ativo (Edit: vértice ativo) | aceso 1 s | ✔ | ✔ |
+| 17h | CUE | Cursor to Grid: o cursor vai para o ponto da grade mais próximo (grade do Blender, 1 m) | aceso 1 s | ✔ | ✔ |
+| 17i | PLAY/PAUSE | Cursor to World Origin: o cursor volta para (0, 0, 0) | aceso 1 s | ✔ | ✔ |
+| 17j | SHIFT + SYNC | Selection to Cursor: cada selecionado vai para o cursor (todos no mesmo ponto) | aceso 1 s | ✔ | ✔ |
+| 17k | SHIFT + CUP | Selection to Active: os selecionados vão para o objeto ativo | aceso 1 s | ✔ | ✔ |
+| 17l | SHIFT + CUE | Selection to Grid: cada selecionado vai para o ponto da grade mais próximo | aceso 1 s | ✔ | ✔ |
+| 17m | SHIFT + PLAY/PAUSE | Selection to Cursor (Keep Offset): a seleção vai em bloco, o centro dela no cursor | aceso 1 s | ✔ | ✔ |
 
 ## Deck C (lado esquerdo)
 
@@ -101,5 +109,5 @@ ação funciona; "—" = sem efeito nesse modo.
 |---|---|
 | 43 | Platter direito com o deck D, ou com o deck B e o menu fechado |
 | 44 | A, B e D FILTER; knobs HI, MID, LOW |
-| 45 | Deck A: RE, CUP, CUE, PLAY/PAUSE, VINYL MODE e os SHIFT; deck B exceto IN, OUT, platter e VINYL MODE; deck D exceto VINYL MODE |
+| 45 | Deck A: RE, VINYL MODE e os outros SHIFT; deck B exceto IN, OUT, platter e VINYL MODE; deck D exceto VINYL MODE |
 | 47 | Deck C: SHIFT + os outros botões; VINYL MODE no Object Mode |

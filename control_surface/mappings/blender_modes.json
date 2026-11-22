@@ -999,6 +999,66 @@
    "when": {
     "add_menu": true
    }
+  },
+  {
+   "control": "SYNC L/A",
+   "event": "press",
+   "operator": "view3d.snap_cursor_to_selected",
+   "args": {},
+   "flash_ms": 1000
+  },
+  {
+   "control": "SYNC L/A+SHIFT",
+   "event": "press",
+   "operator": "view3d.snap_selected_to_cursor",
+   "args": {
+    "use_offset": false
+   },
+   "flash_ms": 1000
+  },
+  {
+   "control": "CUP L/A",
+   "event": "press",
+   "operator": "view3d.snap_cursor_to_active",
+   "args": {},
+   "flash_ms": 1000
+  },
+  {
+   "control": "CUP L/A+SHIFT",
+   "event": "press",
+   "operator": "view3d.snap_selected_to_active",
+   "args": {},
+   "flash_ms": 1000
+  },
+  {
+   "control": "CUE L/A",
+   "event": "press",
+   "operator": "view3d.snap_cursor_to_grid",
+   "args": {},
+   "flash_ms": 1000
+  },
+  {
+   "control": "CUE L/A+SHIFT",
+   "event": "press",
+   "operator": "view3d.snap_selected_to_grid",
+   "args": {},
+   "flash_ms": 1000
+  },
+  {
+   "control": "PLAY/PAUSE L/A",
+   "event": "press",
+   "operator": "view3d.snap_cursor_to_center",
+   "args": {},
+   "flash_ms": 1000
+  },
+  {
+   "control": "PLAY/PAUSE L/A+SHIFT",
+   "event": "press",
+   "operator": "view3d.snap_selected_to_cursor",
+   "args": {
+    "use_offset": true
+   },
+   "flash_ms": 1000
   }
  ],
  "indicators": [
