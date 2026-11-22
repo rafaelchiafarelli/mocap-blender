@@ -194,9 +194,14 @@ def sync_mode():
     return _sync
 
 
+END_TOOLS_HOOKS = []  # called by end_tools (e.g. the adjust session ends)
+
+
 def end_tools(keep=None):
     """Turn every tool off except `keep`; confirm a running grab."""
     global _armed, _sync
+    for hook in END_TOOLS_HOOKS:
+        hook()
     if _running is not None:
         request("confirm")
     if keep != "SYNC":
@@ -284,7 +289,7 @@ class CONTROLSURFACE_OT_grab(bpy.types.Operator):
     bl_options = {"REGISTER", "UNDO", "BLOCKING"}
 
     mode: bpy.props.EnumProperty(items=[(m, m.title(), "") for m in ("MOVE", "SCALE", "ROTATE")])
-    axis: bpy.props.EnumProperty(items=[(a, a, "") for a in ("FREE", "X", "Y", "Z")])
+    axis: bpy.props.EnumProperty(items=[(a, a, "") for a in ("FREE", "X", "Y", "Z", "NORMAL")])
 
     @classmethod
     def poll(cls, context):
@@ -312,6 +317,7 @@ class CONTROLSURFACE_OT_grab(bpy.types.Operator):
         else:
             self.objs = list(context.selected_objects)
         self._take_start()
+        self.normal = self._mean_normal() if self.edit else Vector((0, 0, 1))
         self.orig = (self.start, self.vstart)  # what Esc restores, even after a rebase
         self.pivot = self._pivot()
         self.region, self.rv3d = context.region, context.region_data
@@ -328,6 +334,22 @@ class CONTROLSURFACE_OT_grab(bpy.types.Operator):
         self.timer = context.window_manager.event_timer_add(TIMER_S, window=context.window)
         context.window_manager.modal_handler_add(self)
         return {"RUNNING_MODAL"}
+
+    def _axis_vec(self, axis):
+        """A global axis, or NORMAL: the selection's mean normal (Edit Mode, for Extrude)."""
+        if axis == "NORMAL":
+            return self.normal
+        return AXES[axis]
+
+    def _mean_normal(self):
+        """World-space mean normal of the selected faces (else vertices); Z if none."""
+        n = Vector()
+        for o, bm, verts in getattr(self, "meshes", []):
+            nm = o.matrix_world.to_3x3().inverted().transposed()
+            faces = [f for f in bm.faces if f.select]
+            for e in (faces or verts):
+                n += nm @ e.normal
+        return n.normalized() if n.length > 1e-9 else Vector((0, 0, 1))
 
     def _take_start(self):
         """Objects: origin, scale, matrix. Edit Mode: each selected vertex's world position."""
@@ -393,7 +415,7 @@ class CONTROLSURFACE_OT_grab(bpy.types.Operator):
             if moved:
                 d += self._plane_point(self.mouse) - self._plane_point(self.mouse0)
             if axis != "FREE":
-                d = AXES[axis] * d.dot(AXES[axis])
+                d = self._axis_vec(axis) * d.dot(self._axis_vec(axis))
             if self.edit:
                 self._set_verts(lambda w0: w0 + d)
             for o in self.objs:
@@ -403,7 +425,8 @@ class CONTROLSURFACE_OT_grab(bpy.types.Operator):
             c = self._pivot_2d()
             if moved and c is not None and (self.mouse0 - c).length > 1:
                 f *= (self.mouse - c).length / (self.mouse0 - c).length
-            k = Vector((f, f, f)) if axis == "FREE" else Vector([f if a == axis else 1.0 for a in "XYZ"])
+            k = (Vector((f, f, f)) if axis in ("FREE", "NORMAL")
+                 else Vector([f if a == axis else 1.0 for a in "XYZ"]))
             if self.edit:
                 self._set_verts(lambda w0: self.pivot + Vector([a * b for a, b in zip(w0 - self.pivot, k)]))
             for o in self.objs:
@@ -412,7 +435,7 @@ class CONTROLSURFACE_OT_grab(bpy.types.Operator):
                 self._set_world_location(o, self.pivot + Vector([a * b for a, b in zip(p0 - self.pivot, k)]))
         else:  # ROTATE
             toward_viewer = self.rv3d.view_rotation @ Vector((0, 0, 1))
-            rot_axis = toward_viewer if axis == "FREE" else AXES[axis]
+            rot_axis = toward_viewer if axis == "FREE" else self._axis_vec(axis)
             angle = self.push_angle
             c = self._pivot_2d()
             if self.snap is not None:  # 90° mode: the mouse is ignored
@@ -436,7 +459,7 @@ class CONTROLSURFACE_OT_grab(bpy.types.Operator):
             elif mode == "ROTATE":
                 self.push_angle += math.radians(amount * DEG_PER_PUSH_UNIT)
             elif axis != "FREE":
-                self.push_move += AXES[axis] * amount
+                self.push_move += self._axis_vec(axis) * amount
             else:
                 v = Vector((1, 0, 0)) if along == "right" else Vector((0, 1, 0))
                 self.push_move += (self.rv3d.view_rotation @ v) * amount
@@ -448,7 +471,7 @@ class CONTROLSURFACE_OT_grab(bpy.types.Operator):
         c = self._pivot_2d()
         if self.mouse0 is not None and c is not None and min((self.mouse0 - c).length, (self.mouse - c).length) > 1:
             toward_viewer = self.rv3d.view_rotation @ Vector((0, 0, 1))
-            rot_axis = toward_viewer if self.shared["axis"] == "FREE" else AXES[self.shared["axis"]]
+            rot_axis = toward_viewer if self.shared["axis"] == "FREE" else self._axis_vec(self.shared["axis"])
             a = math.atan2(*(self.mouse - c).yx) - math.atan2(*(self.mouse0 - c).yx)
             angle += a if rot_axis.dot(toward_viewer) >= 0 else -a
         return angle
@@ -458,7 +481,7 @@ class CONTROLSURFACE_OT_grab(bpy.types.Operator):
         (the first object's world Euler), so the 90° mode lands on 0/90/180/270
         in absolute terms. Edit Mode and the free axis have no such reference: 0."""
         axis = self.shared["axis"]
-        if self.edit or axis == "FREE" or not self.objs:
+        if self.edit or axis in ("FREE", "NORMAL") or not self.objs:
             return 0.0
         return self.start[self.objs[0].name][2].to_euler("XYZ")["XYZ".index(axis)]
 

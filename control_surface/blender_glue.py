@@ -14,7 +14,9 @@ from pathlib import Path
 import bpy
 from mathutils import Matrix, Vector
 
-from . import add_menu, grab, knob_select
+from . import add_menu, adjust, grab, knob_select
+
+grab.END_TOOLS_HOOKS.append(adjust.end)
 from .engine import Engine, Mapping
 from .profile import Profile
 
@@ -75,6 +77,9 @@ STATES = {
     "scale_mode": lambda: grab.tool_mode("SCALE"),
     "rotate_mode": lambda: grab.tool_mode("ROTATE"),
     "grab_snap": grab.snap_on,
+    "adjusting": adjust.adjusting,
+    "adjust_active": adjust.active,
+    "mesh_select_mode": lambda: _mesh_select_mode(),
     "sync_mode": grab.sync_mode,
     "cage": grab.cage_on,
     "add_menu": add_menu.is_open,
@@ -226,7 +231,68 @@ def add_menu_toggle():
     return add_menu.toggle()
 
 
+# --- Mesh Edit Mode tools on deck C (task 32) ---------------------------------
+
+def extrude_start():
+    """CUP in Edit Mode: extrude the selection, then the add-on's grab along its normal."""
+    grab.end_tools()
+    result = run_operator("mesh.extrude_region", {})
+    if "FINISHED" not in result:
+        return result
+    return grab_start("MOVE", "NORMAL")
+
+
+def adjust_start(op, props, main, second=None):
+    """Inset / Bevel in Edit Mode: run once, then the platter adjusts `main`
+    (and SHIFT + platter `second`)."""
+    grab.end_tools()
+    return adjust.start(op, props, main, second)
+
+
+def loopcut_start():
+    """SHIFT + CUP in Edit Mode: one loop cut across the ring of the active (or
+    first selected) edge; the platter then sets the number of cuts."""
+    import bmesh
+
+    grab.end_tools()
+    obj = bpy.context.edit_object
+    if obj is None or obj.type != "MESH":
+        raise RuntimeError("loop cut needs a mesh in Edit Mode")
+    bm = bmesh.from_edit_mesh(obj.data)
+    act = bm.select_history.active
+    edge = act if isinstance(act, bmesh.types.BMEdge) else next((e for e in bm.edges if e.select), None)
+    if edge is None:
+        raise RuntimeError("select an edge for the loop cut")
+    objects = list(bpy.context.objects_in_mode_unique_data)
+    return adjust.start("mesh.loopcut", {"number_cuts": 1, "edge_index": edge.index,
+                                         "object_index": objects.index(obj) if obj in objects else 0},
+                        "number_cuts")
+
+
+SELECT_MODES = ("VERT", "EDGE", "FACE")
+
+
+def _mesh_select_mode():
+    if bpy.context.mode != "EDIT_MESH":
+        return "NONE"
+    v, e, f = bpy.context.tool_settings.mesh_select_mode
+    return "FACE" if f else "EDGE" if e else "VERT"
+
+
+def select_mode_cycle():
+    """VINYL MODE (deck C) in Edit Mode: vertex -> edge -> face -> vertex."""
+    cur = _mesh_select_mode()
+    nxt = SELECT_MODES[(SELECT_MODES.index(cur) + 1) % 3] if cur in SELECT_MODES else "VERT"
+    return run_operator("mesh.select_mode", {"type": nxt})
+
+
 ACTIONS = {
+    "extrude_start": extrude_start,
+    "adjust_start": adjust_start,
+    "adjust_change": lambda which, amount: adjust.change(which, amount),
+    "adjust_end": lambda: adjust.end(),
+    "loopcut_start": loopcut_start,
+    "select_mode_cycle": select_mode_cycle,
     "add_menu_toggle": add_menu_toggle,
     "add_menu_step": lambda pulses: add_menu.step(pulses),
     "add_menu_back": lambda: add_menu.back(),
@@ -420,6 +486,11 @@ class Session:
                 break
             self._log("IN", msg)
             self.engine.handle(*msg)
+        if self.engine.active:
+            try:
+                adjust.flush()  # at most one undo + redo per tick
+            except Exception as e:
+                self.engine.last_error = f"adjust: {e}"
         self._log_state()
         self.engine.update()
 

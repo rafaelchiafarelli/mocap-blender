@@ -10,6 +10,172 @@
  },
  "bindings": [
   {
+   "control": "CUP L/C",
+   "event": "press",
+   "action": "grab_confirm",
+   "when": {
+    "grab_axis": "NORMAL"
+   }
+  },
+  {
+   "control": "CUP L/C",
+   "event": "press",
+   "action": "extrude_start",
+   "when": {
+    "object_mode": "EDIT"
+   }
+  },
+  {
+   "control": "CUE L/C",
+   "event": "press",
+   "action": "adjust_end",
+   "when": {
+    "adjusting": "mesh.inset"
+   }
+  },
+  {
+   "control": "CUE L/C",
+   "event": "press",
+   "action": "adjust_start",
+   "when": {
+    "object_mode": "EDIT"
+   },
+   "args": {
+    "op": "mesh.inset",
+    "props": {
+     "thickness": 0.01,
+     "depth": 0.0
+    },
+    "main": "thickness"
+   }
+  },
+  {
+   "control": "PLAY/PAUSE L/C",
+   "event": "press",
+   "action": "adjust_end",
+   "when": {
+    "adjusting": "mesh.bevel"
+   }
+  },
+  {
+   "control": "PLAY/PAUSE L/C",
+   "event": "press",
+   "action": "adjust_start",
+   "when": {
+    "object_mode": "EDIT"
+   },
+   "args": {
+    "op": "mesh.bevel",
+    "props": {
+     "offset": 0.01,
+     "segments": 1,
+     "affect": "EDGES"
+    },
+    "main": "offset",
+    "second": "segments"
+   }
+  },
+  {
+   "control": "CUP L/C+SHIFT",
+   "event": "press",
+   "action": "adjust_end",
+   "when": {
+    "adjusting": "mesh.loopcut"
+   }
+  },
+  {
+   "control": "CUP L/C+SHIFT",
+   "event": "press",
+   "action": "loopcut_start",
+   "when": {
+    "object_mode": "EDIT"
+   }
+  },
+  {
+   "control": "CUE L/C+SHIFT",
+   "event": "press",
+   "operator": "mesh.subdivide",
+   "args": {
+    "number_cuts": 1
+   },
+   "when": {
+    "object_mode": "EDIT"
+   },
+   "flash_ms": 2000
+  },
+  {
+   "control": "PLAY/PAUSE L/C+SHIFT",
+   "event": "press",
+   "operator": "mesh.merge",
+   "args": {
+    "type": "CENTER"
+   },
+   "when": {
+    "object_mode": "EDIT"
+   },
+   "flash_ms": 2000
+  },
+  {
+   "control": "VINYL MODE L/C",
+   "event": "press",
+   "action": "select_mode_cycle",
+   "when": {
+    "object_mode": "EDIT"
+   }
+  },
+  {
+   "control": "PLATTER L/C",
+   "event": "cw",
+   "action": "adjust_change",
+   "args": {
+    "which": "main",
+    "amount": 1
+   },
+   "scale": "step",
+   "when": {
+    "adjust_active": true
+   }
+  },
+  {
+   "control": "PLATTER L/C+SHIFT",
+   "event": "cw",
+   "action": "adjust_change",
+   "args": {
+    "which": "second",
+    "amount": 1
+   },
+   "scale": "step",
+   "when": {
+    "adjust_active": true
+   }
+  },
+  {
+   "control": "PLATTER L/C",
+   "event": "ccw",
+   "action": "adjust_change",
+   "args": {
+    "which": "main",
+    "amount": -1
+   },
+   "scale": "step",
+   "when": {
+    "adjust_active": true
+   }
+  },
+  {
+   "control": "PLATTER L/C+SHIFT",
+   "event": "ccw",
+   "action": "adjust_change",
+   "args": {
+    "which": "second",
+    "amount": -1
+   },
+   "scale": "step",
+   "when": {
+    "adjust_active": true
+   }
+  },
+  {
    "control": "SYNC L/C",
    "event": "press",
    "action": "sync_cycle"
@@ -949,6 +1115,46 @@
    "control": "OUT L/A",
    "state": "add_menu",
    "equals": true,
+   "led": "blink",
+   "on_ms": 200,
+   "off_ms": 200
+  },
+  {
+   "control": "CUP L/C",
+   "state": "grab_axis",
+   "equals": "NORMAL",
+   "led": "on"
+  },
+  {
+   "control": "CUP L/C",
+   "state": "adjusting",
+   "equals": "mesh.loopcut",
+   "led": "blink",
+   "on_ms": 200,
+   "off_ms": 200
+  },
+  {
+   "control": "CUE L/C",
+   "state": "adjusting",
+   "equals": "mesh.inset",
+   "led": "on"
+  },
+  {
+   "control": "PLAY/PAUSE L/C",
+   "state": "adjusting",
+   "equals": "mesh.bevel",
+   "led": "on"
+  },
+  {
+   "control": "VINYL MODE L/C",
+   "state": "mesh_select_mode",
+   "equals": "EDGE",
+   "led": "on"
+  },
+  {
+   "control": "VINYL MODE L/C",
+   "state": "mesh_select_mode",
+   "equals": "FACE",
    "led": "blink",
    "on_ms": 200,
    "off_ms": 200

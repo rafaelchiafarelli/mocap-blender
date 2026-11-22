@@ -3,7 +3,7 @@
 The DJ-Tech 4-Mix as an extension of Blender's interface: its controls run
 Blender commands, its LEDs show Blender's state. The add-on code is described
 file by file in [`CLAUDE.md`](CLAUDE.md); this page is the quick start for the
-next change. State on 2026-11-20: version 0.1.34, installed in the portable
+next change. State on 2026-11-20: version 0.1.35, installed in the portable
 Blender on G:.
 
 ## Use it
@@ -170,11 +170,27 @@ box; e.g. the −X face centre + button 2 stretches only towards +X. Changing
 the point during a scale/rotation goes on from where the objects are. The
 cage lasts while its tool is on.
 
+**Edit Mode tools on deck C** (task 32):
+
+| Control (Edit Mode) | Does | LED |
+|---|---|---|
+| CUP | Extrude, then the add-on's grab along the selection's normal (mouse + platter); CUP again / click confirms | on during the extrude grab |
+| CUE | Inset (1 cm); the platter adjusts the thickness; CUE again ends | on while adjusting |
+| PLAY/PAUSE | Bevel (1 cm, 1 segment); platter = width, SHIFT + platter = segments; PLAY again ends | on while adjusting |
+| SHIFT + CUP | Loop Cut across the ring of the active (or first selected) edge; platter = number of cuts; SHIFT + CUP again ends | blinks while adjusting |
+| SHIFT + CUE | Subdivide | lit 2 s |
+| SHIFT + PLAY/PAUSE | Merge at Center | lit 2 s |
+| VINYL MODE | select mode vertex → edge → face | off / on / blinking |
+
+Adjusting re-runs the operator from a copy of the mesh taken before it ran
+(Blender's undo cannot be called from the add-on's timer: it fails or
+crashes); one re-run per timer tick at most.
+
 **Edit Mode (mesh):** deck C's 1–4, RE, IN, the cage and the left platter
 work on the selected vertices of every mesh in Edit Mode (pivot: their
 median; cage: their box). OUT deletes vertices / edges / faces by the select
-mode. CUP/CUE/PLAY (clear/apply) exist only in Object Mode: in Edit Mode
-they fail into the panel and their LED stays dark.
+mode. CUP/CUE/PLAY and their SHIFT versions are the Edit Mode tools above; the
+clear/apply commands stay in Object Mode.
 
 **One tool at a time per deck:** SYNC, move (1–4), scale (RE) and rotate
 (IN). Turning one on turns the others off and confirms a running grab.

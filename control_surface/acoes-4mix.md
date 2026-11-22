@@ -1,4 +1,4 @@
-# DJ-Tech 4-Mix no Blender — ações (add-on control_surface 0.1.34)
+# DJ-Tech 4-Mix no Blender — ações (add-on control_surface 0.1.35)
 
 Atualizado em 2026-11-21. "Object" e "Edit" indicam o modo do Blender em que a
 ação funciona; "—" = sem efeito nesse modo.
@@ -43,13 +43,15 @@ ação funciona; "—" = sem efeito nesse modo.
 | 24 | Platter esquerdo, durante um grab | empurra pelo passo do S1 VOL (move no eixo; livre = horizontal da vista; scale; rotação) | — | ✔ | ✔ |
 | 24b | 1 / 2 / 3 / 4, 2º clique durante uma rotação | modo 90° ("tombo"): o objeto encaixa no ângulo absoluto mais próximo (0/90/180/270°) naquele eixo e o mouse é ignorado; cada ¼ de volta do platter = exatamente ±90°; outro número troca o eixo mantendo o modo 90° (a rotação do eixo anterior fica); 3º clique confirma. No Edit Mode e no eixo livre, os 90° contam do início | o número pisca no modo 90° | ✔ | ✔ |
 | 25 | SHIFT + platter esquerdo, cage ligada | troca o ponto fixo entre os 27 pontos da caixa (centro, faces, arestas, cantos); uma volta passa por todos; caixa e ponto desenhados no viewport | — | ✔ | ✔ (caixa dos vértices) |
-| 26 | CUP | Clear Location | aceso 2 s se funcionou | ✔ | — |
-| 27 | CUE | Clear Rotation | aceso 2 s se funcionou | ✔ | — |
-| 28 | PLAY/PAUSE | Clear Scale | aceso 2 s se funcionou | ✔ | — |
-| 29 | SHIFT + CUP | Apply Location | aceso 2 s se funcionou | ✔ | — |
-| 30 | SHIFT + CUE | Apply Rotation | aceso 2 s se funcionou | ✔ | — |
-| 31 | SHIFT + PLAY/PAUSE | Apply Scale | aceso 2 s se funcionou | ✔ | — |
+| 26 | CUP | Object: Clear Location. Edit: **Extrude** e já entra num grab ao longo da normal (mouse + platter); CUP de novo ou clique confirma | Object: aceso 2 s se funcionou. Edit: aceso durante o extrude | ✔ | ✔ |
+| 27 | CUE | Object: Clear Rotation. Edit: **Inset** (1 cm); o platter ajusta a espessura; CUE de novo termina | Object: aceso 2 s. Edit: aceso ajustando | ✔ | ✔ |
+| 28 | PLAY/PAUSE | Object: Clear Scale. Edit: **Bevel** (1 cm, 1 segmento); platter = largura, SHIFT + platter = segmentos; PLAY de novo termina | Object: aceso 2 s. Edit: aceso ajustando | ✔ | ✔ |
+| 29 | SHIFT + CUP | Object: Apply Location. Edit: **Loop Cut** no anel da aresta ativa (ou primeira selecionada); platter = número de cortes; SHIFT + CUP de novo termina | Object: aceso 2 s. Edit: piscando ajustando | ✔ | ✔ |
+| 30 | SHIFT + CUE | Object: Apply Rotation. Edit: **Subdivide** | aceso 2 s se funcionou | ✔ | ✔ |
+| 31 | SHIFT + PLAY/PAUSE | Object: Apply Scale. Edit: **Merge at Center** | aceso 2 s se funcionou | ✔ | ✔ |
 | 32 | OUT | apaga a seleção, sem confirmação (Edit: vértices/arestas/faces pelo modo de seleção); confirma antes um grab em andamento | aceso 2 s se funcionou | ✔ objetos | ✔ |
+
+| 32b | VINYL MODE (deck C) | Edit: modo de seleção vértice → aresta → face | apagado = vértice, aceso = aresta, piscando = face | — | ✔ |
 
 ## Deck direito
 
@@ -79,4 +81,4 @@ ação funciona; "—" = sem efeito nesse modo.
 | 44 | A, B e D FILTER; knobs HI, MID, LOW |
 | 45 | Deck A: todos os botões exceto IN e OUT; decks B e D (exceto VINYL MODE) |
 | 46 | CUE D |
-| 47 | Deck C: VINYL MODE; SHIFT + os outros botões; CUP/CUE/PLAY no Edit Mode |
+| 47 | Deck C: SHIFT + os outros botões; VINYL MODE no Object Mode |

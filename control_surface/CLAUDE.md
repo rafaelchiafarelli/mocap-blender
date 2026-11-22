@@ -121,6 +121,15 @@ Blender state → LED messages to the controller.
   `toggle` (IN: open / enter / run with INVOKE_DEFAULT and close), `step`
   (platter, ~14 pulses per item), `close` (OUT = cancel; `back` kept, unbound); drawn with `blf`/`gpu` in a
   POST_PIXEL handler right of the toolbar. State `add_menu`.
+- `adjust.py` — Inset / Bevel / Loop Cut adjusted by the platter (task 32):
+  `start` keeps a copy of every Edit Mode mesh (`_snapshot`, a temporary
+  Mesh datablock each), runs the operator; `change` records the platter
+  (floats by the scaled amount, ints one per ~14 pulses); `flush` (once per
+  `Session.tick`) restores the copy (`bm.clear()` + `bm.from_mesh`) and
+  re-runs; a failing value falls back to the last good one; `end` frees the
+  copies (also from `grab.end_tools` through `END_TOOLS_HOOKS`). States
+  `adjusting` (operator id or NONE), `adjust_active`. Not Blender's undo:
+  `ed.undo` from the timer fails its poll or crashes Blender (2026-11-21).
 - `knob_select.py` — `pick(n, anchor, value)`: the object index for a
   centre-tap knob's position, proportional (the travel is split evenly over
   the objects; the ends land on the last/first). Pure.
@@ -205,6 +214,17 @@ Blender state → LED messages to the controller.
     (task 28: closes the menu; it blinks while the menu is open) and the
     left platter → `add_menu_step` while the menu is open; IN's LED on while
     it is open.
+  - **Deck C in Edit Mode** (task 32; bindings with `when` object_mode EDIT
+    placed first): CUP → `extrude_start` (`mesh.extrude_region`, then the
+    grab on axis `NORMAL`, the selection's mean world normal; CUP again →
+    `grab_confirm`); CUE → `adjust_start` `mesh.inset` (thickness); PLAY →
+    `adjust_start` `mesh.bevel` (offset; SHIFT + platter segments); SHIFT +
+    CUP → `loopcut_start` (`mesh.loopcut` on the active/first selected
+    edge; number_cuts); the same button again → `adjust_end`; SHIFT + CUE →
+    `mesh.subdivide`, SHIFT + PLAY → `mesh.merge` CENTER (flash 2 s);
+    VINYL MODE L/C → `select_mode_cycle` (state `mesh_select_mode`, LED
+    off/on/blink for vertex/edge/face). While adjusting, the left platter
+    → `adjust_change` main, SHIFT + platter → second.
   - **OUT** (task 25) → `delete_selected`: `grab.end_tools()` first (a
     running grab must not hold deleted objects), then `object.delete`
     without confirmation (Edit Mode: `mesh.delete` by the select mode,
