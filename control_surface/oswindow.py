@@ -23,14 +23,17 @@ try:
     _user32.SetWindowPos.argtypes = (wintypes.HWND, wintypes.HWND, ctypes.c_int, ctypes.c_int,
                                      ctypes.c_int, ctypes.c_int, wintypes.UINT)
     _user32.SetForegroundWindow.argtypes = (wintypes.HWND,)
+    _user32.GetWindowLongW.argtypes = (wintypes.HWND, ctypes.c_int)
     _user32.GetAsyncKeyState.argtypes = (ctypes.c_int,)
     _user32.GetAsyncKeyState.restype = ctypes.c_short
     _user32.GetCursorPos.argtypes = (ctypes.POINTER(wintypes.POINT),)
 except (AttributeError, OSError):  # not Windows
     _user32 = None
 
-SWP_NOZORDER = 0x0004
 SWP_NOACTIVATE = 0x0010
+HWND_TOPMOST = -1
+WS_EX_TOPMOST = 0x0008
+GWL_EXSTYLE = -20
 
 
 def process_windows():
@@ -109,12 +112,21 @@ def frame(hwnd):
 
 
 def place(hwnd, x, y, client_w, client_h):
-    """Move the window to (x, y) with a client area of client_w × client_h, without focusing it."""
+    """Move the window to (x, y) with a client area of client_w × client_h, always on
+    top of other programs' windows (so it shows even when Blender is behind
+    another program, which keeps the keyboard), without focusing it."""
     if _user32 is None or not hwnd:
         return False
     dw, dh = frame(hwnd)
-    return bool(_user32.SetWindowPos(hwnd, 0, int(x), int(y), int(client_w + dw), int(client_h + dh),
-                                     SWP_NOZORDER | SWP_NOACTIVATE))
+    return bool(_user32.SetWindowPos(hwnd, wintypes.HWND(HWND_TOPMOST), int(x), int(y),
+                                     int(client_w + dw), int(client_h + dh), SWP_NOACTIVATE))
+
+
+def topmost(hwnd):
+    """True if the window stays on top of the others."""
+    if _user32 is None or not hwnd:
+        return False
+    return bool(_user32.GetWindowLongW(hwnd, GWL_EXSTYLE) & WS_EX_TOPMOST)
 
 
 def focus(hwnd):

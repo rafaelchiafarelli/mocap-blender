@@ -1,4 +1,4 @@
-# DJ-Tech 4-Mix no Blender — ações (add-on control_surface 0.1.45)
+# DJ-Tech 4-Mix no Blender — ações (add-on control_surface 0.1.46)
 
 Atualizado em 2026-11-22. "Object" e "Edit" indicam o modo do Blender em que a
 ação funciona; "—" = sem efeito nesse modo.
@@ -64,7 +64,7 @@ ação funciona; "—" = sem efeito nesse modo.
 | 33c2 | SYNC (deck B), menu aberto | fecha o menu de qualquer nível | aceso com o menu aberto | ✔ | ✔ |
 | 33j | Janela do 4-Mix | abre sozinha quando o menu do Properties (IN deck B) ou o Add (IN deck A) abre, e fecha quando os dois fecham; desenhada pelo próprio Blender (ícones, dropdowns, checkboxes, sliders, gráficos de curva), cursor em vermelho, sem cabeçalho, do tamanho do nível; reabre onde você a deixou | — | ✔ | ✔ |
 | 33k | Mouse na janela do 4-Mix | clicar numa linha = IN; os campos (checkbox, slider, lista, curva) mudam direto; ← = OUT, ✕ = SYNC | — | ✔ | ✔ |
-| 33l | Clicar fora da janela do 4-Mix (ou trocar de programa) | fecha os menus, como o SYNC (uma edição em andamento volta ao valor anterior); o clique também vale onde caiu; só passar o mouse fora não fecha | — | ✔ | ✔ |
+| 33l | Clicar fora da janela do 4-Mix (no Blender ou em outro programa) | fecha os menus, como o SYNC (uma edição em andamento volta ao valor anterior); o clique também vale onde caiu; passar o mouse fora ou Alt+Tab não fecha. A janela fica por cima dos outros programas enquanto está aberta | — | ✔ | ✔ |
 | 33d | Modifiers › Add Modifier | o menu Add Modifier do Blender (Edit / Generate / Deform / …); IN no modificador adiciona e volta para a lista | — | ✔ | ✔ |
 | 33e | Modifiers › (um modificador) | os campos do modificador com o valor ao lado, e Apply / Delete; o Properties de verdade vai para a aba Modifiers com esse painel aberto | — | ✔ | ✔ |
 | 33f | Constraints › Add Constraint / (uma constraint) | igual aos modificadores: adicionar, campos (alvo, influência…), Apply / Delete | — | ✔ | ✔ |

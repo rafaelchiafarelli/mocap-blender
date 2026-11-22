@@ -5,10 +5,11 @@ the window when a menu opens, sizes it to the current level, and closes it when
 both menus are closed. The window is an NLA editor without header, channels or
 footer, as wide as its sidebar, whose tab "4-Mix" draws the level (icons, dropdowns, checkboxes,
 sliders, curve widgets). Mouse: a row click works like IN, the field widgets
-edit directly, ← is OUT and ✕ is SYNC. A mouse click outside the window, or
-another program taking the keyboard, closes both menus, like SYNC. Not the
-keyboard focus moving between Blender's windows: Blender gives it to the
-window under the mouse (seen 2026-11-22), so it moves on a mere hover.
+edit directly, ← is OUT and ✕ is SYNC. A mouse click outside the window
+(on Blender or another program) closes both menus, like SYNC. The keyboard
+focus is not watched: Blender gives it to the window under the mouse (seen
+2026-11-22), and another program in front keeps it (0.1.45 closed at once
+then). The window stays on top of other programs while it is open.
 
 Blender's API cannot size, place or focus a window, so `oswindow` does it
 through user32. The position the window was left at is remembered in Blender's
@@ -210,8 +211,10 @@ def _save_position():
 # --- Click outside = SYNC ----------------------------------------------------------
 
 def _watch():
-    """While the window is open: a click outside it, or another program taking the
-    keyboard, closes the menus like SYNC."""
+    """While the window is open: a click outside it (on Blender or on another program)
+    closes the menus like SYNC. The keyboard focus is not watched: Blender moves it
+    to the window under the mouse, and when another program is in front Windows
+    keeps the keyboard there, so the window opens without it."""
     global _was_down
     if window() is None:
         return None
@@ -220,9 +223,7 @@ def _watch():
     down = oswindow.mouse_down()
     click = oswindow.outside_click(_was_down, down, oswindow.cursor(), oswindow.rect(_hwnd))
     _was_down = down
-    fg = oswindow.foreground_any()
-    other_program = fg is not None and fg not in oswindow.process_windows()
-    if _settled and (click or other_program):
+    if _settled and click:
         close_menus()
         return None
     return WATCH_S

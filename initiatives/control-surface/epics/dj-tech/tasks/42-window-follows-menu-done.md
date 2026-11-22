@@ -29,10 +29,17 @@
   focus left the 4-Mix window on a mere hover over the viewport. A click
   outside is now a mouse button going down outside the window (or another
   program in the foreground); a hover does nothing.
+- **Fix (0.1.46, same day):** it still opened and closed at once when
+  another program was in front of Blender: Windows keeps the keyboard there,
+  and the "other program in the foreground" rule fired. Rule removed (a
+  click on another program is a click outside anyway); the window is kept
+  on top of other programs while open.
 - **Tests:** pytest (143, Blender smoke and `test_oswindow.py` included); a windowed Blender 5.2.2
   check (open by `props_menu.toggle`, clicks through `menu_pick` to Render ›
   Motion Blur › Shutter Curve, window resized at each level, focus on the
   window, focus moved to the main window → both menus closed and the window
   gone, the Add menu opened and closed; screenshots); 0.1.45, with the real
   mouse: hover over the viewport → stays open, click inside → stays open,
-  instant click and 0.12 s click outside → closed.
+  instant click and 0.12 s click outside → closed; 0.1.46: Notepad in
+  front → the window opens on top and stays open, a click on Notepad →
+  closed.

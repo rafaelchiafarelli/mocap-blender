@@ -183,13 +183,15 @@ Blender state → LED messages to the controller.
   `draw`: `ROW_UNITS` per row, `CURVE_UNITS` per curve widget) × 20 px ×
   `ui_scale` + `MARGIN_UNITS`, capped at `MAX_HEIGHT_FRACTION` of the main
   window. Position: `control_surface_window.json` in Blender's config folder,
-  else the main window's top right. `_watch` (every `WATCH_S`, 30 ms): once
-  the window has settled, a mouse button going down with the cursor outside
-  the window (`oswindow.outside_click`), or another program in the
-  foreground, → `close_menus()` (both `close_all`, like SYNC). Not the
-  focus moving between Blender's windows: Blender hands the keyboard to the
-  window under the mouse (seen 2026-11-22), so a mere hover over the
-  viewport moved it and closed the menus at once (0.1.44).
+  else the main window's top right; kept on top of other programs while
+  open (`oswindow.place`). `_watch` (every `WATCH_S`, 30 ms): once the
+  window has settled, a mouse button going down with the cursor outside the
+  window (`oswindow.outside_click`; on Blender or on another program) →
+  `close_menus()` (both `close_all`, like SYNC). The keyboard focus is not
+  watched: Blender hands it to the window under the mouse (seen
+  2026-11-22), so a mere hover closed the menus (0.1.44), and with another
+  program in front Windows keeps it there, so the window opened without it
+  and closed at once (0.1.45).
   `CONTROLSURFACE_PT_menu_window` (`HIDE_HEADER`, polls on the screen name)
   draws the Add level and/or the Properties level with real widgets
   (`_draw_row`: `layout.prop` with `index`/`invert_checkbox`,
@@ -208,7 +210,7 @@ Blender state → LED messages to the controller.
   off Windows): `process_windows()` (visible top-level windows of this
   process; the new 4-Mix window is the one added by `area_dupli`),
   `foreground()` / `foreground_any()`, `rect()`, `place()` (client size,
-  frame added, no activation), `focus()` (`SetForegroundWindow`; refused by
+  frame added, `HWND_TOPMOST`, no activation), `topmost()`, `focus()` (`SetForegroundWindow`; refused by
   Windows when Blender is not the foreground program), `mouse_down()`
   (`GetAsyncKeyState` of the three buttons, held or pressed since the last
   call, so a quick click between two checks counts), `cursor()`, and the
