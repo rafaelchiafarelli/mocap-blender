@@ -271,8 +271,8 @@ def request(what, **kw):
         raise RuntimeError("no grab running")
     if what == "axis":
         _running["axis"] = kw["axis"]
-        if _running["mode"] == "ROTATE":  # keep what was turned on the old axis
-            _running["rebase"] = True
+        if _running["mode"] == "ROTATE":  # start over on the new axis (Rafael, 2026-11-22)
+            _running["reset"] = True
     elif what == "push":
         _running["pushes"].append((kw["amount"], kw.get("along", "right")))
     else:
@@ -377,6 +377,22 @@ class CONTROLSURFACE_OT_grab(bpy.types.Operator):
             for v, w0 in zip(verts, starts):
                 v.co = inv @ world_of(w0)
             bmesh.update_edit_mesh(o.data, loop_triangles=False, destructive=False)
+
+    def _reset_to_start(self):
+        """A rotation's axis changed: undo what was turned so far and start the new
+        axis from 0° (the 90° mode stays on and re-aligns to the new axis)."""
+        self.start, self.vstart = self.orig
+        for o in self.objs:
+            o.matrix_world = self.start[o.name][2]
+        if self.edit:
+            self._set_verts(lambda w0: w0)
+        self.mouse0 = self.mouse
+        self.push_angle = 0.0
+        self.shared.pop("tips", None)
+        self.shared["tip_acc"] = 0.0
+        if self.snap is not None:
+            self.snap = None
+            self._snap_to_grid()
 
     def _rebase(self, context):
         """Go on from where the objects/vertices are now, around the current pivot."""
@@ -530,6 +546,8 @@ class CONTROLSURFACE_OT_grab(bpy.types.Operator):
             return self._end(context, False)
         elif event.type in {"MIDDLEMOUSE", "WHEELUPMOUSE", "WHEELDOWNMOUSE"}:
             return {"PASS_THROUGH"}  # navigate the view while grabbing
+        if self.shared.pop("reset", False):
+            self._reset_to_start()
         if self.shared["rebase"]:
             self._rebase(context)
         self._take_pushes()

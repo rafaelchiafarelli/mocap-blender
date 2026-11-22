@@ -3,7 +3,7 @@
 The DJ-Tech 4-Mix as an extension of Blender's interface: its controls run
 Blender commands, its LEDs show Blender's state. The add-on code is described
 file by file in [`CLAUDE.md`](CLAUDE.md); this page is the quick start for the
-next change. State on 2026-11-20: version 0.1.37, installed in the portable
+next change. State on 2026-11-20: version 0.1.38, installed in the portable
 Blender on G:.
 
 ## Use it
@@ -53,7 +53,7 @@ All of this comes from [`mappings/blender_modes.json`](mappings/blender_modes.js
 | Left platter, deck C, SYNC blinking | view right/left by `step`; in camera view: camera right/left | — |
 | RE (deck C) | scale on: the other tools off, a free scale starts at once (button 1 lit); scale off (a running scale is confirmed) | on while scale is on (running or armed); blinking while the cage is on |
 | RE or IN, second press | turns the cage on (third press: tool off): a fixed point for the scale/rotation, drawn in the viewport with the selection's box | — |
-| 1–4 (deck C), 2nd press in a rotation | 90° mode: the object snaps to the nearest absolute 0/90/180/270° on that axis (Edit Mode and free axis: relative to the start), the mouse is ignored, each quarter platter turn = exactly ±90°; another number keeps the 90° mode on its axis; 3rd press confirms | the number blinks in 90° mode |
+| 1–4 (deck C), 2nd press in a rotation | 90° mode: the object snaps to the nearest absolute 0/90/180/270° on that axis (Edit Mode and free axis: relative to the start), the mouse is ignored, each quarter platter turn = exactly ±90°; another number keeps the 90° mode on its axis, and the turn on the previous axis is undone (the new axis starts from 0°); 3rd press confirms | the number blinks in 90° mode |
 | SHIFT + left platter, deck C, cage on | steps through the box's 27 points (centre, faces, edges, corners); one platter turn (~390 pulses) = all 27 | — |
 | IN (deck C) | rotation, the same logic as RE | on while rotation is on (running or armed); blinking while the cage is on |
 | 1 / 2 / 3 / 4 (deck C) | move (or scale while RE is lit, rotate while IN is lit): free / X / Y / Z; a move turns the other tools off; the same button again confirms; another one changes the axis | on while that grab runs |

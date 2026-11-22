@@ -281,7 +281,8 @@ Blender state → LED messages to the controller.
       the start; `_snap_to_grid`), and the left platter → `rotate_tip`:
       every `PULSES_PER_TIP` (a quarter platter turn) exactly ±90°. Another
       number changes the axis keeping the 90° mode; a rotation's axis
-      change rebases, so the turn on the old axis stays. The 3rd press
+      change undoes the turn so far (`_reset_to_start`, Rafael 2026-11-22;
+      task 31 had kept it). The 3rd press
       confirms. (Task 29 used SHIFT + platter, found confusing; task 30
       counted from the start and let the mouse add drift.)
     - left platter: during a grab → `grab_push` (move: along the axis, free
