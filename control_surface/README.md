@@ -3,7 +3,7 @@
 The DJ-Tech 4-Mix as an extension of Blender's interface: its controls run
 Blender commands, its LEDs show Blender's state. The add-on code is described
 file by file in [`CLAUDE.md`](CLAUDE.md); this page is the quick start for the
-next change. State on 2026-11-22: version 0.1.44, installed in the portable
+next change. State on 2026-11-22: version 0.1.45, installed in the portable
 Blender on G:.
 
 ## Use it
@@ -242,11 +242,13 @@ open (blinking while editing), OUT blinking and SYNC lit while open.
   current level with Blender's own widgets — icons, dropdowns, checkboxes,
   sliders, curve widgets — the cursor row in red, with no header: only the
   panel, as wide as it and as tall as the level (it resizes on every level;
-  long levels scroll). It takes the keyboard, so:
+  long levels scroll).
   - **mouse:** a click on a row works like IN; the fields (checkbox, slider,
     dropdown, curve) edit directly; ← is OUT and ✕ is SYNC;
-  - **a click outside it** (another Blender window or another program)
-    closes the menus like SYNC (an edit in progress is undone).
+  - **a click outside it** (on the viewport, another Blender window or
+    another program), or switching to another program, closes the menus
+    like SYNC (an edit in progress is undone). The click also reaches what
+    it landed on. Only moving the mouse away does nothing.
 
   Move it once where you want it: it reopens there (the position is kept in
   Blender's config folder, `control_surface_window.json`). The overlay on

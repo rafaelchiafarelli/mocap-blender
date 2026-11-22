@@ -24,8 +24,15 @@
   A window narrower than the sidebar hides the sidebar.
 - **Out of scope:** the sidebar's width (no Python API); the exact panel
   height (not reported by Blender: estimated from the rows).
-- **Tests:** pytest (138, Blender smoke included); a windowed Blender 5.2.2
+- **Fix (0.1.45, same day):** Rafael saw the window open and close at
+  once. Blender gives the keyboard to the window under the mouse, so the
+  focus left the 4-Mix window on a mere hover over the viewport. A click
+  outside is now a mouse button going down outside the window (or another
+  program in the foreground); a hover does nothing.
+- **Tests:** pytest (143, Blender smoke and `test_oswindow.py` included); a windowed Blender 5.2.2
   check (open by `props_menu.toggle`, clicks through `menu_pick` to Render ›
   Motion Blur › Shutter Curve, window resized at each level, focus on the
   window, focus moved to the main window → both menus closed and the window
-  gone, the Add menu opened and closed; screenshots).
+  gone, the Add menu opened and closed; screenshots); 0.1.45, with the real
+  mouse: hover over the viewport → stays open, click inside → stays open,
+  instant click and 0.12 s click outside → closed.

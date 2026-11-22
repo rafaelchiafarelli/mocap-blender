@@ -23,6 +23,9 @@ try:
     _user32.SetWindowPos.argtypes = (wintypes.HWND, wintypes.HWND, ctypes.c_int, ctypes.c_int,
                                      ctypes.c_int, ctypes.c_int, wintypes.UINT)
     _user32.SetForegroundWindow.argtypes = (wintypes.HWND,)
+    _user32.GetAsyncKeyState.argtypes = (ctypes.c_int,)
+    _user32.GetAsyncKeyState.restype = ctypes.c_short
+    _user32.GetCursorPos.argtypes = (ctypes.POINTER(wintypes.POINT),)
 except (AttributeError, OSError):  # not Windows
     _user32 = None
 
@@ -50,6 +53,26 @@ def process_windows():
 
 def available():
     return _user32 is not None
+
+
+VK_BUTTONS = (0x01, 0x02, 0x04)  # left, right, middle mouse buttons
+
+
+def mouse_down():
+    """True while any mouse button is held, or if one was pressed since the last call
+    (the low bit: a quick click between two checks is not missed), whatever window
+    it is over."""
+    if _user32 is None:
+        return False
+    return any(_user32.GetAsyncKeyState(vk) & 0x8001 for vk in VK_BUTTONS)
+
+
+def cursor():
+    """(x, y) of the mouse on the screen, or None."""
+    if _user32 is None:
+        return None
+    p = wintypes.POINT()
+    return (p.x, p.y) if _user32.GetCursorPos(ctypes.byref(p)) else None
 
 
 def foreground_any():
@@ -99,3 +122,13 @@ def focus(hwnd):
     if _user32 is None or not hwnd:
         return False
     return bool(_user32.SetForegroundWindow(hwnd))
+
+
+def outside_click(was_down, down, cursor, rect):
+    """True when a mouse button has just gone down (not held from before) with the
+    cursor outside rect (x, y, w, h; frame included, so dragging the title bar is inside)."""
+    if was_down or not down or cursor is None or rect is None:
+        return False
+    x, y, w, h = rect
+    cx, cy = cursor
+    return not (x <= cx < x + w and y <= cy < y + h)

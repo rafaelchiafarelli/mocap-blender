@@ -183,9 +183,13 @@ Blender state → LED messages to the controller.
   `draw`: `ROW_UNITS` per row, `CURVE_UNITS` per curve widget) × 20 px ×
   `ui_scale` + `MARGIN_UNITS`, capped at `MAX_HEIGHT_FRACTION` of the main
   window. Position: `control_surface_window.json` in Blender's config folder,
-  else the main window's top right. `_watch` (every `WATCH_S`): once the
-  settled window has had the keyboard, another foreground window means a
-  click outside → `close_menus()` (both `close_all`, like SYNC).
+  else the main window's top right. `_watch` (every `WATCH_S`, 30 ms): once
+  the window has settled, a mouse button going down with the cursor outside
+  the window (`oswindow.outside_click`), or another program in the
+  foreground, → `close_menus()` (both `close_all`, like SYNC). Not the
+  focus moving between Blender's windows: Blender hands the keyboard to the
+  window under the mouse (seen 2026-11-22), so a mere hover over the
+  viewport moved it and closed the menus at once (0.1.44).
   `CONTROLSURFACE_PT_menu_window` (`HIDE_HEADER`, polls on the screen name)
   draws the Add level and/or the Properties level with real widgets
   (`_draw_row`: `layout.prop` with `index`/`invert_checkbox`,
@@ -205,7 +209,10 @@ Blender state → LED messages to the controller.
   process; the new 4-Mix window is the one added by `area_dupli`),
   `foreground()` / `foreground_any()`, `rect()`, `place()` (client size,
   frame added, no activation), `focus()` (`SetForegroundWindow`; refused by
-  Windows when Blender is not the foreground program). Sets the user32
+  Windows when Blender is not the foreground program), `mouse_down()`
+  (`GetAsyncKeyState` of the three buttons, held or pressed since the last
+  call, so a quick click between two checks counts), `cursor()`, and the
+  pure `outside_click(was_down, down, cursor, rect)`. Sets the user32
   signatures so handles are not truncated.
 - `knob_select.py` — `pick(n, anchor, value)`: the object index for a
   centre-tap knob's position, proportional (the travel is split evenly over
@@ -367,7 +374,8 @@ Blender state → LED messages to the controller.
   Named `probe_*`, not `*_test`, so pytest does not collect them.
 - `tests/` — pytest:
   - `test_profile.py`, `test_leds.py`, `test_engine.py` and `test_layers.py`
-    are pure, with fakes.
+    are pure, with fakes; `test_oswindow.py` checks `outside_click` and the
+    no-ops off Windows.
   - `data/modes_cue_leds.json` — test mapping: mode bindings plus mode LEDs
     on CUE A–D, so the LED path is tested.
   - `test_blender_smoke.py` runs `blender_smoke.py` inside the pinned
