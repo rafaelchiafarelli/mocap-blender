@@ -3,7 +3,7 @@
 The DJ-Tech 4-Mix as an extension of Blender's interface: its controls run
 Blender commands, its LEDs show Blender's state. The add-on code is described
 file by file in [`CLAUDE.md`](CLAUDE.md); this page is the quick start for the
-next change. State on 2026-11-20: version 0.1.43, installed in the portable
+next change. State on 2026-11-22: version 0.1.43, installed in the portable
 Blender on G:.
 
 ## Use it
@@ -282,29 +282,63 @@ Blender must be restarted to load a reinstalled version.
 
   Usage is at the top of each file.
 
+## Where the work lives (2026-11-22)
+
+- **Working copy:** the `mocap-studio/mocap-blender` submodule (Rafael,
+  2026-11-21). The old standalone clone `~/workspace/mocap-blender` stopped at
+  task 26 and is superseded.
+- **Branches:** one per task, `1-device-profile` … `41-handoff-2026-11-22`,
+  each built on the previous one and pushed; the last one contains all the
+  work. `dev` holds the plan; `dj-tech` (epic) and `control-surface`
+  (initiative) are pushed at `dev`. The chain's `tasks` branch exists only in
+  the old clone (merged up to task 26): on the remote, `features` / `epics` /
+  `tasks` belong to the on-hold MVP chain, so they are not pushed. Merging the
+  tasks into `dj-tech` waits for the epic gate (Rafael's hardware check).
+- **Superproject:** `mocap-studio`'s pointer to this submodule is not
+  committed (the superproject is on another session's branch).
+- **Rafael's reference:** [`acoes-4mix.md`](acoes-4mix.md), every control
+  numbered, in Portuguese, Object/Edit columns; update it with every mapping
+  change and copy it to the day's review folder on G:.
+- **Review folders:** `G:\mocap-studio-downloads\review\2026-11-21\` and
+  `…\2026-11-22\` hold the zips, screenshots and phone JPEGs.
+
+## How to check without the hardware
+
+The tests that matter run Blender with a window and feed the session MIDI
+messages through `Session(midi_in=…, midi_out=…)` fakes and `Session.queue`
+(see the task files 30–40): start Blender with `--enable-event-simulate` to
+drive the mouse (`window.event_simulate`), and `bpy.ops.screen.screenshot`
+for pictures. Crop the sidebar with ffmpeg for Rafael's phone. A survey that
+runs every Properties panel's poll/draw through `props_menu` catches context
+stand-in gaps (task 39).
+
 ## Known limits and open items
 
 - **The decks cannot be set from the computer** (deck switch notes are
   ignored; VirtualDJ also only reads them). They are learned from the
   switches or from any control on that side.
-- **Positions of knobs and faders are unknown until they move.** For
-  continuous Blender values (shape keys, MPFB sliders), use pickup ("soft
-  takeover") or relative changes. Not built yet.
+- **Positions of knobs and faders are unknown until they move.** Centre-tap
+  knobs wait for their centre; others (shape keys, MPFB sliders) would need
+  pickup ("soft takeover") or relative changes. Not built yet.
 - **Noisy knobs:** CUE MIX and S4 VOL jitter ±1 at rest. Filter them before
   binding them.
-- **Not seen on the hardware yet:** the encoder LED (note 1F), taken from the
-  VirtualDJ map; Rafael said to treat it as working.
+- **Key bounce:** the delete's second press could come from a bounce (Rafael:
+  a problem for later).
+- **Properties menu:** value changes make no undo step; template fields
+  without a widget in the overlay (curves, colour ramps) show only in the
+  4-Mix window; node trees beyond the surface shader's own inputs are not
+  listed; the 4-Mix window and its sidebar must be sized by hand once and
+  saved in the startup file (no Python API).
+- **Grab/scale/rotate:** Object Mode and mesh Edit Mode only; no snapping or
+  typed values (keyboard G/S/R keep them).
+- **Adjust (Inset/Bevel/Loop Cut):** re-runs from a mesh copy, not
+  Blender's undo (`ed.undo` from the timer crashed Blender); Ctrl+Z after an
+  adjustment may not land where expected — to be checked by Rafael.
+- **Not seen on the hardware yet:** the encoder LED (note 1F).
 - **Open question:** does the 4-Mix pause its input for a few seconds after a
   manufacturer SysEx? A button-press test with `probe_sysex.py` would tell.
-- **Idea (Rafael, 2026-11-20):** a way to step through the Properties
-  editor's tabs (the column of icons on its left) from the controller.
-- **To define:** the right platter and the decks A, B and D.
+- **To define:** the right platter outside the Properties menu, deck D, and
+  most of decks A and B.
 - **Mapping file:** it lives inside the add-on, so changing it means rebuild
-  and reinstall. Choosing an external file plus a Reload button is the next
+  and reinstall. An external file plus a Reload button is the next
   convenience.
-- **Git:** every task branch is pushed (`1-device-profile` …
-  `13-handoff-guide`; the last one contains all the work), and so is `dev`
-  with the plan. The chain's container branches (`features`, `epics`,
-  `tasks`) are not pushed, because on the remote those names belong to the
-  on-hold mvp chain. Merging `tasks` → `dj-tech` waits for the epic gate
-  (Rafael's hardware check).
