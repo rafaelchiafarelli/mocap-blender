@@ -14,7 +14,7 @@ from pathlib import Path
 import bpy
 from mathutils import Matrix, Vector
 
-from . import add_menu, adjust, grab, knob_select, menu_window, props_menu
+from . import add_menu, adjust, grab, knob_select, menu_window, props_menu, snap
 
 grab.END_TOOLS_HOOKS.append(adjust.end)
 from .engine import Engine, Mapping
@@ -88,6 +88,7 @@ STATES = {
     "add_menu": add_menu.is_open,
     "grab_axis": _grab_axis,
     "cursor_axis": lambda: _cursor_axis,
+    "snap_mode": lambda: snap.mode(),
     "object_mode": _object_mode, "view_perspective": _view_perspective,
     "view_axis": _view_axis, "orbit_selection": _orbit_selection,
 }
@@ -229,12 +230,24 @@ def cursor_axis_toggle(axis):
 
 
 def cursor_move(amount):
-    """Left platter (deck A): the 3D cursor along the chosen global axis, in metres."""
+    """Left platter (deck A): the 3D cursor along the chosen global axis, in metres.
+    Grid snapping (VINYL lit): it lands on multiples of the step."""
     if _cursor_axis not in ("X", "Y", "Z"):
         return {"FINISHED"}
-    bpy.context.scene.cursor.location["XYZ".index(_cursor_axis)] += amount
+    loc = bpy.context.scene.cursor.location
+    i = "XYZ".index(_cursor_axis)
+    loc[i] += amount
+    if snap.mode() == "grid":
+        loc[i] = snap.round_to(loc[i], abs(amount))
     _redraw()
     return {"FINISHED"}
+
+
+def step_value():
+    """The `step` scale (S1 VOL), 0.01 m without a session."""
+    if _session is None:
+        return 0.01
+    return _session.engine.scales.get("step", 0.01)
 
 
 class CONTROLSURFACE_OT_cursor_to_mouse(bpy.types.Operator):
@@ -254,7 +267,15 @@ class CONTROLSURFACE_OT_cursor_to_mouse(bpy.types.Operator):
                 if (region.type == "WINDOW" and region.x <= mx < region.x + region.width
                         and region.y <= my < region.y + region.height):
                     with context.temp_override(area=area, region=region):
-                        return bpy.ops.view3d.cursor3d("INVOKE_DEFAULT")
+                        result = bpy.ops.view3d.cursor3d("INVOKE_DEFAULT")
+                    if snap.mode() == "geometry":  # VINYL blinking: onto the vertex/edge/face under the mouse
+                        rv3d = area.spaces.active.region_3d
+                        xy = (mx - region.x, my - region.y)
+                        targets = snap.Targets(context, edit_unselected=True)
+                        hit = targets.find(context, region, rv3d, xy, snap.elements())
+                        if hit is not None:
+                            context.scene.cursor.location = hit[0]
+                    return result
         self.report({"WARNING"}, "the mouse is not over a 3D View")
         return {"CANCELLED"}
 
@@ -446,6 +467,7 @@ ACTIONS = {
     "cursor_to_mouse": cursor_to_mouse,
     "cursor_axis_toggle": cursor_axis_toggle,
     "cursor_move": cursor_move,
+    "snap_cycle": lambda: snap.cycle(),
     "sync_cycle": lambda: grab.sync_cycle(),
     "cage_step": lambda delta: grab.cage_step(delta),
     "rotate_tip": lambda pulses: grab.rotate_tip(pulses),

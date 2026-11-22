@@ -12,8 +12,8 @@ MODES = ROOT / "mappings" / "blender_modes.json"
 # Test mapping: the bundled bindings plus mode LEDs on CUE A-D (A-D have no LED).
 CUE_LEDS = Path(__file__).resolve().parent / "data" / "modes_cue_leds.json"
 A_LED, B_LED = (0x90, 0x27), (0x90, 0x28)  # CUE A, CUE B
-BUNDLED_ACTIONS = {"add_menu_close", "add_out_down", "add_out_up", "props_close", "props_out_down", "props_out_up", "delete_arm", "delete_confirm", "props_toggle", "props_step", "props_cancel", "extrude_start", "adjust_start", "adjust_change", "adjust_end", "loopcut_start", "select_mode_cycle", "rotate_snap_on", "rotate_tip", "add_menu_toggle", "add_menu_step", "add_menu_back", "add_menu_cancel", "delete_selected", "cage_step", "tool_toggle", "move_start", "sync_cycle", "grab_start", "grab_confirm", "grab_axis", "grab_push", "select_by_knob", "camera_move", "view_move", "view_projection", "orbit_selection_toggle", "cursor_to_mouse", "cursor_axis_toggle", "cursor_move"}
-BUNDLED_STATES = {"delete_armed", "props_menu", "props_editing", "adjusting", "adjust_active", "mesh_select_mode", "grab_snap", "add_menu", "cage", "rotate_mode", "sync_mode", "scale_mode", "grabbing", "grab_axis", "object_mode", "view_axis", "view_perspective", "orbit_selection", "cursor_axis"}
+BUNDLED_ACTIONS = {"add_menu_close", "add_out_down", "add_out_up", "props_close", "props_out_down", "props_out_up", "delete_arm", "delete_confirm", "props_toggle", "props_step", "props_cancel", "extrude_start", "adjust_start", "adjust_change", "adjust_end", "loopcut_start", "select_mode_cycle", "rotate_snap_on", "rotate_tip", "add_menu_toggle", "add_menu_step", "add_menu_back", "add_menu_cancel", "delete_selected", "cage_step", "tool_toggle", "move_start", "sync_cycle", "grab_start", "grab_confirm", "grab_axis", "grab_push", "select_by_knob", "camera_move", "view_move", "view_projection", "orbit_selection_toggle", "cursor_to_mouse", "cursor_axis_toggle", "cursor_move", "snap_cycle"}
+BUNDLED_STATES = {"delete_armed", "props_menu", "props_editing", "adjusting", "adjust_active", "mesh_select_mode", "grab_snap", "add_menu", "cage", "rotate_mode", "sync_mode", "scale_mode", "grabbing", "grab_axis", "object_mode", "view_axis", "view_perspective", "orbit_selection", "cursor_axis", "snap_mode"}
 
 
 class FakeBlender:
@@ -25,7 +25,7 @@ class FakeBlender:
                      "add_menu": False, "grab_snap": False,
                      "adjusting": "NONE", "adjust_active": False, "mesh_select_mode": "NONE",
                      "props_menu": False, "props_editing": False, "delete_armed": False,
-                     "cursor_axis": "NONE"}
+                     "cursor_axis": "NONE", "snap_mode": "off"}
         self.actions = []
         self.calls = []
         self.contexts = []
@@ -856,4 +856,25 @@ def test_bundled_deck_a_sync_closes_the_add_menu_first():
     fb.view["add_menu"] = True
     press(e, (0x91, 0x05))
     assert fb.actions == [("add_menu_close", {})] and fb.calls == []
+
+
+def test_bundled_vinyl_cycles_the_snap_on_deck_a_and_on_deck_c_in_object_mode():
+    e, fb, sent = make_bundled()
+    press(e, (0x91, 0x01))                  # VINYL MODE L/A
+    press(e, (0x93, 0x01))                  # VINYL MODE L/C, Object Mode
+    assert fb.actions == [("snap_cycle", {}), ("snap_cycle", {})]
+    fb.view["snap_mode"] = "grid"
+    e.update()
+    assert led_values(sent, (0x91, 0x01))[-1] == LED_ON
+    assert led_values(sent, (0x93, 0x01))[-1] == LED_ON
+
+
+def test_bundled_vinyl_deck_c_keeps_the_select_mode_in_edit_mode():
+    e, fb, sent = make_bundled("EDIT")
+    press(e, (0x93, 0x01))
+    assert fb.actions == [("select_mode_cycle", {})]
+    fb.view["snap_mode"] = "grid"
+    fb.view["mesh_select_mode"] = "VERT"
+    e.update()
+    assert led_values(sent, (0x93, 0x01))[-1] == 0  # the LED shows the select mode, not the snap
 

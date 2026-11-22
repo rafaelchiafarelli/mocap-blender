@@ -1,4 +1,4 @@
-# DJ-Tech 4-Mix no Blender — ações (add-on control_surface 0.1.47)
+# DJ-Tech 4-Mix no Blender — ações (add-on control_surface 0.1.48)
 
 Atualizado em 2026-11-22. "Object" e "Edit" indicam o modo do Blender em que a
 ação funciona; "—" = sem efeito nesse modo.
@@ -33,6 +33,7 @@ ação funciona; "—" = sem efeito nesse modo.
 | 17c | 1 (deck A) | leva o 3D Cursor para o mouse (o mesmo do Shift + botão direito: na superfície embaixo do mouse) | aceso 1 s depois de funcionar | ✔ | ✔ |
 | 17d | 2 / 3 / 4 (deck A) | escolhe o eixo X / Y / Z: o platter esquerdo move o 3D Cursor nesse eixo, pelo `step` do S1 VOL; o mesmo botão de novo desliga | aceso enquanto o eixo está escolhido | ✔ | ✔ |
 | 17e | Platter esquerdo, menu fechado, eixo escolhido | move o 3D Cursor no eixo escolhido (1–10 cm por pulso, pelo S1 VOL) | — | ✔ | ✔ |
+| 17n | VINYL MODE (deck A) | snap (o imã do Blender, Shift+Tab): desligado → **A, grade** → **B, geometria** → desligado. Grade: mover cai em múltiplos do passo do S1 VOL; escalar em passos de 10 × o passo (0,1–1,0); o platter do cursor anda na grade. Geometria: o objeto (ou o vértice, no Edit) gruda no vértice/aresta/face de outro objeto embaixo do mouse; o botão 1 leva o cursor ao vértice/aresta/face embaixo do mouse. Vale também para o G/S do teclado | aceso = grade, piscando = geometria | ✔ | ✔ |
 | 17f | SYNC (menu fechado) | Cursor to Selected: o cursor vai para o centro da seleção | aceso 1 s | ✔ | ✔ |
 | 17g | CUP | Cursor to Active: o cursor vai para o objeto ativo (Edit: vértice ativo) | aceso 1 s | ✔ | ✔ |
 | 17h | CUE | Cursor to Grid: o cursor vai para o ponto da grade mais próximo (grade do Blender, 1 m) | aceso 1 s | ✔ | ✔ |
@@ -63,7 +64,7 @@ ação funciona; "—" = sem efeito nesse modo.
 | 31 | SHIFT + PLAY/PAUSE | Object: Apply Scale. Edit: **Merge at Center** | aceso 2 s se funcionou | ✔ | ✔ |
 | 32 | OUT | 1º toque arma a deleção; 2º toque apaga a seleção (Edit: vértices/arestas/faces pelo modo de seleção). Mudar a seleção ou o modo, ou ligar outra ferramenta, desarma. Confirma antes um grab em andamento | pisca rápido enquanto armado; aceso 2 s depois de apagar | ✔ objetos | ✔ |
 
-| 32b | VINYL MODE (deck C) | Edit: modo de seleção vértice → aresta → face | apagado = vértice, aceso = aresta, piscando = face | — | ✔ |
+| 32b | VINYL MODE (deck C) | Object: snap (o mesmo do 17n). Edit: modo de seleção vértice → aresta → face | Object: aceso = grade, piscando = geometria. Edit: apagado = vértice, aceso = aresta, piscando = face | ✔ | ✔ |
 
 ## Deck B (lado direito)
 

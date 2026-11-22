@@ -3,7 +3,7 @@
 The DJ-Tech 4-Mix as an extension of Blender's interface: its controls run
 Blender commands, its LEDs show Blender's state. The add-on code is described
 file by file in [`CLAUDE.md`](CLAUDE.md); this page is the quick start for the
-next change. State on 2026-11-22: version 0.1.47, installed in the portable
+next change. State on 2026-11-22: version 0.1.48, installed in the portable
 Blender on G:.
 
 ## Use it
@@ -44,6 +44,7 @@ All of this comes from [`mappings/blender_modes.json`](mappings/blender_modes.js
 | CUE B | Top view; again → Bottom | on in Top, blinks in Bottom, off otherwise |
 | CUE D | toggles the camera view | on while in camera view |
 | C FILTER (after reaching its centre) | selects one object (and makes it active), see below | — |
+| VINYL MODE, deck A (and deck C in Object Mode) | snapping (Blender's magnet, Shift+Tab): off → grid → geometry → off. Grid: a move lands on multiples of `step` (on the moving axes), a scale factor on multiples of 10 × `step`, the 3D cursor's platter moves on the step. Geometry: the selection (or the 3D cursor with deck A's 1) snaps to the vertex, edge or face under the mouse (Blender's Snap With picks the point of the selection) | on = grid, blinking = geometry |
 | VINYL MODE, right deck (B or D) | toggles Preferences → Navigation → Orbit Around Selection | blinks while it is on |
 | Encoder (PRESS TO ENTER), turn | zoom in (right) / out (left); in camera view: dolly the camera forward/back by `step` | — |
 | Encoder, press | nothing (the camera view moved to CUE D) | — |

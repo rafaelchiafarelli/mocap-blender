@@ -124,6 +124,14 @@
    }
   },
   {
+   "control": "VINYL MODE L/C",
+   "event": "press",
+   "action": "snap_cycle",
+   "when": {
+    "object_mode": "OBJECT"
+   }
+  },
+  {
    "control": "PLATTER L/C",
    "event": "cw",
    "action": "adjust_change",
@@ -908,6 +916,11 @@
    "scale": "step"
   },
   {
+   "control": "VINYL MODE L/A",
+   "event": "press",
+   "action": "snap_cycle"
+  },
+  {
    "control": "1 L/A",
    "event": "press",
    "action": "cursor_to_mouse",
@@ -1342,6 +1355,40 @@
    "control": "VINYL MODE L/C",
    "state": "mesh_select_mode",
    "equals": "FACE",
+   "led": "blink",
+   "on_ms": 200,
+   "off_ms": 200
+  },
+  {
+   "control": "VINYL MODE L/C",
+   "state": "snap_mode",
+   "equals": "grid",
+   "when": {
+    "object_mode": "OBJECT"
+   },
+   "led": "on"
+  },
+  {
+   "control": "VINYL MODE L/C",
+   "state": "snap_mode",
+   "equals": "geometry",
+   "when": {
+    "object_mode": "OBJECT"
+   },
+   "led": "blink",
+   "on_ms": 200,
+   "off_ms": 200
+  },
+  {
+   "control": "VINYL MODE L/A",
+   "state": "snap_mode",
+   "equals": "grid",
+   "led": "on"
+  },
+  {
+   "control": "VINYL MODE L/A",
+   "state": "snap_mode",
+   "equals": "geometry",
    "led": "blink",
    "on_ms": 200,
    "off_ms": 200

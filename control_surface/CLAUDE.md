@@ -103,6 +103,14 @@ Blender state → LED messages to the controller.
   - `resend()` (`leds.py:40`) forgets what was sent, so the next tick sends
     every LED again.
 - `grab.py` — the add-on's own modal grab/scale/rotate
+  (snapping, task 45: in `_apply`, grid mode rounds a move's target
+  `pivot + d` to `grid_size()` = `step` on the moving axes, and a scale
+  factor to multiples of 10 × `step`; geometry mode moves the selection's
+  snap point — Blender's Snap With: CLOSEST = the nearest of the start
+  origins, box corners or vertices, ACTIVE, else the pivot — onto
+  `_snap_hit()` (`snap.Targets` built on first use), projected on the
+  axis; a scale takes the factor that brings the nearest selection point
+  onto it; rotation keeps its 90° mode)
   (`control_surface.grab`, tasks 18–20) and the deck's tool state: follows the mouse like G/S (the start is the first real mouse
   move, since an invoke from the timer may carry a stale position), adds the
   controller's pushes, ends on click/Enter/right click/Esc or
@@ -216,6 +224,18 @@ Blender state → LED messages to the controller.
   call, so a quick click between two checks counts), `cursor()`, and the
   pure `outside_click(was_down, down, cursor, rect)`. Sets the user32
   signatures so handles are not truncated.
+- `snap.py` — snapping (task 45). The state is Blender's magnet:
+  `mode()` is `off` (`use_snap` off), `grid` (elements only GRID /
+  INCREMENT) or `geometry` (any other element); `cycle()` (VINYL MODE)
+  sets off → `{GRID}` → the last geometry elements (default VERTEX, EDGE,
+  FACE) → off, so the keyboard's G/S follow it too. `round_to` /
+  `grid_point` round to a grid. `Targets(context, exclude)` takes once the
+  world vertices and edges of the visible meshes other than the excluded
+  ones (evaluated meshes, numpy; Edit Mode: the edited meshes' unselected
+  vertices; up to `MAX_VERTS`); `find(context, region, rv3d, mouse,
+  elems)` projects them and returns the nearest vertex, else edge point,
+  within `RADIUS_PX` × ui_scale, else the face under the mouse
+  (`ray_under_mouse`, skipping excluded and edited objects).
 - `knob_select.py` — `pick(n, anchor, value)`: the object index for a
   centre-tap knob's position, proportional (the travel is split evenly over
   the objects; the ends land on the last/first). Pure.
@@ -260,7 +280,11 @@ Blender state → LED messages to the controller.
       click: surface projection) there; elsewhere a warning, `CANCELLED`;
     - `cursor_axis_toggle(axis)` / `cursor_move(amount)` (task 43): the
       left platter moves `scene.cursor.location` along the chosen global
-      axis; module state `_cursor_axis`;
+      axis; module state `_cursor_axis`; grid snapping rounds it to the
+      step (task 45); `cursor_to_mouse` with geometry snapping moves the
+      cursor onto `snap.Targets.find` under the mouse;
+    - `snap_cycle()` (task 45) → `snap.cycle()`; state `snap_mode`;
+      `step_value()` gives the `step` scale to `grab.grid_size`;
     - `orbit_selection_toggle()` flips Orbit Around Selection. Actions, not
       `wm.context_set_enum`/`wm.context_toggle`: those return
       `{'CANCELLED'}` for non-undo data and would show as an error.
@@ -313,6 +337,10 @@ Blender state → LED messages to the controller.
     LED on); the left platter (after the Add menu's bindings) →
     `cursor_move` ±1 × `step` along that global axis (nothing while
     `cursor_axis` is NONE).
+  - **Snapping** (task 45): VINYL MODE L/A, and VINYL MODE L/C in Object
+    Mode (after its Edit Mode select-mode binding) → `snap_cycle`; their
+    LEDs: on for `snap_mode` grid, blinking for geometry (L/C only in
+    Object Mode).
   - **Deck A, Snap menu** (task 44; Blender's Shift+S operators, run in
     the 3D View, `flash_ms` 1000): SYNC → `view3d.snap_cursor_to_selected`,
     CUP → `snap_cursor_to_active`, CUE → `snap_cursor_to_grid`, PLAY/PAUSE
@@ -330,7 +358,8 @@ Blender state → LED messages to the controller.
     edge; number_cuts); the same button again → `adjust_end`; SHIFT + CUE →
     `mesh.subdivide`, SHIFT + PLAY → `mesh.merge` CENTER (flash 2 s);
     VINYL MODE L/C → `select_mode_cycle` (state `mesh_select_mode`, LED
-    off/on/blink for vertex/edge/face). While adjusting, the left platter
+    off/on/blink for vertex/edge/face; in Object Mode it is the snap, task
+    45). While adjusting, the left platter
     → `adjust_change` main, SHIFT + platter → second.
   - **Deck B** (task 33): IN R/B → `props_toggle`, OUT R/B →
     `props_cancel` and the right platter → `props_step` (scaled by `step`)

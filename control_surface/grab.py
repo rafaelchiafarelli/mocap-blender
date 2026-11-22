@@ -11,6 +11,9 @@ confirm them. The modal operator here:
 - ends with left click / Enter (confirm), right click / Esc (cancel), or
   `request("confirm")` from the controller;
 - Object Mode, every selected object, around their median point.
+- snapping (task 45, `snap.py`, Blender's magnet): grid → move lands on a
+  grid of `step`, scale factors in steps of 10 × `step`; geometry → the
+  selection snaps to the vertex / edge / face under the mouse.
 
 **Tools** (one at a time per deck, Rafael 2026-11-21): SYNC (the platter
 moves the view: `sync` off/on/blink), MOVE (a grab from 1-4), SCALE (RE) and
@@ -27,6 +30,8 @@ import gpu
 from bpy_extras import view3d_utils
 from gpu_extras.batch import batch_for_shader
 from mathutils import Matrix, Vector
+
+from . import snap as snapping
 
 AXES = {"X": Vector((1, 0, 0)), "Y": Vector((0, 1, 0)), "Z": Vector((0, 0, 1))}
 TIMER_S = 0.02
@@ -281,6 +286,15 @@ def request(what, **kw):
     return {"FINISHED"}
 
 
+def grid_size():
+    """The grid of the snapping's grid mode: the `step` scale (S1 VOL), 0.01 m without a session."""
+    try:
+        from .blender_glue import step_value
+        return step_value()
+    except Exception:
+        return 0.01
+
+
 class CONTROLSURFACE_OT_grab(bpy.types.Operator):
     bl_idname = "control_surface.grab"
     bl_label = "Grab / Scale / Rotate (control surface)"
@@ -329,6 +343,7 @@ class CONTROLSURFACE_OT_grab(bpy.types.Operator):
         self.push_scale = 1.0
         self.push_angle = 0.0
         self.snap = None  # the 90° mode's angle, or None
+        self.targets = None  # snapping.Targets, built the first time geometry snapping is needed
         self.shared = _running = {"axis": self.axis, "mode": self.mode, "pushes": [], "end": None,
                                   "rebase": False}
         self.timer = context.window_manager.event_timer_add(TIMER_S, window=context.window)
@@ -423,15 +438,60 @@ class CONTROLSURFACE_OT_grab(bpy.types.Operator):
     def _pivot_2d(self):
         return view3d_utils.location_3d_to_region_2d(self.region, self.rv3d, self.pivot)
 
+    # --- snapping (task 45) ---------------------------------------------------
+
+    def _snap_hit(self):
+        """Geometry mode: the world point under the mouse to snap to, or None."""
+        if self.mouse is None:
+            return None
+        if self.targets is None:
+            self.targets = snapping.Targets(bpy.context, exclude={o.name for o in self.objs})
+        hit = self.targets.find(bpy.context, self.region, self.rv3d, self.mouse, snapping.elements())
+        return hit[0] if hit else None
+
+    def _snap_points(self):
+        """The selection's points at the start: vertices (Edit Mode), else the
+        origins and the corners of each object's box."""
+        if self.edit:
+            return [w for ws in self.vstart for w in ws]
+        pts = []
+        for o in self.objs:
+            p0, _, m0 = self.start[o.name]
+            pts.append(p0)
+            pts += [m0 @ Vector(c) for c in o.bound_box]
+        return pts
+
+    def _snap_source(self, hit, for_scale=False):
+        """The point of the selection that lands on hit (Blender's Snap With)."""
+        how = snapping.snap_target()
+        if for_scale or how == "CLOSEST":
+            pts = [p for p in self._snap_points() if not for_scale or (p - self.pivot).length > 1e-6]
+            return min(pts, key=lambda p: (p - hit).length) if pts else self.pivot
+        if how == "ACTIVE" and not self.edit:
+            act = bpy.context.view_layer.objects.active
+            if act is not None and act.name in self.start:
+                return self.start[act.name][0]
+        return self.pivot
+
     def _apply(self):
         axis, mode = self.shared["axis"], self.shared["mode"]
         moved = self.mouse0 is not None
+        snap_mode = snapping.mode()
         if mode == "MOVE":
             d = self.push_move.copy()
             if moved:
                 d += self._plane_point(self.mouse) - self._plane_point(self.mouse0)
             if axis != "FREE":
                 d = self._axis_vec(axis) * d.dot(self._axis_vec(axis))
+            if snap_mode == "grid" and axis != "NORMAL":
+                axes = "XYZ" if axis == "FREE" else axis
+                d = snapping.grid_point(self.pivot + d, grid_size(), axes) - self.pivot
+            elif snap_mode == "geometry" and moved:
+                hit = self._snap_hit()
+                if hit is not None:
+                    d = hit - self._snap_source(hit)
+                    if axis != "FREE":
+                        d = self._axis_vec(axis) * d.dot(self._axis_vec(axis))
             if self.edit:
                 self._set_verts(lambda w0: w0 + d)
             for o in self.objs:
@@ -441,6 +501,22 @@ class CONTROLSURFACE_OT_grab(bpy.types.Operator):
             c = self._pivot_2d()
             if moved and c is not None and (self.mouse0 - c).length > 1:
                 f *= (self.mouse - c).length / (self.mouse0 - c).length
+            if snap_mode == "grid":
+                q = 10 * grid_size()
+                f = snapping.round_to(f, q) or (q if f >= 0 else -q)
+            elif snap_mode == "geometry" and moved:
+                hit = self._snap_hit()
+                if hit is not None:
+                    src = self._snap_source(hit, for_scale=True)
+                    if axis in ("FREE", "NORMAL"):
+                        den = (src - self.pivot).length
+                        if den > 1e-6:
+                            f = (hit - self.pivot).length / den
+                    else:
+                        i = "XYZ".index(axis)
+                        den = src[i] - self.pivot[i]
+                        if abs(den) > 1e-6:
+                            f = (hit[i] - self.pivot[i]) / den
             k = (Vector((f, f, f)) if axis in ("FREE", "NORMAL")
                  else Vector([f if a == axis else 1.0 for a in "XYZ"]))
             if self.edit:
