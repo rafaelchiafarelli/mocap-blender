@@ -7,7 +7,7 @@ actions, and LEDs show Blender's state, whoever changed it. Plan:
 
 **Entry points:**
 - In Blender: the **DJ-Tech** tab in the 3D View sidebar (N panel), with
-  Connect / Disconnect (`blender_glue.py:235`).
+  Connect / Disconnect (`blender_glue.py:673`).
 - `register()` / `unregister()` in `__init__.py`.
 - Pure Python: `Profile.load` (`profile.py:70`), `Mapping.load`
   (`engine.py:60`), `Engine` (`engine.py:121`).
@@ -122,8 +122,10 @@ Blender state → LED messages to the controller.
   `toggle` (IN: open / enter / run with INVOKE_DEFAULT and close), `step`
   (platter, ~14 pulses per item), `back` (OUT short), `close_all` (SYNC L/A, or
   OUT held 0.5 s via `_add_out_down`/`_add_out_up`; task 40); items keep their
-  Shift+A icons, drawn in the 4-Mix window above the Properties menu; drawn with `blf`/`gpu` in a
-  POST_PIXEL handler right of the toolbar. State `add_menu`.
+  Shift+A icons, shown in the 4-Mix window above the Properties menu
+  (`menu_window`; `_redraw` calls `menu_window.follow()`); the fallback
+  overlay is drawn with `blf`/`gpu` in a POST_PIXEL handler right of the
+  toolbar, only while that window is not open. State `add_menu`.
 - `adjust.py` — Inset / Bevel / Loop Cut adjusted by the platter (task 32):
   `start` keeps a copy of every Edit Mode mesh (`_snapshot`, a temporary
   Mesh datablock each), runs the operator; `change` records the platter
@@ -157,19 +159,8 @@ Blender state → LED messages to the controller.
   (`_button_label`, e.g. shutter curve presets); `cancel` goes one level
   back, `close_all` closes (SYNC R/B, or OUT held `LONG_PRESS_S` 0.5 s,
   timed by `_props_out_down`/`_props_out_up` in `blender_glue.py`).
-  Task 38: the **4-Mix Properties window** — `CONTROLSURFACE_OT_props_window`
-  duplicates an area into a new window (`screen.area_dupli`), names its
-  screen `WINDOW_SCREEN` ("4-Mix Properties"), makes it an Image Editor
-  and selects the sidebar tab "4-Mix" a moment later
-  (`_select_sidebar_tab`: `active_panel_category` is only settable once the
-  region has drawn). `CONTROLSURFACE_PT_props_window` (polls on the screen
-  name) draws the current level with real widgets (`_draw_row`:
-  `layout.prop` with `index`/`invert_checkbox`, `template_curve_mapping`
-  for recorded curves, icons for tabs/buttons/options), the cursor row with
-  `alert`. The viewport overlay is skipped while the window exists. Tried
-  and dropped: a panel inside a Properties editor (Blender keeps the
-  panels' stored order, so it lands among the originals) and pinning a
-  Properties editor to a Text (only the Tool tab is left).
+  The overlay (`_draw`) is skipped while the 4-Mix window is open
+  (`menu_window`); `_redraw` calls `menu_window.follow()` on every change.
   Task 39 (a survey drawing every panel of every tab for a cube with cloth
   and particles, a camera and a light): `_ButtonsContext` answers None for
   members only the editor has (e.g. `particle_system_editable`) and has
@@ -179,6 +170,43 @@ Blender state → LED messages to the controller.
   header-less panels sort first, as in the editor (Physics' "Enable physics
   for" buttons above Cloth). Remaining draw failures are only polls of
   panels that do not apply to the object.
+- `menu_window.py` — the **4-Mix window** (task 38, made to follow the
+  menus in task 42): `follow()` (called by both menus' `_redraw`) opens it
+  when the Add or the Properties menu opens (`_open`: `screen.area_dupli` of
+  the 3D View from a `temp_override` of the main window, screen named
+  `WINDOW_SCREEN`, area turned into an NLA editor with header, channels and
+  footer hidden, sidebar shown), refits it on every change (`_fit`) and
+  closes it when both are closed (`_close`: saves the position,
+  `wm.window_close`). `_settle` waits for the sidebar to draw, picks the tab
+  `CATEGORY` "4-Mix", sizes, places and focuses the window. Size: the
+  sidebar's width + 2 px, the level's rows (`_units`, counted by the panel's
+  `draw`: `ROW_UNITS` per row, `CURVE_UNITS` per curve widget) × 20 px ×
+  `ui_scale` + `MARGIN_UNITS`, capped at `MAX_HEIGHT_FRACTION` of the main
+  window. Position: `control_surface_window.json` in Blender's config folder,
+  else the main window's top right. `_watch` (every `WATCH_S`): once the
+  settled window has had the keyboard, another foreground window means a
+  click outside → `close_menus()` (both `close_all`, like SYNC).
+  `CONTROLSURFACE_PT_menu_window` (`HIDE_HEADER`, polls on the screen name)
+  draws the Add level and/or the Properties level with real widgets
+  (`_draw_row`: `layout.prop` with `index`/`invert_checkbox`,
+  `template_curve_mapping`, icons), cursor row `alert`; levels and actions
+  are flat left-aligned buttons (`_pick_button` →
+  `control_surface.menu_pick`: sets the index and runs that menu's
+  `toggle`, i.e. IN); `_nav_row` has ← (`menu_back`: OUT) and ✕
+  (`menu_close`: SYNC). Why NLA: probed 2026-11-22, its sidebar is the only
+  one with a single tab and an opaque background (Image Editor: a tool
+  header that does not hide, Tool/View tabs, a grid behind; Text, Node,
+  Sequencer, Spreadsheet: extra tabs). Narrower than its sidebar, Blender
+  hides the sidebar ("too small"). Tried and dropped (task 38): a panel
+  inside a Properties editor (lands among the originals) and pinning a
+  Properties editor to a Text.
+- `oswindow.py` — Blender's OS windows through `user32` + `ctypes` (no-ops
+  off Windows): `process_windows()` (visible top-level windows of this
+  process; the new 4-Mix window is the one added by `area_dupli`),
+  `foreground()` / `foreground_any()`, `rect()`, `place()` (client size,
+  frame added, no activation), `focus()` (`SetForegroundWindow`; refused by
+  Windows when Blender is not the foreground program). Sets the user32
+  signatures so handles are not truncated.
 - `knob_select.py` — `pick(n, anchor, value)`: the object index for a
   centre-tap knob's position, proportional (the travel is split evenly over
   the objects; the ends land on the last/first). Pure.
@@ -187,26 +215,26 @@ Blender state → LED messages to the controller.
   callback on a WinMM thread) and `MidiOut` (`winmm.py:125`). Short messages
   only.
 - `blender_glue.py` — the Blender side:
-  - **`Session`** (`blender_glue.py:123`) loads mapping + profile, validates
+  - **`Session`** (`blender_glue.py:496`) loads mapping + profile, validates
     the mapping against `STATES` and `ACTIONS`, finds and opens the ports by
     `port_name_contains`, builds the `Engine`, and starts the intro unless
-    `intro=False` (`blender_glue.py:154`).
+    `intro=False` (`blender_glue.py:539`).
   - **The timer:** a `bpy.app.timers` tick every 20 ms
-    (`blender_glue.py:178`) drains the input queue and updates the LEDs.
-  - **`STATES`** (`blender_glue.py:60`):
-    - `object_mode` (`blender_glue.py:24`);
-    - `view_perspective` (`blender_glue.py:34`): `PERSP` / `ORTHO` /
+    (`blender_glue.py:25`) drains the input queue and updates the LEDs.
+  - **`STATES`** (`blender_glue.py:75`):
+    - `object_mode` (`blender_glue.py:29`);
+    - `view_perspective` (`blender_glue.py:39`): `PERSP` / `ORTHO` /
       `CAMERA` of the first 3D View, or `NONE`;
-    - `view_axis` (`blender_glue.py:48`): which of `AXIS_VIEWS`
-      (`blender_glue.py:41`) the first 3D View looks along, else `NONE`
+    - `view_axis` (`blender_glue.py:53`): which of `AXIS_VIEWS`
+      (`blender_glue.py:46`) the first 3D View looks along, else `NONE`
       (also `NONE` in camera view);
     - `orbit_selection`: Preferences → Navigation → Orbit Around
       Selection (`True`/`False`).
-  - **`ACTIONS`** (`blender_glue.py:88`):
-    - `camera_move(x, y, forward)` (`blender_glue.py:67`) moves the scene
+  - **`ACTIONS`** (`blender_glue.py:372`):
+    - `camera_move(x, y, forward)` (`blender_glue.py:99`) moves the scene
       camera in metres along its own right/up axes and its view direction (a
       dolly; the lens is not touched);
-    - `view_move(x, y)` (`blender_glue.py:78`) moves the first 3D View's
+    - `view_move(x, y)` (`blender_glue.py:110`) moves the first 3D View's
       centre in metres along the view's right/up (the same directions as
       `view_pan` PANRIGHT/PANUP);
     - `view_projection(type)` sets the first 3D View to `ORTHO`/`PERSP`
@@ -219,10 +247,10 @@ Blender state → LED messages to the controller.
     - `orbit_selection_toggle()` flips Orbit Around Selection. Actions, not
       `wm.context_set_enum`/`wm.context_toggle`: those return
       `{'CANCELLED'}` for non-undo data and would show as an error.
-  - **`run_operator()`** (`blender_glue.py:106`) runs an operator with a
+  - **`run_operator()`** (`blender_glue.py:439`) runs an operator with a
     3D View context override and the `call` execution context.
   - **Operators and panel:** the panel also shows the layer states
-    (`blender_glue.py:248`) and the scales in cm (`blender_glue.py:251`).
+    (`blender_glue.py:691`) and the scales in cm (`blender_glue.py:697`).
 - `devices/dj_tech_4mix.json` — DJ-Tech 4-Mix profile: 170 controls
   (125 buttons, 30 absolute CCs, 9 relative controls, 4 lights, 2 meters),
   plus `layers`, `notes` and an `unverified` list.
@@ -360,7 +388,7 @@ Blender state → LED messages to the controller.
 
 - **Threads:** WinMM calls `MidiIn`'s callback on its own thread. The callback
   only puts the message on a queue. `bpy` is touched only from the timer, on
-  the main thread (`blender_glue.py:157`).
+  the main thread (`blender_glue.py:604`).
 - **First match wins:** for one control event only one binding runs, so a
   binding with a `when` placed before one without acts as "if … otherwise"
   (e.g. CUE C: in Right view go Left, otherwise go Right).
@@ -396,7 +424,7 @@ Blender state → LED messages to the controller.
   knob gates followed, no binding runs, nothing is sent; on return every LED
   is resent. Injected ports (tests) are always active.
 - **Exclusive ports** (older Windows MIDI stack): a Windows MIDI port opens in one program at a time.
-  Disconnect (or disabling the add-on, `blender_glue.py:265`) releases it.
+  Disconnect (or disabling the add-on, `blender_glue.py:711`) releases it.
   While another program holds it, Connect reports "port in use".
 - **Invoke-only operators:** some operators (e.g. `view3d.view_pan`) have no
   exec. Called with `EXEC_DEFAULT`, Blender only logs

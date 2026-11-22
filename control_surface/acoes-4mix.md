@@ -1,6 +1,6 @@
-# DJ-Tech 4-Mix no Blender — ações (add-on control_surface 0.1.41)
+# DJ-Tech 4-Mix no Blender — ações (add-on control_surface 0.1.44)
 
-Atualizado em 2026-11-21. "Object" e "Edit" indicam o modo do Blender em que a
+Atualizado em 2026-11-22. "Object" e "Edit" indicam o modo do Blender em que a
 ação funciona; "—" = sem efeito nesse modo.
 
 ## Fileira de cima
@@ -26,7 +26,7 @@ ação funciona; "—" = sem efeito nesse modo.
 
 | # | Controle | Ação | LED | Object | Edit |
 |---|---|---|---|---|---|
-| 15 | IN | abre o menu Add (o mesmo do Shift+A, desenhado no viewport, ou na janela do 4-Mix com os ícones do Blender); com o menu aberto: entra no submenu ou insere o item no 3D Cursor e fecha | aceso com o menu aberto | ✔ | ✔ (menu de malha) |
+| 15 | IN | abre o menu Add (o mesmo do Shift+A, na janela do 4-Mix com os ícones do Blender); com o menu aberto: entra no submenu ou insere o item no 3D Cursor e fecha | aceso com o menu aberto | ✔ | ✔ (menu de malha) |
 | 16 | Platter esquerdo, menu aberto | anda pelos itens (~14 pulsos por item) | — | ✔ | ✔ |
 | 17 | OUT, menu aberto | toque curto: volta um nível (no primeiro nível, fecha); segurado 0,5 s: fecha | pisca enquanto o menu está aberto | ✔ | ✔ |
 | 17b | SYNC (deck A), menu aberto | fecha o menu de qualquer nível | aceso com o menu aberto | ✔ | ✔ |
@@ -58,11 +58,13 @@ ação funciona; "—" = sem efeito nesse modo.
 
 | # | Controle | Ação | LED | Object | Edit |
 |---|---|---|---|---|---|
-| 33a | IN | abre o menu do Properties (desenhado à direita do viewport; abas e painéis na mesma ordem do Properties; IN numa lista de opções, como Render Engine, mostra as opções e IN escolhe) com as abas do Properties do Blender, na mesma ordem e só as que existem para o objeto (Render, Output, View Layer, Scene, World, Collection, Object, Modifiers, Particles, Physics, Constraints, Mesh/Camera/Light…, Material, Texture); com o menu aberto: entra no nível, executa a ação, liga/desliga, ou começa a editar um número/lista; IN de novo mantém o valor | aceso com o menu aberto; piscando editando | ✔ | ✔ |
+| 33a | IN | abre o menu do Properties (na janela do 4-Mix; abas e painéis na mesma ordem do Properties; IN numa lista de opções, como Render Engine, mostra as opções e IN escolhe) com as abas do Properties do Blender, na mesma ordem e só as que existem para o objeto (Render, Output, View Layer, Scene, World, Collection, Object, Modifiers, Particles, Physics, Constraints, Mesh/Camera/Light…, Material, Texture); com o menu aberto: entra no nível, executa a ação, liga/desliga, ou começa a editar um número/lista; IN de novo mantém o valor | aceso com o menu aberto; piscando editando | ✔ | ✔ |
 | 33b | Platter direito, menu aberto | anda pelas linhas (~14 pulsos por linha); editando: muda o valor (o passo do próprio Blender para aquele campo — ex.: 1 mm na lente, 0,01 no roughness — vezes 1 a 10 pelo S1 VOL; ângulos 1–10°; inteiros e listas a cada ~14 pulsos) | — | ✔ | ✔ |
 | 33c | OUT, menu aberto | toque curto: editando, volta o valor anterior; senão, volta um nível (no primeiro nível, fecha). Segurado 0,5 s: fecha | pisca com o menu aberto | ✔ | ✔ |
 | 33c2 | SYNC (deck B), menu aberto | fecha o menu de qualquer nível | aceso com o menu aberto | ✔ | ✔ |
-| 33j | Painel DJ-Tech › Open 4-Mix Properties window | abre uma janela separada com o menu do Properties desenhado pelo próprio Blender (ícones, dropdowns, checkboxes, sliders, gráficos de curva), cursor em vermelho; com ela aberta, o menu sobre o viewport não aparece | — | ✔ | ✔ |
+| 33j | Janela do 4-Mix | abre sozinha quando o menu do Properties (IN deck B) ou o Add (IN deck A) abre, e fecha quando os dois fecham; desenhada pelo próprio Blender (ícones, dropdowns, checkboxes, sliders, gráficos de curva), cursor em vermelho, sem cabeçalho, do tamanho do nível; reabre onde você a deixou | — | ✔ | ✔ |
+| 33k | Mouse na janela do 4-Mix | clicar numa linha = IN; os campos (checkbox, slider, lista, curva) mudam direto; ← = OUT, ✕ = SYNC | — | ✔ | ✔ |
+| 33l | Clicar fora da janela do 4-Mix | fecha os menus, como o SYNC (uma edição em andamento volta ao valor anterior) | — | ✔ | ✔ |
 | 33d | Modifiers › Add Modifier | o menu Add Modifier do Blender (Edit / Generate / Deform / …); IN no modificador adiciona e volta para a lista | — | ✔ | ✔ |
 | 33e | Modifiers › (um modificador) | os campos do modificador com o valor ao lado, e Apply / Delete; o Properties de verdade vai para a aba Modifiers com esse painel aberto | — | ✔ | ✔ |
 | 33f | Constraints › Add Constraint / (uma constraint) | igual aos modificadores: adicionar, campos (alvo, influência…), Apply / Delete | — | ✔ | ✔ |

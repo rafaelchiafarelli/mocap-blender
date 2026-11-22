@@ -3,7 +3,7 @@
 The DJ-Tech 4-Mix as an extension of Blender's interface: its controls run
 Blender commands, its LEDs show Blender's state. The add-on code is described
 file by file in [`CLAUDE.md`](CLAUDE.md); this page is the quick start for the
-next change. State on 2026-11-22: version 0.1.43, installed in the portable
+next change. State on 2026-11-22: version 0.1.44, installed in the portable
 Blender on G:.
 
 ## Use it
@@ -207,13 +207,13 @@ on each press, usable in `when` and in indicators:
 ```
 
 **The Add menu (deck A)** works like the Properties menu (OUT back, held
-OUT or SYNC close) and also shows in the 4-Mix window with Shift+A's icons.
+OUT or SYNC close) and shows in the 4-Mix window with Shift+A's icons.
 It is Blender's own: the add-on reads the menu
 classes (`VIEW3D_MT_add`, or the mode's Shift+A menu: mesh in Edit Mode,
 …) through a recording layout, so add-ons' items appear too. Items with
 "..." open their usual dialog.
 
-**The Properties menu (deck B)**, drawn on the right of the viewport (or in the 4-Mix window):
+**The Properties menu (deck B)**, shown in the 4-Mix window (below):
 IN opens it on the tabs of the Properties editor, in Blender's order and
 only those the active object has, each tab's panels in Blender's
 registration order, as the editor draws them (Render, Output, View Layer, Scene, World,
@@ -236,13 +236,21 @@ open (blinking while editing), OUT blinking and SYNC lit while open.
   its RNA, since those panels are drawn in C), Apply / Delete.
 - Material and World: "Surface: <shader>" lists the inputs of the shader
   plugged into the output (Base Color, Roughness, Strength, …).
-- **The 4-Mix Properties window** (DJ-Tech panel → "Open 4-Mix Properties
-  window"): a separate window (an empty Image Editor) whose sidebar tab
-  "4-Mix" shows the current level with Blender's own widgets — icons,
-  dropdowns, checkboxes, sliders, curve widgets — the cursor row in red.
-  While it is open, the viewport overlay is not drawn. Python cannot size
-  the window or the sidebar: move/resize the window and drag the sidebar's
-  edge once, then File → Defaults → Save Startup File.
+- **The 4-Mix window** (task 42) follows the menus: it opens by itself when
+  the Properties menu (deck B IN) or the Add menu (deck A IN) opens, and
+  closes when both are closed (SYNC, OUT held, OUT at the top). It shows the
+  current level with Blender's own widgets — icons, dropdowns, checkboxes,
+  sliders, curve widgets — the cursor row in red, with no header: only the
+  panel, as wide as it and as tall as the level (it resizes on every level;
+  long levels scroll). It takes the keyboard, so:
+  - **mouse:** a click on a row works like IN; the fields (checkbox, slider,
+    dropdown, curve) edit directly; ← is OUT and ✕ is SYNC;
+  - **a click outside it** (another Blender window or another program)
+    closes the menus like SYNC (an edit in progress is undone).
+
+  Move it once where you want it: it reopens there (the position is kept in
+  Blender's config folder, `control_surface_window.json`). The overlay on
+  the viewport is drawn only if the window could not open.
 - The real Properties editor follows: its tab changes, and the chosen
   modifier or constraint becomes active with its panel expanded.
 - Value changes do not create undo steps.
@@ -324,11 +332,12 @@ stand-in gaps (task 39).
   binding them.
 - **Key bounce:** the delete's second press could come from a bounce (Rafael:
   a problem for later).
-- **Properties menu:** value changes make no undo step; template fields
-  without a widget in the overlay (curves, colour ramps) show only in the
-  4-Mix window; node trees beyond the surface shader's own inputs are not
-  listed; the 4-Mix window and its sidebar must be sized by hand once and
-  saved in the startup file (no Python API).
+- **Properties menu:** value changes make no undo step; node trees beyond
+  the surface shader's own inputs are not listed.
+- **4-Mix window:** its height is estimated from the rows (Blender does not
+  report a panel's height), so a level can end with a little empty space;
+  the sidebar keeps Blender's default width (Python cannot set it); the tab
+  "4-Mix" stays on the right edge (a sidebar always shows its tab).
 - **Grab/scale/rotate:** Object Mode and mesh Edit Mode only; no snapping or
   typed values (keyboard G/S/R keep them).
 - **Adjust (Inset/Bevel/Loop Cut):** re-runs from a mesh copy, not

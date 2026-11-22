@@ -14,7 +14,7 @@ from pathlib import Path
 import bpy
 from mathutils import Matrix, Vector
 
-from . import add_menu, adjust, grab, knob_select, props_menu
+from . import add_menu, adjust, grab, knob_select, menu_window, props_menu
 
 grab.END_TOOLS_HOOKS.append(adjust.end)
 from .engine import Engine, Mapping
@@ -685,7 +685,6 @@ class CONTROLSURFACE_PT_panel(bpy.types.Panel):
             col.operator(CONTROLSURFACE_OT_connect.bl_idname, icon="PLUGIN")
         else:
             col.operator(CONTROLSURFACE_OT_disconnect.bl_idname, icon="CANCEL")
-            col.operator("control_surface.props_window", icon="WINDOW")
             col.operator(CONTROLSURFACE_OT_debug.bl_idname,
                          text="Debug log: ON (click to stop)" if _session.debug else "Debug log: off",
                          icon="REC" if _session.debug else "TEXT")
@@ -701,7 +700,7 @@ class CONTROLSURFACE_PT_panel(bpy.types.Panel):
                 col.label(text=_session.engine.last_error, icon="ERROR")
 
 
-CLASSES = grab.CLASSES + props_menu.CLASSES + (CONTROLSURFACE_OT_debug, CONTROLSURFACE_OT_connect, CONTROLSURFACE_OT_disconnect, CONTROLSURFACE_PT_panel)
+CLASSES = grab.CLASSES + menu_window.CLASSES + (CONTROLSURFACE_OT_debug, CONTROLSURFACE_OT_connect, CONTROLSURFACE_OT_disconnect, CONTROLSURFACE_PT_panel)
 
 
 def register():
@@ -713,6 +712,7 @@ def unregister():
     disconnect()
     grab.end_tools()
     add_menu.close()
-    props_menu.close()  # release the ports, or they stay locked until Blender quits
+    props_menu.close()
+    menu_window.close()  # release the ports, or they stay locked until Blender quits
     for c in reversed(CLASSES):
         bpy.utils.unregister_class(c)

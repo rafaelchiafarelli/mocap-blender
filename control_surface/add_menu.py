@@ -255,8 +255,10 @@ def _redraw():
     wm = bpy.context.window_manager
     for win in (wm.windows if wm else ()):
         for area in win.screen.areas:
-            if area.type in {"VIEW_3D", "IMAGE_EDITOR"}:
+            if area.type in {"VIEW_3D", "NLA_EDITOR"}:
                 area.tag_redraw()
+    from . import menu_window
+    menu_window.follow()  # the 4-Mix window opens, refits or closes with the menus
 
 
 def _rect(shader, x, y, w, h, color):
@@ -316,8 +318,8 @@ def draw_list(title, rows, idx, footer, side="left", editing=False):
 
 
 def _draw():
-    from . import props_menu
-    if not _stack or props_menu.window_open():  # the 4-Mix window shows it with icons
+    from . import menu_window
+    if not _stack or menu_window.is_open():  # the 4-Mix window shows it with icons
         return
     level = _stack[-1]
     rows = [(it["text"], None, "items" in it) for it in level["items"]]
