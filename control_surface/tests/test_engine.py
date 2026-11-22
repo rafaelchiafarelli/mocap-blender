@@ -12,8 +12,8 @@ MODES = ROOT / "mappings" / "blender_modes.json"
 # Test mapping: the bundled bindings plus mode LEDs on CUE A-D (A-D have no LED).
 CUE_LEDS = Path(__file__).resolve().parent / "data" / "modes_cue_leds.json"
 A_LED, B_LED = (0x90, 0x27), (0x90, 0x28)  # CUE A, CUE B
-BUNDLED_ACTIONS = {"props_toggle", "props_step", "props_cancel", "extrude_start", "adjust_start", "adjust_change", "adjust_end", "loopcut_start", "select_mode_cycle", "rotate_snap_on", "rotate_tip", "add_menu_toggle", "add_menu_step", "add_menu_back", "add_menu_cancel", "delete_selected", "cage_step", "tool_toggle", "move_start", "sync_cycle", "grab_start", "grab_confirm", "grab_axis", "grab_push", "select_by_knob", "camera_move", "view_move", "view_projection", "orbit_selection_toggle"}
-BUNDLED_STATES = {"props_menu", "props_editing", "adjusting", "adjust_active", "mesh_select_mode", "grab_snap", "add_menu", "cage", "rotate_mode", "sync_mode", "scale_mode", "grabbing", "grab_axis", "object_mode", "view_axis", "view_perspective", "orbit_selection"}
+BUNDLED_ACTIONS = {"delete_arm", "delete_confirm", "props_toggle", "props_step", "props_cancel", "extrude_start", "adjust_start", "adjust_change", "adjust_end", "loopcut_start", "select_mode_cycle", "rotate_snap_on", "rotate_tip", "add_menu_toggle", "add_menu_step", "add_menu_back", "add_menu_cancel", "delete_selected", "cage_step", "tool_toggle", "move_start", "sync_cycle", "grab_start", "grab_confirm", "grab_axis", "grab_push", "select_by_knob", "camera_move", "view_move", "view_projection", "orbit_selection_toggle"}
+BUNDLED_STATES = {"delete_armed", "props_menu", "props_editing", "adjusting", "adjust_active", "mesh_select_mode", "grab_snap", "add_menu", "cage", "rotate_mode", "sync_mode", "scale_mode", "grabbing", "grab_axis", "object_mode", "view_axis", "view_perspective", "orbit_selection"}
 
 
 class FakeBlender:
@@ -24,7 +24,7 @@ class FakeBlender:
                      "rotate_mode": "OFF", "sync_mode": "off", "cage": False,
                      "add_menu": False, "grab_snap": False,
                      "adjusting": "NONE", "adjust_active": False, "mesh_select_mode": "NONE",
-                     "props_menu": False, "props_editing": False}
+                     "props_menu": False, "props_editing": False, "delete_armed": False}
         self.actions = []
         self.calls = []
         self.contexts = []
@@ -707,11 +707,20 @@ def test_bundled_deck_c_shift_applies_and_its_led_stays_lit_for_2_s(note, which)
 def test_bundled_deck_c_out_deletes_the_selection_and_flashes():
     e, fb, sent = make_bundled()
     e.update()
-    press(e, (0x93, 0x03))
-    assert fb.actions == [("delete_selected", {})]
-    fb.now = 100
+    press(e, (0x93, 0x03))                   # 1st: arm
+    assert fb.actions == [("delete_arm", {})]
+    fb.view["delete_armed"] = True
+    for t in range(0, 400, 20):
+        fb.now = t
+        e.update()
+    out = led_values(sent, (0x93, 0x03))
+    assert LED_ON in out[-3:] and LED_OFF in out[-3:]  # blinking while armed
+    press(e, (0x93, 0x03))                   # 2nd: delete
+    assert fb.actions[-1] == ("delete_confirm", {})
+    fb.view["delete_armed"] = False
+    fb.now = 500
     e.update()
-    assert led_values(sent, (0x93, 0x03))[-1] == LED_ON
+    assert led_values(sent, (0x93, 0x03))[-1] == LED_ON  # lit 2 s after it worked
 
 
 def test_bundled_deck_a_add_menu_in_platter_out():

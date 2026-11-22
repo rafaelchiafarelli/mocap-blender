@@ -79,6 +79,7 @@ STATES = {
     "grab_snap": grab.snap_on,
     "props_menu": props_menu.is_open,
     "props_editing": props_menu.editing,
+    "delete_armed": lambda: delete_armed(),
     "adjusting": adjust.adjusting,
     "adjust_active": adjust.active,
     "mesh_select_mode": lambda: _mesh_select_mode(),
@@ -215,6 +216,51 @@ def move_start(axis):
     return grab_start("MOVE", axis)
 
 
+_delete_armed = None  # (mode, selection) when OUT was pressed once, else None
+
+
+def _selection_key():
+    """What a delete would act on: the mode and the selected objects (or, in
+    Edit Mode, the selected vertices' count per mesh)."""
+    if bpy.context.mode == "EDIT_MESH":
+        sel = tuple((o.name, o.data.total_vert_sel) for o in bpy.context.objects_in_mode_unique_data
+                    if o.type == "MESH")
+    else:
+        sel = tuple(sorted(o.name for o in bpy.context.selected_objects))
+    return bpy.context.mode, sel
+
+
+def delete_armed():
+    """True while OUT was pressed once and the selection has not changed."""
+    global _delete_armed
+    if _delete_armed is not None and _delete_armed != _selection_key():
+        _delete_armed = None
+    return _delete_armed is not None
+
+
+def delete_arm():
+    """OUT, first press: arm the delete (OUT blinks); the second press deletes."""
+    global _delete_armed
+    grab.end_tools()
+    _delete_armed = _selection_key()
+    return {"FINISHED"}
+
+
+def _delete_disarm():
+    global _delete_armed
+    _delete_armed = None
+
+
+grab.END_TOOLS_HOOKS.append(_delete_disarm)
+
+
+def delete_confirm():
+    """OUT, second press: delete."""
+    global _delete_armed
+    _delete_armed = None
+    return delete_selected()
+
+
 def delete_selected():
     """Delete the selected objects (no confirmation, like X > Delete); in mesh
     Edit Mode the selected vertices / edges / faces, by the select mode. The
@@ -303,6 +349,8 @@ ACTIONS = {
     "add_menu_back": lambda: add_menu.back(),
     "add_menu_cancel": lambda: (add_menu.close(), {"FINISHED"})[1],
     "delete_selected": delete_selected,
+    "delete_arm": delete_arm,
+    "delete_confirm": delete_confirm,
     "tool_toggle": tool_toggle,
     "move_start": move_start,
     "sync_cycle": lambda: grab.sync_cycle(),

@@ -244,7 +244,11 @@ Blender state → LED messages to the controller.
   - **Deck B** (task 33): IN R/B → `props_toggle`, OUT R/B →
     `props_cancel` and the right platter → `props_step` (scaled by `step`)
     while the menu is open; IN lit (blinking while editing), OUT blinking.
-  - **OUT** (task 25) → `delete_selected`: `grab.end_tools()` first (a
+  - **OUT** (task 36: two presses) → `delete_arm` (first press; state
+    `delete_armed`, the LED blinks 150/150 ms; disarmed when the mode or
+    the selection changes, or by `grab.end_tools` through
+    `END_TOOLS_HOOKS`), then `delete_confirm` (second press) →
+    `delete_selected`: `grab.end_tools()` first (a
     running grab must not hold deleted objects), then `object.delete`
     without confirmation (Edit Mode: `mesh.delete` by the select mode,
     task 27); `flash_ms` 2000.

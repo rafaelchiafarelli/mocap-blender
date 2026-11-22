@@ -1,4 +1,4 @@
-# DJ-Tech 4-Mix no Blender — ações (add-on control_surface 0.1.38)
+# DJ-Tech 4-Mix no Blender — ações (add-on control_surface 0.1.39)
 
 Atualizado em 2026-11-21. "Object" e "Edit" indicam o modo do Blender em que a
 ação funciona; "—" = sem efeito nesse modo.
@@ -49,7 +49,7 @@ ação funciona; "—" = sem efeito nesse modo.
 | 29 | SHIFT + CUP | Object: Apply Location. Edit: **Loop Cut** no anel da aresta ativa (ou primeira selecionada); platter = número de cortes; SHIFT + CUP de novo termina | Object: aceso 2 s. Edit: piscando ajustando | ✔ | ✔ |
 | 30 | SHIFT + CUE | Object: Apply Rotation. Edit: **Subdivide** | aceso 2 s se funcionou | ✔ | ✔ |
 | 31 | SHIFT + PLAY/PAUSE | Object: Apply Scale. Edit: **Merge at Center** | aceso 2 s se funcionou | ✔ | ✔ |
-| 32 | OUT | apaga a seleção, sem confirmação (Edit: vértices/arestas/faces pelo modo de seleção); confirma antes um grab em andamento | aceso 2 s se funcionou | ✔ objetos | ✔ |
+| 32 | OUT | 1º toque arma a deleção; 2º toque apaga a seleção (Edit: vértices/arestas/faces pelo modo de seleção). Mudar a seleção ou o modo, ou ligar outra ferramenta, desarma. Confirma antes um grab em andamento | pisca rápido enquanto armado; aceso 2 s depois de apagar | ✔ objetos | ✔ |
 
 | 32b | VINYL MODE (deck C) | Edit: modo de seleção vértice → aresta → face | apagado = vértice, aceso = aresta, piscando = face | — | ✔ |
 

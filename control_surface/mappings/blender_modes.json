@@ -835,8 +835,16 @@
   {
    "control": "OUT L/C",
    "event": "press",
-   "action": "delete_selected",
+   "action": "delete_confirm",
+   "when": {
+    "delete_armed": true
+   },
    "flash_ms": 2000
+  },
+  {
+   "control": "OUT L/C",
+   "event": "press",
+   "action": "delete_arm"
   },
   {
    "control": "IN L/A",
@@ -1219,6 +1227,14 @@
    "led": "blink",
    "on_ms": 200,
    "off_ms": 200
+  },
+  {
+   "control": "OUT L/C",
+   "state": "delete_armed",
+   "equals": true,
+   "led": "blink",
+   "on_ms": 150,
+   "off_ms": 150
   }
  ]
 }
