@@ -25,8 +25,10 @@ platforms other than Windows.
 
 **Decision (Rafael, 2026-11-23):** integrate the control surface with the
 Human Model Editor (`mocap-studio/human-model/hm_editor`, the MPFB human),
-all three levels, in stages: buttons and LEDs, then knobs and faders on the
-face controls, then the editor's sliders on the platter. Epic `human`.
+as a floating Human menu, one more in the set with Add and Properties (not
+a work mode taking the whole controller; deck D stays for design work),
+that works only with a human in the scene or to add one; then knobs and
+faders that follow its open level. Epic `human`.
 
 **Initiative gate** (revised 2026-11-20, because A–D have no LED): with the
 4-Mix plugged into the Windows PC, Rafael uses the bundled mapping in Blender
