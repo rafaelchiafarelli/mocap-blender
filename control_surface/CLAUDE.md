@@ -21,6 +21,15 @@ Blender state → LED messages to the controller.
 - `README.md` — quick start for the next change: how to use it, what each
   control does now, where to change what, build/install/test commands, open
   items.
+- `docs/` (task 47) — the software documentation: `README.md` (index),
+  `specification.md` (architecture, runtime model, data formats, input/LED
+  processing, states and actions, features, errors, limits), `usage.md`,
+  `testing.md` (suites, windowed checks, hardware, the open test list) and
+  `diagrams/*.drawio` (01 components, 02 classes, 03 message flow, 04 LED
+  update, 05–08 sequences: connect, button press, Properties menu + 4-Mix
+  window, grab + snap; 09 state machines). The diagrams were written by a
+  generator script, not kept; edit them in draw.io from now on. Excluded
+  from the zip.
 - `acoes-4mix.md` — Rafael's reference, in Portuguese: every control's
   action and LED, numbered, with Object/Edit Mode columns. Keep it in step
   with the mapping on every change (a copy goes to the day's review folder
@@ -29,8 +38,8 @@ Blender state → LED messages to the controller.
   them, so the pure modules import and test without Blender.
 - `blender_manifest.toml` — extension manifest (id `control_surface`,
   Blender ≥ 4.2, `windows-x64`, GPL-3.0-or-later). Its `[build]` section leaves
-  `tests/`, `tools/`, `README.md`, `acoes-4mix.md` and this file out of
-  the zip.
+  `tests/`, `tools/`, `docs/`, `README.md`, `acoes-4mix.md` and this file
+  out of the zip.
 - `profile.py` — device profile.
   - **Control types:** `button`, `absolute`, `relative`, and the output-only
     `light` and `meter`, which are not decoded (`profile.py:43`).
@@ -438,6 +447,10 @@ Blender state → LED messages to the controller.
       must fail into `last_error`);
     - checks that unregister releases the ports and turns the LEDs off;
     - checks the real WinMM's port listing and its "not found" error.
+  - `windowed/` (task 47): `check_*.py` scripts run in a windowed Blender
+    (some move the real mouse) and print JSON results; `run.sh` runs one or
+    all and deletes the window position they leave. Not collected by
+    pytest. Listed in `docs/testing.md`.
   - **Windowed check:** the view operators, the view states and
     `camera_move` (including `forward`: along the view direction, lens
     unchanged) and `view_move` (exact metres along the view's up/right) need a window, so they are not in the suite. They were

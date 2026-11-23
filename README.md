@@ -23,10 +23,19 @@ doesn't cap its Python version.
 
 ## Status
 
-**Control surface (2026-11-20):** `control_surface/` is a Blender
-extension that turns the DJ-Tech 4-Mix MIDI controller into an extension of
-Blender's interface (buttons → operators, LEDs ← Blender state). See
-`control_surface/CLAUDE.md`.
+**Control surface (2026-11-22, version 0.1.49):** `control_surface/` is a
+Blender extension that turns the DJ-Tech 4-Mix MIDI controller into an
+extension of Blender's interface (buttons → operators, LEDs ← Blender
+state).
+
+## Documentation
+
+- [`doc/architecture.md`](doc/architecture.md) — the repository's parts and
+  how they fit (diagram `doc/diagrams/mocap-blender-overview.drawio`).
+- [`control_surface/docs/`](control_surface/docs/README.md) — the control
+  surface: specification, usage, testing, draw.io diagrams (components,
+  classes, flows, sequences, state machines).
+- `control_surface/CLAUDE.md` — as-built notes, file by file.
 
 Planned, no code yet. It's off the critical path to the camera decision.
 Retargeting to character rigs and links to a database are phase 2. Plan:
