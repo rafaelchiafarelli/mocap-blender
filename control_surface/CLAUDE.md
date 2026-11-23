@@ -374,7 +374,9 @@ Blender state → LED messages to the controller.
   - **Deck B** (task 33): IN R/B → `props_toggle`, OUT R/B →
     `props_cancel` and the right platter → `props_step` (scaled by `step`)
     while the menu is open; IN lit (blinking while editing), OUT blinking.
-  - **OUT** (task 36: two presses) → `delete_arm` (first press; state
+  - **OUT** (task 36: two presses; task 48: on every deck — L/A, R/B, L/C,
+    R/D — with `when` add_menu and props_menu false, after decks A/B's menu
+    OUT bindings, so a menu keeps its OUT; one shared armed state) → `delete_arm` (first press; state
     `delete_armed`, the LED blinks 150/150 ms; disarmed when the mode or
     the selection changes, or by `grab.end_tools` through
     `END_TOOLS_HOOKS`), then `delete_confirm` (second press) →

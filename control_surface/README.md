@@ -3,7 +3,7 @@
 The DJ-Tech 4-Mix as an extension of Blender's interface: its controls run
 Blender commands, its LEDs show Blender's state. The add-on code is described
 file by file in [`CLAUDE.md`](CLAUDE.md); this page is the quick start for the
-next change. State on 2026-11-22: version 0.1.49, installed in the portable
+next change. State on 2026-11-22: version 0.1.50, installed in the portable
 Blender on G:.
 
 ## Use it
@@ -65,7 +65,7 @@ All of this comes from [`mappings/blender_modes.json`](mappings/blender_modes.js
 | SHIFT + CUP (deck C) | Apply Location (Ctrl+A) | lit 2 s after it worked |
 | SHIFT + CUE (deck C) | Apply Rotation | lit 2 s after it worked |
 | SHIFT + PLAY/PAUSE (deck C) | Apply Scale | lit 2 s after it worked |
-| OUT (deck C) | 1st press arms the delete; 2nd press deletes the selected objects (Edit Mode: vertices/edges/faces by the select mode). A change of selection or mode, or another deck tool, disarms it. A running grab is confirmed first | blinks fast while armed; lit 2 s after it deleted |
+| OUT (any deck, no menu open) | 1st press arms the delete (one state for the four decks: arm on one, delete on another); 2nd press deletes the selected objects (Edit Mode: vertices/edges/faces by the select mode). A change of selection or mode, or another deck tool, disarms it. A running grab is confirmed first | blinks fast while armed; lit 2 s after it deleted |
 | IN (deck A) | opens the Add menu (Shift+A) in the 4-Mix window; on a submenu: enters it; on an item: adds it (at the 3D Cursor) and closes | on while the menu is open |
 | Left platter (deck A), menu open | moves through the items (~14 pulses per item) | — |
 | OUT (deck A), menu open | short: one level back (at the top, closes); held 0.5 s: closes | blinks while the menu is open |

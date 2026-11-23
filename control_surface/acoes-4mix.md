@@ -1,4 +1,4 @@
-# DJ-Tech 4-Mix no Blender — ações (add-on control_surface 0.1.49)
+# DJ-Tech 4-Mix no Blender — ações (add-on control_surface 0.1.50)
 
 Atualizado em 2026-11-22. "Object" e "Edit" indicam o modo do Blender em que a
 ação funciona; "—" = sem efeito nesse modo.
@@ -62,7 +62,7 @@ ação funciona; "—" = sem efeito nesse modo.
 | 29 | SHIFT + CUP | Object: Apply Location. Edit: **Loop Cut** no anel da aresta ativa (ou primeira selecionada); platter = número de cortes; SHIFT + CUP de novo termina | Object: aceso 2 s. Edit: piscando ajustando | ✔ | ✔ |
 | 30 | SHIFT + CUE | Object: Apply Rotation. Edit: **Subdivide** | aceso 2 s se funcionou | ✔ | ✔ |
 | 31 | SHIFT + PLAY/PAUSE | Object: Apply Scale. Edit: **Merge at Center** | aceso 2 s se funcionou | ✔ | ✔ |
-| 32 | OUT | 1º toque arma a deleção; 2º toque apaga a seleção (Edit: vértices/arestas/faces pelo modo de seleção). Mudar a seleção ou o modo, ou ligar outra ferramenta, desarma. Confirma antes um grab em andamento | pisca rápido enquanto armado; aceso 2 s depois de apagar | ✔ objetos | ✔ |
+| 32 | OUT (qualquer deck, sem menu aberto) | 1º toque arma a deleção (vale para os 4 decks: arma num, apaga em outro; com um menu aberto, o OUT de A/B fica no menu e o de C/D não faz nada); 2º toque apaga a seleção (Edit: vértices/arestas/faces pelo modo de seleção). Mudar a seleção ou o modo, ou ligar outra ferramenta, desarma. Confirma antes um grab em andamento | pisca rápido enquanto armado; aceso 2 s depois de apagar | ✔ objetos | ✔ |
 
 | 32b | VINYL MODE (deck C) | o snap, igual ao 17n (o VINYL não depende do deck) | aceso = grade, piscando = geometria | ✔ | ✔ |
 
@@ -110,5 +110,5 @@ ação funciona; "—" = sem efeito nesse modo.
 |---|---|
 | 43 | Platter direito com o deck D, ou com o deck B e o menu fechado |
 | 44 | A, B e D FILTER; knobs HI, MID, LOW |
-| 45 | Deck A: RE e os outros SHIFT; deck B exceto IN, OUT, platter e VINYL MODE; deck D exceto VINYL MODE |
+| 45 | Deck A: RE e os outros SHIFT; deck B exceto IN, OUT, platter e VINYL MODE; deck D exceto VINYL MODE e OUT |
 | 47 | Deck C: SHIFT + os outros botões |

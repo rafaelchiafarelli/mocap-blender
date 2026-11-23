@@ -852,20 +852,6 @@
    "flash_ms": 2000
   },
   {
-   "control": "OUT L/C",
-   "event": "press",
-   "action": "delete_confirm",
-   "when": {
-    "delete_armed": true
-   },
-   "flash_ms": 2000
-  },
-  {
-   "control": "OUT L/C",
-   "event": "press",
-   "action": "delete_arm"
-  },
-  {
    "control": "IN L/A",
    "event": "press",
    "action": "add_menu_toggle"
@@ -884,6 +870,26 @@
    "action": "add_out_up",
    "when": {
     "add_menu": true
+   }
+  },
+  {
+   "control": "OUT L/A",
+   "event": "press",
+   "action": "delete_confirm",
+   "when": {
+    "add_menu": false,
+    "props_menu": false,
+    "delete_armed": true
+   },
+   "flash_ms": 2000
+  },
+  {
+   "control": "OUT L/A",
+   "event": "press",
+   "action": "delete_arm",
+   "when": {
+    "add_menu": false,
+    "props_menu": false
    }
   },
   {
@@ -980,6 +986,26 @@
    "action": "props_out_up",
    "when": {
     "props_menu": true
+   }
+  },
+  {
+   "control": "OUT R/B",
+   "event": "press",
+   "action": "delete_confirm",
+   "when": {
+    "add_menu": false,
+    "props_menu": false,
+    "delete_armed": true
+   },
+   "flash_ms": 2000
+  },
+  {
+   "control": "OUT R/B",
+   "event": "press",
+   "action": "delete_arm",
+   "when": {
+    "add_menu": false,
+    "props_menu": false
    }
   },
   {
@@ -1083,6 +1109,46 @@
     "use_offset": true
    },
    "flash_ms": 1000
+  },
+  {
+   "control": "OUT L/C",
+   "event": "press",
+   "action": "delete_confirm",
+   "when": {
+    "add_menu": false,
+    "props_menu": false,
+    "delete_armed": true
+   },
+   "flash_ms": 2000
+  },
+  {
+   "control": "OUT L/C",
+   "event": "press",
+   "action": "delete_arm",
+   "when": {
+    "add_menu": false,
+    "props_menu": false
+   }
+  },
+  {
+   "control": "OUT R/D",
+   "event": "press",
+   "action": "delete_confirm",
+   "when": {
+    "add_menu": false,
+    "props_menu": false,
+    "delete_armed": true
+   },
+   "flash_ms": 2000
+  },
+  {
+   "control": "OUT R/D",
+   "event": "press",
+   "action": "delete_arm",
+   "when": {
+    "add_menu": false,
+    "props_menu": false
+   }
   }
  ],
  "indicators": [
@@ -1365,6 +1431,14 @@
    "off_ms": 200
   },
   {
+   "control": "OUT L/A",
+   "state": "delete_armed",
+   "equals": true,
+   "led": "blink",
+   "on_ms": 150,
+   "off_ms": 150
+  },
+  {
    "control": "CUP L/C",
    "state": "grab_axis",
    "equals": "NORMAL",
@@ -1441,7 +1515,7 @@
    "off_ms": 200
   },
   {
-   "control": "OUT L/C",
+   "control": "OUT R/B",
    "state": "delete_armed",
    "equals": true,
    "led": "blink",
@@ -1477,6 +1551,22 @@
    "state": "cursor_axis",
    "equals": "Z",
    "led": "on"
+  },
+  {
+   "control": "OUT L/C",
+   "state": "delete_armed",
+   "equals": true,
+   "led": "blink",
+   "on_ms": 150,
+   "off_ms": 150
+  },
+  {
+   "control": "OUT R/D",
+   "state": "delete_armed",
+   "equals": true,
+   "led": "blink",
+   "on_ms": 150,
+   "off_ms": 150
   }
  ]
 }

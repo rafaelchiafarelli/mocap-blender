@@ -40,8 +40,9 @@ controller; the other shows "Standby" and does nothing until it is clicked.
   (1–10 cm) for every platter move.
 - **Deck C (left)**: 1–4 move free/X/Y/Z, RE scale, IN rotate, SYNC moves the
   view; the left platter pushes by `step`; the same number again confirms.
-  CUP/CUE/PLAY clear (Object) or extrude/inset/bevel (Edit); OUT twice
-  deletes.
+  CUP/CUE/PLAY clear (Object) or extrude/inset/bevel (Edit).
+- **OUT, any deck, no menu open**: twice deletes the selection (the first press
+  arms it and every OUT blinks).
 - **Deck A (left)**: IN opens the Add menu; 1 puts the 3D cursor at the mouse;
   2/3/4 choose an axis for the platter to move the cursor; SYNC/CUP/CUE/PLAY
   are the Snap menu (alone: the cursor, with SHIFT: the selection).

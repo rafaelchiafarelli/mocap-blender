@@ -894,3 +894,42 @@ def test_bundled_right_vinyl_is_the_select_mode_in_edit_mode(right):
     e.update()
     assert led_values(sent, (right, 0x01))[-1] == LED_ON
 
+
+@pytest.mark.parametrize("ch", [0x91, 0x92, 0x93, 0x94])
+def test_bundled_out_deletes_on_every_deck_with_no_menu_open(ch):
+    e, fb, sent = make_bundled()
+    press(e, (ch, 0x03))                    # OUT: arm
+    assert fb.actions == [("delete_arm", {})]
+    fb.view["delete_armed"] = True
+    e.update()
+    assert led_values(sent, (ch, 0x03))[-1] == LED_ON      # blinking (starts lit)
+    press(e, (ch, 0x03))                    # OUT again: delete
+    assert fb.actions[-1] == ("delete_confirm", {})
+
+
+def test_bundled_out_arms_on_one_deck_and_deletes_on_another():
+    e, fb, _ = make_bundled()
+    press(e, (0x91, 0x03))                  # OUT deck A
+    fb.view["delete_armed"] = True
+    press(e, (0x94, 0x03))                  # OUT deck D
+    assert fb.actions == [("delete_arm", {}), ("delete_confirm", {})]
+
+
+@pytest.mark.parametrize("menu", ["add_menu", "props_menu"])
+@pytest.mark.parametrize("ch", [0x93, 0x94])
+def test_bundled_out_on_c_and_d_does_nothing_while_a_menu_is_open(menu, ch):
+    e, fb, _ = make_bundled()
+    fb.view[menu] = True
+    press(e, (ch, 0x03))
+    assert fb.actions == []
+
+
+def test_bundled_out_on_a_and_b_drive_their_menu_when_it_is_open():
+    e, fb, _ = make_bundled()
+    fb.view["add_menu"] = True
+    press(e, (0x91, 0x03))
+    fb.view.update(add_menu=False, props_menu=True)
+    press(e, (0x92, 0x03))
+    assert fb.actions == [("add_out_down", {}), ("add_out_up", {}),
+                          ("props_out_down", {}), ("props_out_up", {})]
+

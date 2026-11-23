@@ -1,6 +1,6 @@
 # control_surface — software specification
 
-State: version 0.1.49, 2026-11-22. This page describes what the add-on does
+State: version 0.1.50, 2026-11-22. This page describes what the add-on does
 and how it is built. What each button does today, in one table, is in
 [`../README.md`](../README.md) and, in Portuguese, in
 [`../acoes-4mix.md`](../acoes-4mix.md). The file-by-file as-built notes are in
@@ -181,7 +181,7 @@ mapping's toggles), usable in `when` and in indicators:
 | `grabbing`, `grab_axis`, `grab_snap` | running grab, its axis, 90° mode | `grab.py` |
 | `scale_mode`, `rotate_mode` | OFF, ARMED, RUNNING | `grab.py` |
 | `cage`, `sync_mode` | true/false; off, on, blink | `grab.py` |
-| `delete_armed` | true/false | first OUT press (deck C) |
+| `delete_armed` | true/false | first OUT press (any deck, no menu open) |
 | `adjusting`, `adjust_active` | operator id / NONE; true/false | `adjust.py` |
 | `mesh_select_mode` | VERT, EDGE, FACE, NONE | Edit Mode tool settings |
 | `add_menu`, `props_menu`, `props_editing` | true/false | the menus |
@@ -231,7 +231,11 @@ ROTATE (IN). Turning one on turns the others off and confirms a running grab.
 - **90° mode**: in a rotation, the axis button's second press snaps the angle
   to absolute 0/90/180/270° and every quarter platter turn is ±90°.
 - **Clear / Apply / Delete**: CUP/CUE/PLAY clear location/rotation/scale,
-  with SHIFT apply them; OUT arms the delete, a second OUT deletes.
+  with SHIFT apply them. **Delete**: with no menu open, OUT on any deck arms
+  the delete (all four OUT LEDs blink fast), a second OUT on any deck deletes
+  (objects; in Edit Mode by the select mode); a change of selection or mode, or
+  another tool, disarms it. With a menu open, OUT on deck A/B drives the menu
+  and OUT on C/D does nothing.
 - **Edit Mode tools**: CUP extrude (then a grab along the normal), CUE inset,
   PLAY bevel, SHIFT+CUP loop cut (`adjust.py`: the platter changes the value
   and the operator is re-run from a copy of the mesh), SHIFT+CUE subdivide,
