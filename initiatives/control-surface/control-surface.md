@@ -10,8 +10,8 @@ Windows' own MIDI API (WinMM, via `ctypes`), a device profile per controller
 (control names → MIDI bytes, LED addresses), and a mapping file ("de-para")
 that binds controls to Blender operators and LEDs to Blender state.
 
-**Out of scope:** Faders and knobs driving arbitrary properties (only a
-character's controls and shape keys, epic `human`), the
+**Out of scope:** Faders and knobs driving arbitrary properties (only the
+MPFB human's sheet, epic `human`), the
 conboard as a MIDI hub (a separate conboard project), any Blender automation
 beyond the mapping (Rafael, 2026-11-20: counterproductive given AI tools), and
 platforms other than Windows.
@@ -24,12 +24,14 @@ platforms other than Windows.
 - The add-on lives in this repository.
 
 **Decision (Rafael, 2026-11-23):** a **Human Mode** of the control surface
-for the characters built by `mocap-studio/human-model` (the MPFB human):
-offered only when a character is selected (Blender's own mode list can't be
-extended by an add-on), it puts the rig in Pose Mode and gives the
-controller its own mapping for posing, the face and the timeline. Creating
-characters (the MPFB editor) is rare and stays on the mouse; deck D stays
-for design work. Epic `human`.
+for the MPFB human of `mocap-studio/human-model`: offered only when the
+plain human is selected (Blender's own mode list can't be extended by an
+add-on), S3 PLAY enters it, and the controller gets its own mapping that
+shapes the character from its sheet: phenotype (age, ancestry, gender),
+height and weight, the sewing measures, then silhouette, biotype and body
+fat (`mocap-studio` initiative `body-type-selection`). Not the rig or the
+face; fine details stay on the mouse. Plan only for now: the design tools
+of epic dj-tech come first. Epic `human`.
 
 **Initiative gate** (revised 2026-11-20, because A–D have no LED): with the
 4-Mix plugged into the Windows PC, Rafael uses the bundled mapping in Blender
