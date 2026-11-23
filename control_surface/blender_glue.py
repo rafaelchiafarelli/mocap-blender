@@ -223,7 +223,8 @@ def cursor_to_mouse():
     return run_operator("control_surface.cursor_to_mouse", {}, "INVOKE_DEFAULT")
 
 
-CUP_AGAIN_S = 3.0        # a second CUP within this enters the vertex pick
+CUP_AGAIN_S = 3.0        # without a session: a second CUP within this enters the vertex pick
+CUP_CONTROL = "CUP L/A"  # with a session: while this LED is lit (its flash_ms), task 51
 PULSES_PER_VERTEX = 390 / 27  # ~14 platter pulses per vertex, like the menus
 _cup_at = None           # when CUP (deck A) last sent the cursor to the active object
 _pick = None             # {"points": [Vector], "index": int, "acc": float} while picking a vertex
@@ -253,16 +254,23 @@ def cursor_pick():
     return _pick is not None
 
 
+def _cup_lit(now):
+    """The second CUP counts while the first one's LED is still lit (task 51)."""
+    if _session is not None:
+        return _session.engine.flashing(CUP_CONTROL)
+    return now - _cup_at <= CUP_AGAIN_S
+
+
 def cursor_cup():
-    """CUP (deck A): the 3D cursor to the active object; CUP again within 3 s:
-    pick one of its vertices with the platter (CUP blinks); CUP again: done,
-    the cursor stays there."""
+    """CUP (deck A): the 3D cursor to the active object; CUP again while its
+    LED is lit: pick one of its vertices with the platter (CUP blinks); CUP
+    again: done, the cursor stays there."""
     global _cup_at, _pick
     if _pick is not None:
         _pick = None
         return {"FINISHED"}
     now = time.monotonic()
-    if _cup_at is not None and now - _cup_at <= CUP_AGAIN_S:
+    if _cup_at is not None and _cup_lit(now):
         _cup_at = None
         co = _active_vertices()
         order = tour.vertex_tour(co, bpy.context.scene.cursor.location)
@@ -477,9 +485,16 @@ def delete_arm():
     return {"FINISHED"}
 
 
+AXIS_OFF_KEYS = ("CUP L/A", "CUE L/A", "PLAY/PAUSE L/A")  # with or without SHIFT
+
+
 def on_event(cid, event):
     """Every decoded event of the owning Blender, before its bindings: any key
-    other than an OUT (on any deck, platter touches excepted) disarms the delete."""
+    other than an OUT (on any deck, platter touches excepted) disarms the delete;
+    deck A's CUP / CUE / PLAY/PAUSE turn the cursor axis (2/3/4) off (task 51)."""
+    global _cursor_axis
+    if event == "press" and cid.split("+")[0] in AXIS_OFF_KEYS:
+        _cursor_axis = "NONE"
     if (_delete_armed is not None and event == "press" and not cid.startswith("OUT ")
             and not cid.endswith(" touch")):
         _delete_disarm()

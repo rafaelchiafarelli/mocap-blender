@@ -370,6 +370,11 @@ class Engine:
             self.leds.resend()
         self.active = active
 
+    def flashing(self, cid):
+        """True while the LED of `cid` is lit by a binding's `flash_ms` (task 51)."""
+        addr = self.profile.led(cid)
+        return addr is not None and addr in self._flash and self._clock() < self._flash[addr]
+
     def update(self):
         """Read the states and drive the LEDs; call this often (e.g. every 20 ms)."""
         now = self._clock()

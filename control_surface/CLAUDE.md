@@ -7,7 +7,7 @@ actions, and LEDs show Blender's state, whoever changed it. Plan:
 
 **Entry points:**
 - In Blender: the **DJ-Tech** tab in the 3D View sidebar (N panel), with
-  Connect / Disconnect (`blender_glue.py:883`).
+  Connect / Disconnect (`blender_glue.py:898`).
 - `register()` / `unregister()` in `__init__.py`.
 - Pure Python: `Profile.load` (`profile.py:73`), `Mapping.load`
   (`engine.py:66`), `Engine` (`engine.py:137`).
@@ -59,20 +59,20 @@ Blender state → LED messages to the controller.
 - `engine.py` — the mapping format and its `validate()` (`engine.py:70`), and
   the `Engine`:
   - **Scales** (`scales` in the mapping): an absolute control (fader/knob)
-    sets a size between `min` and `max` (`engine.py:251`), `default` until it
+    sets a size between `min` and `max` (`engine.py:255`), `default` until it
     moves; `Engine.scales` holds the current values. A binding's optional
-    `scale` multiplies its numeric `args` (`_args`, `engine.py:288`).
+    `scale` multiplies its numeric `args` (`_args`, `engine.py:294`).
   - **Bindings** have either an `operator` (with optional `call`:
     `EXEC_DEFAULT` by default, or `INVOKE_DEFAULT`, `engine.py:47`) or an
     `action` named by the Blender side.
   - **Layer states** are in `Engine.layers`: a select layer is `UNKNOWN`
     until it is first set, and a hold layer is `False`.
-  - **`handle()`** (`engine.py:241`) sets select layers from the message's
-    channel (`_track_channels`, `engine.py:203`) and from presses
-    (`_track_layers`, `engine.py:213`), and resends every LED when a layer
-    changes (`engine.py:244`, `engine.py:265`). Then, for each decoded event,
+  - **`handle()`** (`engine.py:245`) sets select layers from the message's
+    channel (`_track_channels`, `engine.py:207`) and from presses
+    (`_track_layers`, `engine.py:217`), and resends every LED when a layer
+    changes (`engine.py:248`, `engine.py:269`). Then, for each decoded event,
     it runs **only the first** binding whose control, event and optional
-    `when` match (`engine.py:274`).
+    `when` match (`engine.py:280`).
   - **Centre tap** (task 15): an absolute control with `center_tap` in the
     profile is ignored after Connect until its value equals the centre or
     two messages fall on opposite sides of it (`Engine._tap_ok`); then it is
@@ -91,21 +91,23 @@ Blender state → LED messages to the controller.
     action as `value=` (validated: absolute control + action).
   - **`on_event`** (task 49): an optional callable(control id, event) run
     for every decoded event of the owning Blender before its bindings.
-  - **`_fire()`** (`engine.py:297`) runs the operator or action and reports a
-    raised error, or a `{'CANCELLED'}` result (`engine.py:310`), in
+  - **`flashing(cid)`** (task 51): true while that control's LED is lit by
+    a `flash_ms` (the deck A CUP's second-press window).
+  - **`_fire()`** (`engine.py:303`) runs the operator or action and reports a
+    raised error, or a `{'CANCELLED'}` result (`engine.py:316`), in
     `last_error`.
-  - **`start_intro()`** (`engine.py:318`) plans the intro: every LED of the
+  - **`start_intro()`** (`engine.py:324`) plans the intro: every LED of the
     profile lights one by one, one every `INTRO_STEP_MS` (15 ms,
     `engine.py:49`), with the level meters rising; all stay lit
     `INTRO_HOLD_MS` (400 ms); then all go off. `_play_intro()`
-    (`engine.py:347`) sends the due frames; when it ends, every LED is resent
-    (`engine.py:357`).
-  - **`update()`** (`engine.py:367`) plays the intro while it runs, and
+    (`engine.py:353`) sends the due frames; when it ends, every LED is resent
+    (`engine.py:363`).
+  - **`update()`** (`engine.py:378`) plays the intro while it runs, and
     otherwise picks, for each physical LED, the first indicator whose `when`
     and `state`/`equals` match, then drives the LEDs.
-  - **`state()`** (`engine.py:188`) answers layer states itself and asks
+  - **`state()`** (`engine.py:192`) answers layer states itself and asks
     Blender for the rest.
-  - **`shutdown()`** (`engine.py:389`) turns the LEDs off, and clears what
+  - **`shutdown()`** (`engine.py:400`) turns the LEDs off, and clears what
     an interrupted intro lit.
 - `leds.py` — `LedDriver` (`leds.py:11`): looks are off / `("on",)` /
   `("blink", on_ms, off_ms)`.
@@ -274,10 +276,10 @@ Blender state → LED messages to the controller.
   callback on a WinMM thread) and `MidiOut` (`winmm.py:125`). Short messages
   only.
 - `blender_glue.py` — the Blender side:
-  - **`Session`** (`blender_glue.py:742`) loads mapping + profile, validates
+  - **`Session`** (`blender_glue.py:757`) loads mapping + profile, validates
     the mapping against `STATES` and `ACTIONS`, finds and opens the ports by
     `port_name_contains`, builds the `Engine`, and starts the intro unless
-    `intro=False` (`blender_glue.py:786`).
+    `intro=False` (`blender_glue.py:801`).
   - **The timer:** a `bpy.app.timers` tick every 20 ms
     (`blender_glue.py:25`) drains the input queue and updates the LEDs.
   - **`STATES`** (`blender_glue.py:75`):
@@ -289,7 +291,7 @@ Blender state → LED messages to the controller.
       (also `NONE` in camera view);
     - `orbit_selection`: Preferences → Navigation → Orbit Around
       Selection (`True`/`False`).
-  - **`ACTIONS`** (`blender_glue.py:611`):
+  - **`ACTIONS`** (`blender_glue.py:626`):
     - `camera_move(x, y, forward)` (`blender_glue.py:102`) moves the scene
       camera in metres along its own right/up axes and its view direction (a
       dolly; the lens is not touched);
@@ -328,10 +330,10 @@ Blender state → LED messages to the controller.
     - `orbit_selection_toggle()` flips Orbit Around Selection. Actions, not
       `wm.context_set_enum`/`wm.context_toggle`: those return
       `{'CANCELLED'}` for non-undo data and would show as an error.
-  - **`run_operator()`** (`blender_glue.py:685`) runs an operator with a
+  - **`run_operator()`** (`blender_glue.py:700`) runs an operator with a
     3D View context override and the `call` execution context.
   - **Operators and panel:** the panel also shows the layer states
-    (`blender_glue.py:938`), the scales in cm (`blender_glue.py:944`) and
+    (`blender_glue.py:953`), the scales in cm (`blender_glue.py:959`) and
     the viewport grid.
 - `devices/dj_tech_4mix.json` — DJ-Tech 4-Mix profile: 170 controls
   (125 buttons, 30 absolute CCs, 9 relative controls, 4 lights, 2 meters),
@@ -375,7 +377,8 @@ Blender state → LED messages to the controller.
     it is open.
   - **Deck A, 3D cursor** (task 43): 1 → `cursor_to_mouse` (flash 1 s);
     2/3/4 → `cursor_axis_toggle` X/Y/Z (state `cursor_axis`, that button's
-    LED on); the left platter (after the Add menu's bindings) →
+    LED on; deck A's CUP, CUE, PLAY/PAUSE, with or without SHIFT, turn it
+    off — `blender_glue.on_event`, `AXIS_OFF_KEYS`, task 51); the left platter (after the Add menu's bindings) →
     `cursor_move` ±1 × `step` along that global axis (nothing while
     `cursor_axis` is NONE).
   - **VINYL MODE by side, not by deck** (task 46, Rafael 2026-11-22: the
@@ -387,7 +390,9 @@ Blender state → LED messages to the controller.
     shown in Object Mode only).
   - **Deck A, CUP vertex pick** (task 49): CUP L/A → `cursor_cup`: the
     cursor to the active object (`view3d.snap_cursor_to_active`); again
-    within `CUP_AGAIN_S` (3 s) → the vertex pick (`_pick`: the active mesh's
+    while CUP's LED is still lit (task 51: `_cup_lit` →
+    `Engine.flashing("CUP L/A")`, the binding's `flash_ms` 3000; without a
+    session `CUP_AGAIN_S`, 3 s) → the vertex pick (`_pick`: the active mesh's
     world vertices, evaluated in Object Mode / the edit mesh in Edit Mode,
     ordered by `tour.vertex_tour` from the cursor; state `cursor_pick`, CUP
     blinks); the left platter → `cursor_pick_step` (one vertex per
@@ -511,7 +516,7 @@ Blender state → LED messages to the controller.
 
 - **Threads:** WinMM calls `MidiIn`'s callback on its own thread. The callback
   only puts the message on a queue. `bpy` is touched only from the timer, on
-  the main thread (`blender_glue.py:821`).
+  the main thread (`blender_glue.py:836`).
 - **First match wins:** for one control event only one binding runs, so a
   binding with a `when` placed before one without acts as "if … otherwise"
   (e.g. CUE C: in Right view go Left, otherwise go Right).
@@ -537,7 +542,7 @@ Blender state → LED messages to the controller.
   next tick sends it again (`LedDriver.forget`).
 - **LEDs show state, not presses:** a button press only runs its binding.
   The LED changes because the state changed, so pressing Tab on the keyboard
-  moves the blinking LED too (`engine.py:367`).
+  moves the blinking LED too (`engine.py:378`).
 - **Two Blenders** (task 22): Windows MIDI Services makes the 4-Mix's ports
   multi-client (two opens of in and out succeeded on 2026-11-21), so two
   connected Blenders both acted and both drove the LEDs. The owner is the
@@ -547,7 +552,7 @@ Blender state → LED messages to the controller.
   knob gates followed, no binding runs, nothing is sent; on return every LED
   is resent. Injected ports (tests) are always active.
 - **Exclusive ports** (older Windows MIDI stack): a Windows MIDI port opens in one program at a time.
-  Disconnect (or disabling the add-on, `blender_glue.py:959`) releases it.
+  Disconnect (or disabling the add-on, `blender_glue.py:974`) releases it.
   While another program holds it, Connect reports "port in use".
 - **Invoke-only operators:** some operators (e.g. `view3d.view_pan`) have no
   exec. Called with `EXEC_DEFAULT`, Blender only logs

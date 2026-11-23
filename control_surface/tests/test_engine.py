@@ -953,9 +953,20 @@ def test_bundled_cup_vertex_pick_platter():
     e.handle(0xB1, 0x0F, 0x3F)
     assert fb.actions == [("cursor_cup", {}), ("cursor_cup", {}),
                           ("cursor_pick_step", {"pulses": 1}), ("cursor_pick_step", {"pulses": -1})]
-    fb.now = 5000                           # after the 1 s flash
+    fb.now = 5000                           # after the 3 s flash
     e.update()
     assert led_values(sent, (0x91, 0x0A))[-1] == LED_ON   # blinking while picking
+
+
+def test_bundled_cup_lit_window_is_its_3_s_flash():
+    e, fb, _ = make_bundled()
+    assert not e.flashing("CUP L/A")
+    press(e, (0x91, 0x0A))                  # CUP deck A: lit 3 s
+    fb.now = 2999
+    assert e.flashing("CUP L/A")
+    fb.now = 3000
+    assert not e.flashing("CUP L/A")
+    assert not e.flashing("A")              # no LED
 
 
 def test_on_event_sees_every_event_of_the_owner_only():

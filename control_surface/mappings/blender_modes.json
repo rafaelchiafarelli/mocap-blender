@@ -1096,7 +1096,7 @@
   {
    "control": "CUP L/A",
    "event": "press",
-   "flash_ms": 1000,
+   "flash_ms": 3000,
    "action": "cursor_cup"
   },
   {

@@ -1,7 +1,9 @@
 """Windowed check (task 49). Through a real Session with fake MIDI ports: the armed
 delete ends after 5 s and on another key; armed on deck A and confirmed on deck D;
 CUP (deck A): cursor to the object, CUP again = vertex pick, the platter walks the
-vertices, CUP again ends with the cursor kept. No mouse. Writes delete_pick.json.
+vertices, CUP again ends with the cursor kept. Task 51: the second CUP counts only while
+CUP's LED is lit (3 s), in Object Mode; deck A's CUP / CUE / PLAY/PAUSE (SHIFT too) turn
+the cursor axis (2/3/4) off. No mouse. Writes delete_pick.json.
 
 Run from WSL:
     ./run.sh check_delete_and_vertex_pick.py
@@ -111,7 +113,63 @@ def s10():
     log.append(["after the 3rd CUP", r3(bpy.context.scene.cursor.location), "pick", g.cursor_pick()])
 
 
-seq = [(1.0, s0), (0.5, s1), (5.6, s2), (0.5, s3), (0.5, s4), (0.5, s5), (0.5, s6), (0.5, s7), (0.5, s8), (0.5, s9), (0.5, s10)]
+def s11():
+    log.append(["mode", bpy.context.object.mode])
+    press(0x91, 0x0A)                                   # CUP: to the object, lit 3 s
+
+
+def s12():
+    log.append(["CUP lit after 2.5 s", st["s"].engine.flashing("CUP L/A")])
+    press(0x91, 0x0A)                                   # 2nd CUP while lit: pick
+
+
+def s13():
+    log.append(["2nd CUP while lit -> pick (must be True)", g.cursor_pick()])
+    press(0x91, 0x0A)                                   # 3rd: done
+    st["after3"] = True
+
+
+def s14():
+    log.append(["CUP lit by the 3rd press", st["s"].engine.flashing("CUP L/A")])
+    press(0x91, 0x0A)                                   # CUP: to the object (a 4th within the 3rd's light)
+
+
+def s15():
+    log.append(["4th CUP -> to the object, no pick (must be False)", g.cursor_pick()])
+
+
+def s16():
+    press(0x91, 0x0A)                                   # CUP after the light went off
+
+
+def s17():
+    log.append(["CUP after the light -> no pick (must be False)", g.cursor_pick()])
+
+
+def axis_step(name, note):
+    def f():
+        a0 = g.read_state("cursor_axis")
+        press(0x91, note)
+        st["last"] = (name, a0)
+    def h():
+        log.append([f"axis after {name} (was {st['last'][1]})", g.read_state("cursor_axis")])
+        if g.read_state("cursor_axis") != "NONE":
+            press(0x91, 0x07)                           # 2 again: off
+    return f, h
+
+
+def arm_x():
+    if g.read_state("cursor_axis") != "X":
+        press(0x91, 0x07)
+
+
+axis_seq = []
+for name, note in (("CUP", 0x0A), ("CUE", 0x0B), ("PLAY/PAUSE", 0x0C), ("SHIFT+CUP", 0x4A), ("SYNC (keeps it)", 0x05)):
+    f, h = axis_step(name, note)
+    axis_seq += [(3.3, arm_x), (0.5, f), (0.5, h)]
+
+seq = [(1.0, s0), (0.5, s1), (5.6, s2), (0.5, s3), (0.5, s4), (0.5, s5), (0.5, s6), (0.5, s7), (0.5, s8), (0.5, s9), (0.5, s10),
+       (3.3, s11), (2.5, s12), (0.5, s13), (0.5, s14), (0.5, s15), (3.3, s16), (0.5, s17)] + axis_seq
 
 
 def run():
