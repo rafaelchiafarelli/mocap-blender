@@ -305,15 +305,17 @@ Blender must be restarted to load a reinstalled version.
 - **Working copy:** the `mocap-studio/mocap-blender` submodule (Rafael,
   2026-11-21). The old standalone clone `~/workspace/mocap-blender` stopped at
   task 26 and is superseded.
-- **Branches:** one per task, `1-device-profile` … `41-handoff-2026-11-22`,
+- **Branches:** one per task, `1-device-profile` … `47-documentation`,
   each built on the previous one and pushed; the last one contains all the
   work. `dev` holds the plan; `dj-tech` (epic) and `control-surface`
   (initiative) are pushed at `dev`. The chain's `tasks` branch exists only in
   the old clone (merged up to task 26): on the remote, `features` / `epics` /
   `tasks` belong to the on-hold MVP chain, so they are not pushed. Merging the
   tasks into `dj-tech` waits for the epic gate (Rafael's hardware check).
-- **Superproject:** `mocap-studio`'s pointer to this submodule is not
-  committed (the superproject is on another session's branch).
+- **Superproject:** `mocap-studio`'s `dev` points at `47-documentation`
+  (fix `fixes/0000f9/mocap-blender-control-surface-docs`, 2026-11-22).
+- **Documentation:** [`docs/`](docs/README.md) (specification, usage,
+  testing with the open test list, draw.io diagrams).
 - **Rafael's reference:** [`acoes-4mix.md`](acoes-4mix.md), every control
   numbered, in Portuguese, Object/Edit columns; update it with every mapping
   change and copy it to the day's review folder on G:.
