@@ -14,7 +14,9 @@
   channel; whether the knobs send relative values (endless) or 0–127;
   whether the pads' LEDs follow MIDI from the computer (and which messages
   pick a colour) or only light on touch, set by M-VAVE's MIDI Suite; the
-  USB port name on Windows.
+  USB port name on Windows; **over Bluetooth too**: whether Windows hands a
+  Bluetooth MIDI device to WinMM at all (the add-on's only MIDI API) — it
+  is meant to be held in the hand, so wireless matters.
 - **Pre-work (Rafael, hardware):** the device, plugged by USB (not
   Bluetooth) for the probe.
 - **Tests:** pytest: the profile loads and decodes the probe's messages.
