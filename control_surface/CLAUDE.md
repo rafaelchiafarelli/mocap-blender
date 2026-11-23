@@ -7,7 +7,7 @@ actions, and LEDs show Blender's state, whoever changed it. Plan:
 
 **Entry points:**
 - In Blender: the **DJ-Tech** tab in the 3D View sidebar (N panel), with
-  Connect / Disconnect (`blender_glue.py:673`).
+  Connect / Disconnect (`blender_glue.py:883`).
 - `register()` / `unregister()` in `__init__.py`.
 - Pure Python: `Profile.load` (`profile.py:73`), `Mapping.load`
   (`engine.py:66`), `Engine` (`engine.py:137`).
@@ -121,8 +121,9 @@ Blender state → LED messages to the controller.
   nearest the mouse on screen where the mouse is taking it — the nearest in
   3D swapped between top and bottom corners with the depth;
   snapping, task 45: in `_apply`, grid mode rounds a move's target
-  `pivot + d` to `grid_size()` = `step` on the moving axes, and a scale
-  factor to multiples of 10 × `step`; geometry mode moves the selection's
+  `pivot + d` to `grid_size()` = the viewport grid (`blender_glue.grid_size`,
+  S2 VOL; task 50 — the `step` before) on the moving axes, and a scale
+  factor to multiples of 10 × `scale_step()` = `step`; geometry mode moves the selection's
   snap point — Blender's Snap With: CLOSEST = the nearest of the start
   origins, box corners or vertices, ACTIVE, else the pivot — onto
   `_snap_hit()` (`snap.Targets` built on first use), projected on the
@@ -260,6 +261,11 @@ Blender state → LED messages to the controller.
   the deck A vertex pick goes to a neighbour; index order above `TOUR_MAX`
   (5000). Tested in `blender_smoke.py` (WSL's Python has no numpy;
   `tests/test_tour.py` skips there).
+- `grid_sizes.py` (task 50, pure) — `SIZES` (1-2-5 series, 1 mm to
+  10 m), `pick(value, current)`: the index for the S2 VOL value, keeping the
+  current one within `HYSTERESIS` (0.15 of a step) past a boundary, so a
+  fader jittering by ±1 does not flip the grid; `nearest(size)`;
+  `label(size)` ("5 mm", "2 cm", "1 m").
 - `knob_select.py` — `pick(n, anchor, value)`: the object index for a
   centre-tap knob's position, proportional (the travel is split evenly over
   the objects; the ends land on the last/first). Pure.
@@ -268,10 +274,10 @@ Blender state → LED messages to the controller.
   callback on a WinMM thread) and `MidiOut` (`winmm.py:125`). Short messages
   only.
 - `blender_glue.py` — the Blender side:
-  - **`Session`** (`blender_glue.py:496`) loads mapping + profile, validates
+  - **`Session`** (`blender_glue.py:742`) loads mapping + profile, validates
     the mapping against `STATES` and `ACTIONS`, finds and opens the ports by
     `port_name_contains`, builds the `Engine`, and starts the intro unless
-    `intro=False` (`blender_glue.py:539`).
+    `intro=False` (`blender_glue.py:786`).
   - **The timer:** a `bpy.app.timers` tick every 20 ms
     (`blender_glue.py:25`) drains the input queue and updates the LEDs.
   - **`STATES`** (`blender_glue.py:75`):
@@ -283,11 +289,11 @@ Blender state → LED messages to the controller.
       (also `NONE` in camera view);
     - `orbit_selection`: Preferences → Navigation → Orbit Around
       Selection (`True`/`False`).
-  - **`ACTIONS`** (`blender_glue.py:372`):
-    - `camera_move(x, y, forward)` (`blender_glue.py:99`) moves the scene
+  - **`ACTIONS`** (`blender_glue.py:611`):
+    - `camera_move(x, y, forward)` (`blender_glue.py:102`) moves the scene
       camera in metres along its own right/up axes and its view direction (a
       dolly; the lens is not touched);
-    - `view_move(x, y)` (`blender_glue.py:110`) moves the first 3D View's
+    - `view_move(x, y)` (`blender_glue.py:113`) moves the first 3D View's
       centre in metres along the view's right/up (the same directions as
       `view_pan` PANRIGHT/PANUP);
     - `view_projection(type)` sets the first 3D View to `ORTHO`/`PERSP`
@@ -304,18 +310,29 @@ Blender state → LED messages to the controller.
       click: surface projection) there; elsewhere a warning, `CANCELLED`;
     - `cursor_axis_toggle(axis)` / `cursor_move(amount)` (task 43): the
       left platter moves `scene.cursor.location` along the chosen global
-      axis; module state `_cursor_axis`; grid snapping rounds it to the
-      step (task 45); `cursor_to_mouse` with geometry snapping moves the
-      cursor onto `snap.Targets.find` under the mouse;
+      axis; module state `_cursor_axis`; with grid snapping the platter
+      moves an unsnapped coordinate (`_cursor_free`, reset when the cursor
+      was moved by something else) and the cursor shows it rounded to
+      `grid_size()` (task 50; task 45 rounded to the step); `cursor_to_mouse`
+      with geometry snapping moves the cursor onto `snap.Targets.find` under
+      the mouse;
     - `snap_cycle()` (task 45) → `snap.cycle()`; state `snap_mode`;
-      `step_value()` gives the `step` scale to `grab.grid_size`;
+      `step_value()` gives the `step` scale to `grab.scale_step`;
+    - `grid_set(value)` (task 50, S2 VOL): `grid_sizes.pick` with the
+      current index (`_grid_index`, else the nearest to the present grid)
+      → `overlay.grid_scale` of every 3D View; on a change, the note
+      "grid: …" in the viewports' bottom left for `GRID_NOTE_S` (1.5 s,
+      `_draw_grid_note`, removed by `_grid_note_check`). `grid_size()` reads
+      the grid scale of the context's 3D View, else the first one (1 m
+      without one): the grid of the grid snapping, whoever set it;
     - `orbit_selection_toggle()` flips Orbit Around Selection. Actions, not
       `wm.context_set_enum`/`wm.context_toggle`: those return
       `{'CANCELLED'}` for non-undo data and would show as an error.
-  - **`run_operator()`** (`blender_glue.py:439`) runs an operator with a
+  - **`run_operator()`** (`blender_glue.py:685`) runs an operator with a
     3D View context override and the `call` execution context.
   - **Operators and panel:** the panel also shows the layer states
-    (`blender_glue.py:691`) and the scales in cm (`blender_glue.py:697`).
+    (`blender_glue.py:938`), the scales in cm (`blender_glue.py:944`) and
+    the viewport grid.
 - `devices/dj_tech_4mix.json` — DJ-Tech 4-Mix profile: 170 controls
   (125 buttons, 30 absolute CCs, 9 relative controls, 4 lights, 2 meters),
   plus `layers`, `notes` and an `unverified` list.
@@ -415,6 +432,10 @@ Blender state → LED messages to the controller.
   - **VINYL MODE R/B and R/D**: see "VINYL MODE by side" above.
   - **Step scale** `step`: S1 VOL sets 0.01–0.10 m (1–10 cm), 0.01 until
     it moves. It sizes every platter step and the encoder's dolly.
+  - **S2 VOL** (`value`, task 50) → `grid_set`: the viewport grid, 1 mm to
+    10 m (`grid_sizes.SIZES`); untouched until the fader moves. It is the
+    grid of the grid snapping (and of Blender's own grid snapping and
+    Shift+S "to grid").
   - **PRESS TO ENTER encoder** (`NAVIGATION`): in camera view, turned
     right/left → `camera_move` `forward` ±1 × `step` (dolly); otherwise
     `view3d.zoom` `delta=1` (in) / `delta=-1` (out). Press: free (the
@@ -465,7 +486,7 @@ Blender state → LED messages to the controller.
   - `test_profile.py`, `test_leds.py`, `test_engine.py` and `test_layers.py`
     are pure, with fakes; `test_oswindow.py` checks `outside_click` and the
     no-ops off Windows; `test_tour.py` the vertex walk (skipped without
-    numpy).
+    numpy); `test_grid_sizes.py` the S2 VOL size choice.
   - `data/modes_cue_leds.json` — test mapping: mode bindings plus mode LEDs
     on CUE A–D, so the LED path is tested.
   - `test_blender_smoke.py` runs `blender_smoke.py` inside the pinned
@@ -490,7 +511,7 @@ Blender state → LED messages to the controller.
 
 - **Threads:** WinMM calls `MidiIn`'s callback on its own thread. The callback
   only puts the message on a queue. `bpy` is touched only from the timer, on
-  the main thread (`blender_glue.py:604`).
+  the main thread (`blender_glue.py:821`).
 - **First match wins:** for one control event only one binding runs, so a
   binding with a `when` placed before one without acts as "if … otherwise"
   (e.g. CUE C: in Right view go Left, otherwise go Right).
@@ -526,7 +547,7 @@ Blender state → LED messages to the controller.
   knob gates followed, no binding runs, nothing is sent; on return every LED
   is resent. Injected ports (tests) are always active.
 - **Exclusive ports** (older Windows MIDI stack): a Windows MIDI port opens in one program at a time.
-  Disconnect (or disabling the add-on, `blender_glue.py:711`) releases it.
+  Disconnect (or disabling the add-on, `blender_glue.py:959`) releases it.
   While another program holds it, Connect reports "port in use".
 - **Invoke-only operators:** some operators (e.g. `view3d.view_pan`) have no
   exec. Called with `EXEC_DEFAULT`, Blender only logs

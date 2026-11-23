@@ -32,6 +32,7 @@ from bpy_extras import view3d_utils
 from gpu_extras.batch import batch_for_shader
 from mathutils import Matrix, Vector
 
+from . import grid_sizes
 from . import snap as snapping
 
 AXES = {"X": Vector((1, 0, 0)), "Y": Vector((0, 1, 0)), "Z": Vector((0, 0, 1))}
@@ -199,7 +200,7 @@ def _draw_snap_marker():
     if m.get("grid") or m.get("factor"):
         blf.color(font, 1.0, 0.6, 0.1, 1.0)
         blf.position(font, 20, 20, 0)
-        blf.draw(font, f"snap: grid {m['grid'] * 100:g} cm" if m.get("grid")
+        blf.draw(font, f"snap: grid {grid_sizes.label(m['grid'])}" if m.get("grid")
                  else f"snap: scale in steps of {m['factor']:g}")
     elif m.get("kind") is not None and m.get("hit") is None:
         blf.color(font, 1.0, 0.6, 0.1, 1.0)
@@ -347,7 +348,16 @@ def request(what, **kw):
 
 
 def grid_size():
-    """The grid of the snapping's grid mode: the `step` scale (S1 VOL), 0.01 m without a session."""
+    """The grid of the snapping's grid mode: the viewport grid (S2 VOL, task 50), 1 m on failure."""
+    try:
+        from .blender_glue import grid_size as viewport_grid
+        return viewport_grid()
+    except Exception:
+        return 1.0
+
+
+def scale_step():
+    """Grid mode scale factors are multiples of 10 × `step` (S1 VOL), 0.01 without a session."""
     try:
         from .blender_glue import step_value
         return step_value()
@@ -594,7 +604,7 @@ class CONTROLSURFACE_OT_grab(bpy.types.Operator):
             if moved and c is not None and (self.mouse0 - c).length > 1:
                 f *= (self.mouse - c).length / (self.mouse0 - c).length
             if snap_mode == "grid":
-                q = 10 * grid_size()
+                q = 10 * scale_step()
                 f = snapping.round_to(f, q) or (q if f >= 0 else -q)
                 self._marker(factor=q)
             elif snap_mode == "off":

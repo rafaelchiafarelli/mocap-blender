@@ -4,7 +4,7 @@ Three levels, from cheapest to the hardware.
 
 ## 1. pytest (every commit)
 
-From the `mocap-blender` root: `pytest -q` (165 tests + 1 skipped without numpy, 2026-11-22, ~1 s).
+From the `mocap-blender` root: `pytest -q` (170 tests + 1 skipped without numpy, 2026-11-22, ~1 s).
 
 | File | What |
 |---|---|
@@ -14,6 +14,7 @@ From the `mocap-blender` root: `pytest -q` (165 tests + 1 skipped without numpy,
 | `tests/test_layers.py` | deck and SHIFT layers |
 | `tests/test_knob_select.py` | the C FILTER object choice |
 | `tests/test_oswindow.py` | `outside_click` and the no-ops off Windows |
+| `tests/test_grid_sizes.py` | the S2 VOL grid size choice: ends, every size reachable, hysteresis, labels |
 | `tests/test_tour.py` | the vertex walk of the deck A vertex pick (needs numpy: skipped in WSL, the same checks run in the smoke test) |
 | `tests/test_blender_smoke.py` | runs `tests/blender_smoke.py` inside the pinned Blender 5.2.2 (`-b`, skipped if G: is not mounted): registers the add-on, round trip with fake ports, unregister releases the ports, WinMM port listing |
 
@@ -46,6 +47,7 @@ cd control_surface/tests/windowed
 | `check_snapping.py` | snap cycle; grid move and scale; geometry move onto a vertex; cursor onto a vertex |
 | `check_snapping_edit_mode.py` | geometry snapping of a vertex in Edit Mode |
 | `check_snap_sweep.py` | geometry snapping while the mouse sweeps a plane and another cube: rests on the plane, grabs vertex/edge, no corner swapping; marker screenshots |
+| `check_grid_s2_vol.py` | S2 VOL values → every 3D View's grid scale; jitter at a boundary keeps it; the grid move lands on it (real mouse); the deck A cursor walk crosses a 50 cm grid with 1 cm steps; screenshot with the note |
 | `check_delete_and_vertex_pick.py` | through a Session with fake ports: delete expires after 5 s, another key disarms, arm on A / delete on D; CUP vertex pick walks the cube's corners |
 
 They are not collected by pytest (named `check_*`). `run.sh` deletes the
@@ -83,11 +85,12 @@ Not yet seen on the hardware, or not covered by an automatic check:
    moves vertices) and in Pose Mode.
 10. LEDs of 2/3/4 (axis) and the 1 s flashes on the hardware.
 
-**Snapping (tasks 45–46, 49)**
+**Snapping (tasks 45–46, 49, 50)**
 11b. The snap marker on the hardware: visible, and does the "nearest on
     screen" corner match what you aim at?
-11c. Grid snapping with S1 VOL at 1 cm is barely visible; decide whether the
-    grid should follow Blender's visible grid instead.
+11c. S2 VOL (task 50) on the hardware: the whole travel 1 mm → 10 m, no
+    flicker at rest, the "grid: …" note, and a grid move / cursor walk with
+    a grid you can see (Top view, ortho).
 
 **Delete and vertex pick (task 49)**
 25. Delete: 5 s expiry and another key (any deck) disarming, on the hardware.

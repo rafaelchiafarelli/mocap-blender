@@ -37,7 +37,8 @@ controller; the other shows "Standby" and does nothing until it is clicked.
 - **Top row**: S1/S2 PLAY = Object/Edit Mode; A–D = projection and framing;
   CUE A/B/C = Front/Top/Right views (again: the opposite side); CUE D = camera
   view; the encoder zooms (camera view: dolly); S1 VOL sets `step`
-  (1–10 cm) for every platter move.
+  (1–10 cm) for every platter move; S2 VOL sets Blender's grid (1 mm–10 m),
+  the grid that grid snapping lands on.
 - **Deck C (left)**: 1–4 move free/X/Y/Z, RE scale, IN rotate, SYNC moves the
   view; the left platter pushes by `step`; the same number again confirms.
   CUP/CUE/PLAY clear (Object) or extrude/inset/bevel (Edit).

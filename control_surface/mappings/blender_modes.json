@@ -592,6 +592,11 @@
    }
   },
   {
+   "control": "S2 VOL",
+   "event": "value",
+   "action": "grid_set"
+  },
+  {
    "control": "A",
    "event": "press",
    "action": "view_projection",

@@ -14,7 +14,7 @@ from pathlib import Path
 import bpy
 from mathutils import Matrix, Vector
 
-from . import add_menu, adjust, grab, knob_select, menu_window, props_menu, snap, tour
+from . import add_menu, adjust, grab, grid_sizes, knob_select, menu_window, props_menu, snap, tour
 
 grab.END_TOOLS_HOOKS.append(adjust.end)
 from .engine import Engine, Mapping
@@ -301,18 +301,103 @@ def cursor_axis_toggle(axis):
     return {"FINISHED"}
 
 
+_cursor_free = None  # (axis index, unsnapped coordinate, coordinate shown) of the grid walk
+
+
 def cursor_move(amount):
     """Left platter (deck A): the 3D cursor along the chosen global axis, in metres.
-    Grid snapping (VINYL lit): it lands on multiples of the step."""
+    Grid snapping (VINYL lit): the platter moves an unsnapped coordinate and the
+    cursor shows it rounded to the viewport grid (`grid_size`, S2 VOL), so a
+    1 cm step still crosses a 1 m grid."""
+    global _cursor_free
     if _cursor_axis not in ("X", "Y", "Z"):
         return {"FINISHED"}
     loc = bpy.context.scene.cursor.location
     i = "XYZ".index(_cursor_axis)
-    loc[i] += amount
     if snap.mode() == "grid":
-        loc[i] = snap.round_to(loc[i], abs(amount))
+        if _cursor_free is None or _cursor_free[0] != i or abs(_cursor_free[2] - loc[i]) > 1e-9:
+            _cursor_free = (i, loc[i], loc[i])   # the cursor was moved by something else
+        free = _cursor_free[1] + amount
+        loc[i] = snap.round_to(free, grid_size())
+        _cursor_free = (i, free, loc[i])
+    else:
+        loc[i] += amount
+        _cursor_free = None
     _redraw()
     return {"FINISHED"}
+
+
+# --- Grid size (task 50): S2 VOL sets the 3D Views' grid scale ---------------
+
+_grid_index = None      # index into grid_sizes.SIZES last set from S2 VOL
+_grid_note = None       # (text, until monotonic) shown in the viewports
+_grid_note_handle = None
+GRID_NOTE_S = 1.5
+
+
+def _view3d_spaces():
+    wm = bpy.context.window_manager
+    for win in (wm.windows if wm else ()):
+        for area in win.screen.areas:
+            if area.type == "VIEW_3D":
+                yield area.spaces.active
+
+
+def grid_size():
+    """The viewport grid (Blender's overlay grid scale) of the 3D View in the
+    context, else of the first one; 1 m without a 3D View."""
+    space = getattr(bpy.context, "space_data", None)
+    if space is None or getattr(space, "type", "") != "VIEW_3D":
+        space = next(_view3d_spaces(), None)
+    return space.overlay.grid_scale if space is not None else 1.0
+
+
+def grid_set(value):
+    """S2 VOL (value 0..127) → grid scale of every 3D View, from grid_sizes.SIZES."""
+    global _grid_index
+    current = _grid_index if _grid_index is not None else grid_sizes.nearest(grid_size())
+    i = grid_sizes.pick(value, current)
+    size = grid_sizes.SIZES[i]
+    changed = i != _grid_index or any(abs(sp.overlay.grid_scale - size) > 1e-9
+                                      for sp in _view3d_spaces())
+    _grid_index = i
+    if changed:
+        for sp in _view3d_spaces():
+            sp.overlay.grid_scale = size
+        _grid_note_show(f"grid: {grid_sizes.label(size)}")
+    return {"FINISHED"}
+
+
+def _draw_grid_note():
+    import blf
+    note = _grid_note
+    if note is None or time.monotonic() > note[1]:
+        return
+    font = 0
+    blf.size(font, 16 * bpy.context.preferences.system.ui_scale)
+    blf.color(font, 1.0, 0.6, 0.1, 1.0)
+    blf.position(font, 20, 44 * bpy.context.preferences.system.ui_scale, 0)
+    blf.draw(font, note[0])
+
+
+def _grid_note_show(text):
+    global _grid_note, _grid_note_handle
+    _grid_note = (text, time.monotonic() + GRID_NOTE_S)
+    if _grid_note_handle is None:
+        _grid_note_handle = bpy.types.SpaceView3D.draw_handler_add(_draw_grid_note, (), "WINDOW", "POST_PIXEL")
+        bpy.app.timers.register(_grid_note_check, first_interval=0.25)
+
+
+def _grid_note_check():
+    global _grid_note, _grid_note_handle
+    if _grid_note is not None and time.monotonic() <= _grid_note[1]:
+        return 0.25
+    _grid_note = None
+    if _grid_note_handle is not None:
+        bpy.types.SpaceView3D.draw_handler_remove(_grid_note_handle, "WINDOW")
+        _grid_note_handle = None
+    _redraw()
+    return None
 
 
 def step_value():
@@ -551,6 +636,7 @@ ACTIONS = {
     "cursor_to_mouse": cursor_to_mouse,
     "cursor_axis_toggle": cursor_axis_toggle,
     "cursor_move": cursor_move,
+    "grid_set": grid_set,
     "cursor_cup": cursor_cup,
     "cursor_pick_step": cursor_pick_step,
     "snap_cycle": lambda: snap.cycle(),
@@ -857,6 +943,7 @@ class CONTROLSURFACE_PT_panel(bpy.types.Panel):
                             f"grab: {_grab_axis()}  owner: {'yes' if _session.engine.active else 'no'}"))
             for name, value in _session.engine.scales.items():
                 col.label(text=f"{name}: {value * 100:.1f} cm")
+            col.label(text=f"grid (S2 VOL): {grid_sizes.label(grid_size())}")
             if _session.engine.last_error:
                 col.label(text=_session.engine.last_error, icon="ERROR")
 

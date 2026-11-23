@@ -12,7 +12,7 @@ MODES = ROOT / "mappings" / "blender_modes.json"
 # Test mapping: the bundled bindings plus mode LEDs on CUE A-D (A-D have no LED).
 CUE_LEDS = Path(__file__).resolve().parent / "data" / "modes_cue_leds.json"
 A_LED, B_LED = (0x90, 0x27), (0x90, 0x28)  # CUE A, CUE B
-BUNDLED_ACTIONS = {"add_menu_close", "add_out_down", "add_out_up", "props_close", "props_out_down", "props_out_up", "delete_arm", "delete_confirm", "props_toggle", "props_step", "props_cancel", "extrude_start", "adjust_start", "adjust_change", "adjust_end", "loopcut_start", "select_mode_cycle", "rotate_snap_on", "rotate_tip", "add_menu_toggle", "add_menu_step", "add_menu_back", "add_menu_cancel", "delete_selected", "cage_step", "tool_toggle", "move_start", "sync_cycle", "grab_start", "grab_confirm", "grab_axis", "grab_push", "select_by_knob", "camera_move", "view_move", "view_projection", "orbit_selection_toggle", "cursor_to_mouse", "cursor_axis_toggle", "cursor_move", "snap_cycle", "cursor_cup", "cursor_pick_step"}
+BUNDLED_ACTIONS = {"add_menu_close", "add_out_down", "add_out_up", "props_close", "props_out_down", "props_out_up", "delete_arm", "delete_confirm", "props_toggle", "props_step", "props_cancel", "extrude_start", "adjust_start", "adjust_change", "adjust_end", "loopcut_start", "select_mode_cycle", "rotate_snap_on", "rotate_tip", "add_menu_toggle", "add_menu_step", "add_menu_back", "add_menu_cancel", "delete_selected", "cage_step", "tool_toggle", "move_start", "sync_cycle", "grab_start", "grab_confirm", "grab_axis", "grab_push", "select_by_knob", "camera_move", "view_move", "view_projection", "orbit_selection_toggle", "cursor_to_mouse", "cursor_axis_toggle", "cursor_move", "snap_cycle", "cursor_cup", "cursor_pick_step", "grid_set"}
 BUNDLED_STATES = {"delete_armed", "props_menu", "props_editing", "adjusting", "adjust_active", "mesh_select_mode", "grab_snap", "add_menu", "cage", "rotate_mode", "sync_mode", "scale_mode", "grabbing", "grab_axis", "object_mode", "view_axis", "view_perspective", "orbit_selection", "cursor_axis", "snap_mode", "cursor_pick"}
 
 
@@ -560,6 +560,14 @@ def test_bundled_c_filter_sends_its_value_to_select_by_knob_after_the_centre():
     e.handle(0xB0, 0x08, 65)
     assert fb.actions == [("select_by_knob", {"knob": "C FILTER", "value": 64}),
                           ("select_by_knob", {"knob": "C FILTER", "value": 65})]
+
+
+def test_bundled_s2_vol_sends_its_value_to_grid_set_and_does_not_change_step():
+    e, fb, _ = make_bundled()
+    e.handle(0xB0, 0x02, 0)
+    e.handle(0xB0, 0x02, 127)
+    assert fb.actions == [("grid_set", {"value": 0}), ("grid_set", {"value": 127})]
+    assert e.scales["step"] == 0.01
 
 
 def test_value_event_needs_an_absolute_control_and_an_action():

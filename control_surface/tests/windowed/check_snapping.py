@@ -42,6 +42,7 @@ def s1():
         snap.cycle(); seq.append(g.read_state("snap_mode"))
     log.append(["cycle", seq])
     snap.cycle()  # grid
+    g.grid_set(64)  # S2 VOL: 10 cm, so the mouse moves cross cells
     mouse_to(*to_screen(Vector((0, 0, 0))))
 def s2():
     log.append(["grab_start", sorted(g.grab_start("MOVE", "X"))])
@@ -51,7 +52,8 @@ def s4():
     x, y = to_screen(Vector((0, 0, 0))); mouse_to(x + 53, y + 4)
 def s5():
     loc = st["c"].location
-    log.append(["grid move X", r3(loc), "on 0.01 grid", abs(loc.x / 0.01 - round(loc.x / 0.01)) < 1e-6, "y,z kept", abs(loc.y) < 1e-9 and abs(loc.z) < 1e-9])
+    q = g.grid_size()  # the viewport grid (task 50)
+    log.append(["grid move X", r3(loc), "on the viewport grid", q, abs(loc.x / q - round(loc.x / q)) < 1e-6, "y,z kept", abs(loc.y) < 1e-9 and abs(loc.z) < 1e-9])
     grab.request("confirm")
 def s6():
     st["c"].location = (0, 0, 0)

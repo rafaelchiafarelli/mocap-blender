@@ -20,6 +20,7 @@ ação funciona; "—" = sem efeito nesse modo.
 | 11 | Encoder (PRESS TO ENTER), girar | zoom; na vista da câmera: câmera para frente/trás (dolly) | — | ✔ | ✔ |
 | 12 | Encoder, apertar | — (a vista da câmera foi para o CUE D) | — | | |
 | 13 | S1 VOL | tamanho do passo do platter: 1–10 cm (mover, vista, câmera), 1–10 % (scale), 1–10° (rotação); 1 até ser mexido | — | ✔ | ✔ |
+| 13b | S2 VOL | tamanho da grade do Blender (grid scale de todas as 3D Views): 1 mm (embaixo) a 10 m (em cima), em passos 1-2-5 (1, 2, 5 mm, 1, 2, 5 cm …); aparece "grid: 50 cm" por 1,5 s; a grade não muda até o fader ser mexido. É a grade do snap de grade, do Cursor/Selection to Grid e do snap do próprio Blender | — | ✔ | ✔ |
 | 14 | C FILTER (depois de passar pelo centro) | seleciona um objeto na ordem do Outliner, proporcional ao curso do knob | — | ✔ | — |
 
 ## Deck A (lado esquerdo)
@@ -32,11 +33,11 @@ ação funciona; "—" = sem efeito nesse modo.
 | 17b | SYNC (deck A), menu aberto | fecha o menu de qualquer nível | aceso com o menu aberto | ✔ | ✔ |
 | 17c | 1 (deck A) | leva o 3D Cursor para o mouse (o mesmo do Shift + botão direito: na superfície embaixo do mouse) | aceso 1 s depois de funcionar | ✔ | ✔ |
 | 17d | 2 / 3 / 4 (deck A) | escolhe o eixo X / Y / Z: o platter esquerdo move o 3D Cursor nesse eixo, pelo `step` do S1 VOL; o mesmo botão de novo desliga | aceso enquanto o eixo está escolhido | ✔ | ✔ |
-| 17e | Platter esquerdo, menu fechado, eixo escolhido | move o 3D Cursor no eixo escolhido (1–10 cm por pulso, pelo S1 VOL) | — | ✔ | ✔ |
-| 17n | VINYL MODE do lado esquerdo (deck A ou C, Object e Edit) | snap (o imã do Blender, Shift+Tab): desligado → **A, grade** → **B, geometria** → desligado. Grade: mover cai em múltiplos do passo do S1 VOL; escalar em passos de 10 × o passo (0,1–1,0); o platter do cursor anda na grade. Geometria: o objeto (ou o vértice, no Edit) gruda no vértice/aresta/face de outro objeto embaixo do mouse; o botão 1 leva o cursor ao vértice/aresta/face embaixo do mouse. Vale também para o G/S do teclado. Durante o mover/escalar aparece uma marca laranja: um anel com VERTEX/EDGE/FACE no alvo e um ponto no canto que gruda (o canto mais perto do mouse na tela), ou "snap: grid N cm" embaixo à esquerda | aceso = grade, piscando = geometria | ✔ | ✔ |
+| 17e | Platter esquerdo, menu fechado, eixo escolhido | move o 3D Cursor no eixo escolhido (1–10 cm por pulso, pelo S1 VOL); com o snap de grade, pula de linha em linha da grade do S2 VOL | — | ✔ | ✔ |
+| 17n | VINYL MODE do lado esquerdo (deck A ou C, Object e Edit) | snap (o imã do Blender, Shift+Tab): desligado → **A, grade** → **B, geometria** → desligado. Grade: mover cai na grade do Blender (S2 VOL); escalar em passos de 10 × o passo do S1 VOL (0,1–1,0); o platter do cursor anda na grade. Geometria: o objeto (ou o vértice, no Edit) gruda no vértice/aresta/face de outro objeto embaixo do mouse; o botão 1 leva o cursor ao vértice/aresta/face embaixo do mouse. Vale também para o G/S do teclado. Durante o mover/escalar aparece uma marca laranja: um anel com VERTEX/EDGE/FACE no alvo e um ponto no canto que gruda (o canto mais perto do mouse na tela), ou "snap: grid 50 cm" (o tamanho) embaixo à esquerda | aceso = grade, piscando = geometria | ✔ | ✔ |
 | 17f | SYNC (menu fechado) | Cursor to Selected: o cursor vai para o centro da seleção | aceso 1 s | ✔ | ✔ |
 | 17g | CUP | Cursor to Active: o cursor vai para o objeto ativo (Edit: vértice ativo). **CUP de novo em até 3 s**: escolher vértice — o platter esquerdo leva o cursor de um vértice ao vizinho (~14 pulsos cada); **mais um CUP** encerra e o cursor fica | aceso 1 s; piscando escolhendo vértice | ✔ | ✔ |
-| 17h | CUE | Cursor to Grid: o cursor vai para o ponto da grade mais próximo (grade do Blender, 1 m) | aceso 1 s | ✔ | ✔ |
+| 17h | CUE | Cursor to Grid: o cursor vai para o ponto da grade mais próximo (grade do Blender: o tamanho do S2 VOL, 1 m se não mexido) | aceso 1 s | ✔ | ✔ |
 | 17i | PLAY/PAUSE | Cursor to World Origin: o cursor volta para (0, 0, 0) | aceso 1 s | ✔ | ✔ |
 | 17j | SHIFT + SYNC | Selection to Cursor: cada selecionado vai para o cursor (todos no mesmo ponto) | aceso 1 s | ✔ | ✔ |
 | 17k | SHIFT + CUP | Selection to Active: os selecionados vão para o objeto ativo | aceso 1 s | ✔ | ✔ |

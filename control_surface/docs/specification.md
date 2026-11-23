@@ -1,6 +1,6 @@
 # control_surface — software specification
 
-State: version 0.1.51, 2026-11-22. This page describes what the add-on does
+State: version 0.1.52, 2026-11-22. This page describes what the add-on does
 and how it is built. What each button does today, in one table, is in
 [`../README.md`](../README.md) and, in Portuguese, in
 [`../acoes-4mix.md`](../acoes-4mix.md). The file-by-file as-built notes are in
@@ -253,9 +253,14 @@ VINYL on the left side (deck A or C, any mode) cycles off → **grid** (LED on,
 elements `{GRID}`) → **geometry** (LED blinking, the last geometry elements,
 default VERTEX/EDGE/FACE) → off.
 
-- **Grid**: a move's target (`pivot + d`) is rounded to multiples of `step`
-  on the moving axes; a scale factor to multiples of 10 × `step`; the deck A
-  platter moves the 3D cursor on the step.
+- **Grid**: the grid is the viewport's (`overlay.grid_scale` of the 3D
+  View, `blender_glue.grid_size`), which S2 VOL sets (task 50: `grid_set`,
+  1 mm to 10 m in 1-2-5 steps from `grid_sizes.SIZES`, with hysteresis at
+  the boundaries; every 3D View; "grid: 50 cm" shown for 1.5 s; untouched
+  until the fader moves). A move's target (`pivot + d`) is rounded to it on
+  the moving axes; a scale factor to multiples of 10 × `step`; the deck A
+  platter moves an unsnapped cursor coordinate by `step` and the cursor
+  shows it rounded to the grid, so it walks the grid lines.
 - **Geometry**: `Targets` takes, once per grab, the world vertices and edges
   of the visible meshes that are not moving (in Edit Mode also the unselected
   vertices of the edited meshes); `find()` projects them and returns the
@@ -270,7 +275,7 @@ default VERTEX/EDGE/FACE) → off.
   crossed it.
 - **Marker**: during a grab an orange ring with VERTEX / EDGE / FACE marks
   the target and a white dot the snapping point; in grid mode the bottom
-  left reads "snap: grid N cm" (or "scale in steps of q").
+  left reads "snap: grid 50 cm" (the grid size) or "scale in steps of q".
 
 ### 9.4 Deck A: Add menu, 3D cursor, Snap menu
 
