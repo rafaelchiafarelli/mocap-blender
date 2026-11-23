@@ -9,8 +9,8 @@ actions, and LEDs show Blender's state, whoever changed it. Plan:
 - In Blender: the **DJ-Tech** tab in the 3D View sidebar (N panel), with
   Connect / Disconnect (`blender_glue.py:673`).
 - `register()` / `unregister()` in `__init__.py`.
-- Pure Python: `Profile.load` (`profile.py:70`), `Mapping.load`
-  (`engine.py:60`), `Engine` (`engine.py:121`).
+- Pure Python: `Profile.load` (`profile.py:73`), `Mapping.load`
+  (`engine.py:66`), `Engine` (`engine.py:137`).
 
 **Inputs → Outputs:** a mapping (`mappings/*.json`) naming a device profile
 (`devices/<device>.json`) + incoming MIDI → Blender operators and actions run;
@@ -42,37 +42,37 @@ Blender state → LED messages to the controller.
   out of the zip.
 - `profile.py` — device profile.
   - **Control types:** `button`, `absolute`, `relative`, and the output-only
-    `light` and `meter`, which are not decoded (`profile.py:43`).
-  - **Decoding:** `Profile.decode(b0, b1, b2)` (`profile.py:74`) turns a
+    `light` and `meter`, which are not decoded (`profile.py:45`).
+  - **Decoding:** `Profile.decode(b0, b1, b2)` (`profile.py:77`) turns a
     message into `(control, event)`, with event `press` / `release` / `cw` /
     `ccw` / `("value", b2)`. A relative control with a `center` gives `cw`
-    above it and `ccw` below it, whatever the speed (`profile.py:93`).
-  - **LEDs:** `Profile.led(control)` (`profile.py:128`) gives the LED's
-    `(b0, b1)` or `None`. `all_leds()` (`profile.py:115`) lists every LED
-    address and `meters()` (`profile.py:124`) every level meter, for the
+    above it and `ccw` below it, whatever the speed (`profile.py:111`).
+  - **LEDs:** `Profile.led(control)` (`profile.py:131`) gives the LED's
+    `(b0, b1)` or `None`. `all_leds()` (`profile.py:118`) lists every LED
+    address and `meters()` (`profile.py:127`) every level meter, for the
     intro.
-  - **Layers:** `Profile.layers` (`profile.py:53`) holds the controller's
+  - **Layers:** `Profile.layers` (`profile.py:56`) holds the controller's
     layers. A `select` layer takes the value of the last pressed control, and
     optional `channels` per value let any message on those status bytes select
-    it (checked at `profile.py:60`). A `hold` layer is true while any of its
+    it (checked at `profile.py:61`). A `hold` layer is true while any of its
     controls is held.
-- `engine.py` — the mapping format and its `validate()` (`engine.py:64`), and
+- `engine.py` — the mapping format and its `validate()` (`engine.py:70`), and
   the `Engine`:
   - **Scales** (`scales` in the mapping): an absolute control (fader/knob)
-    sets a size between `min` and `max` (`engine.py:213`), `default` until it
+    sets a size between `min` and `max` (`engine.py:251`), `default` until it
     moves; `Engine.scales` holds the current values. A binding's optional
-    `scale` multiplies its numeric `args` (`_args`, `engine.py:222`).
+    `scale` multiplies its numeric `args` (`_args`, `engine.py:288`).
   - **Bindings** have either an `operator` (with optional `call`:
-    `EXEC_DEFAULT` by default, or `INVOKE_DEFAULT`, `engine.py:42`) or an
+    `EXEC_DEFAULT` by default, or `INVOKE_DEFAULT`, `engine.py:47`) or an
     `action` named by the Blender side.
   - **Layer states** are in `Engine.layers`: a select layer is `UNKNOWN`
     until it is first set, and a hold layer is `False`.
-  - **`handle()`** (`engine.py:205`) sets select layers from the message's
-    channel (`_track_channels`, `engine.py:175`) and from presses
-    (`_track_layers`, `engine.py:185`), and resends every LED when a layer
-    changes (`engine.py:208`, `engine.py:216`). Then, for each decoded event,
+  - **`handle()`** (`engine.py:241`) sets select layers from the message's
+    channel (`_track_channels`, `engine.py:203`) and from presses
+    (`_track_layers`, `engine.py:213`), and resends every LED when a layer
+    changes (`engine.py:244`, `engine.py:265`). Then, for each decoded event,
     it runs **only the first** binding whose control, event and optional
-    `when` match (`engine.py:220`).
+    `when` match (`engine.py:274`).
   - **Centre tap** (task 15): an absolute control with `center_tap` in the
     profile is ignored after Connect until its value equals the centre or
     two messages fall on opposite sides of it (`Engine._tap_ok`); then it is
@@ -89,27 +89,27 @@ Blender state → LED messages to the controller.
     the indicators (`Engine._flash`).
   - **`value` bindings** (task 16): an absolute control's value goes to an
     action as `value=` (validated: absolute control + action).
-  - **`_fire()`** (`engine.py:231`) runs the operator or action and reports a
-    raised error, or a `{'CANCELLED'}` result (`engine.py:241`), in
+  - **`_fire()`** (`engine.py:297`) runs the operator or action and reports a
+    raised error, or a `{'CANCELLED'}` result (`engine.py:310`), in
     `last_error`.
-  - **`start_intro()`** (`engine.py:246`) plans the intro: every LED of the
+  - **`start_intro()`** (`engine.py:318`) plans the intro: every LED of the
     profile lights one by one, one every `INTRO_STEP_MS` (15 ms,
-    `engine.py:44`), with the level meters rising; all stay lit
+    `engine.py:49`), with the level meters rising; all stay lit
     `INTRO_HOLD_MS` (400 ms); then all go off. `_play_intro()`
-    (`engine.py:265`) sends the due frames; when it ends, every LED is resent
-    (`engine.py:275`).
-  - **`update()`** (`engine.py:278`) plays the intro while it runs, and
+    (`engine.py:347`) sends the due frames; when it ends, every LED is resent
+    (`engine.py:357`).
+  - **`update()`** (`engine.py:367`) plays the intro while it runs, and
     otherwise picks, for each physical LED, the first indicator whose `when`
     and `state`/`equals` match, then drives the LEDs.
-  - **`state()`** (`engine.py:162`) answers layer states itself and asks
+  - **`state()`** (`engine.py:188`) answers layer states itself and asks
     Blender for the rest.
-  - **`shutdown()`** (`engine.py:295`) turns the LEDs off, and clears what
+  - **`shutdown()`** (`engine.py:389`) turns the LEDs off, and clears what
     an interrupted intro lit.
 - `leds.py` — `LedDriver` (`leds.py:11`): looks are off / `("on",)` /
   `("blink", on_ms, off_ms)`.
   - It sends a message only when an LED's value changes (`leds.py:24`).
   - A blink's phase restarts only when its look changes (`leds.py:18`).
-  - `resend()` (`leds.py:40`) forgets what was sent, so the next tick sends
+  - `resend()` (`leds.py:44`) forgets what was sent, so the next tick sends
     every LED again.
 - `grab.py` — the add-on's own modal grab/scale/rotate
   (snapping, task 45: in `_apply`, grid mode rounds a move's target
@@ -487,7 +487,7 @@ Blender state → LED messages to the controller.
   next tick sends it again (`LedDriver.forget`).
 - **LEDs show state, not presses:** a button press only runs its binding.
   The LED changes because the state changed, so pressing Tab on the keyboard
-  moves the blinking LED too (`engine.py:278`).
+  moves the blinking LED too (`engine.py:367`).
 - **Two Blenders** (task 22): Windows MIDI Services makes the 4-Mix's ports
   multi-client (two opens of in and out succeeded on 2026-11-21), so two
   connected Blenders both acted and both drove the LEDs. The owner is the
@@ -529,7 +529,7 @@ Blender state → LED messages to the controller.
   only in the Virtual DJ map; not seen on the hardware, Rafael: consider it
   works). A–D, SHIFT and the deck switches have none.
 - **Release:** a note-on with velocity 0 and a note-off (0x8n) both decode as
-  `release` (`profile.py:83`, `profile.py:93`).
+  `release` (`profile.py:101`, `profile.py:111`).
 - **Platter resolution:** ~390 pulses per turn, every message ±1 whatever
   the speed (measured 2026-11-21, one counter-clockwise turn: 393 × `3F`,
   decoded `ccw` as expected).
