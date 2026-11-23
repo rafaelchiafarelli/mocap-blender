@@ -16,6 +16,8 @@
   message; whether the encoders send relative values; whether the button
   and fader lights follow MIDI from the computer; whether it has a Mackie
   Control (MCU) mode, which would give known LED messages; the USB port
-  name on Windows.
+  name on Windows; **over Bluetooth too**: whether Windows hands a
+  Bluetooth MIDI device to WinMM at all (the add-on's only MIDI API) — it
+  is meant to be held in the hand, so wireless matters.
 - **Pre-work (Rafael, hardware):** the device, plugged by USB for the probe.
 - **Tests:** pytest: the profile loads and decodes the probe's messages.

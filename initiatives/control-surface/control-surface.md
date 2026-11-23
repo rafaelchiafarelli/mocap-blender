@@ -27,6 +27,13 @@ add-on drives several at once, each with its own profile and mapping; the
 Arduino Micro MIDI board is the second device and the integration test is
 run with it and the 4-Mix. Epic `multi-device`.
 
+**Decision (Rafael, 2026-11-23): which controller does what.** The 4-Mix
+stays on the desk for big, rare actions (modes, views, the Add and
+Properties menus, snapping, delete, apply, creating characters); the small
+controllers, held in the hand, take the regular work on the object at hand
+(the drawing tools, fine adjustment, keys). So the drawing tools likely go to
+a small controller, not deck D, and epic `multi-device` comes before them.
+
 **Initiative gate** (revised 2026-11-20, because A–D have no LED): with the
 4-Mix plugged into the Windows PC, Rafael uses the bundled mapping in Blender
 5.2.2. S1/S2 PLAY change the mode, and their LED blinks for the current mode,
