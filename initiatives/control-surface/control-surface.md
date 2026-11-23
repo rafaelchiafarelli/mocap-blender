@@ -22,6 +22,11 @@ platforms other than Windows.
   inside Blender 5.2.2 on 2026-11-20).
 - The add-on lives in this repository.
 
+**Decision (Rafael, 2026-11-23):** more controllers are coming, so the
+add-on drives several at once, each with its own profile and mapping; the
+Arduino Micro MIDI board is the second device and the integration test is
+run with it and the 4-Mix. Epic `multi-device`.
+
 **Initiative gate** (revised 2026-11-20, because A–D have no LED): with the
 4-Mix plugged into the Windows PC, Rafael uses the bundled mapping in Blender
 5.2.2. S1/S2 PLAY change the mode, and their LED blinks for the current mode,
