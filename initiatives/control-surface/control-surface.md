@@ -10,8 +10,8 @@ Windows' own MIDI API (WinMM, via `ctypes`), a device profile per controller
 (control names → MIDI bytes, LED addresses), and a mapping file ("de-para")
 that binds controls to Blender operators and LEDs to Blender state.
 
-**Out of scope:** Faders and knobs driving arbitrary properties (only the
-Human Model Editor's, epic `human`), the
+**Out of scope:** Faders and knobs driving arbitrary properties (only a
+character's controls and shape keys, epic `human`), the
 conboard as a MIDI hub (a separate conboard project), any Blender automation
 beyond the mapping (Rafael, 2026-11-20: counterproductive given AI tools), and
 platforms other than Windows.
@@ -23,12 +23,13 @@ platforms other than Windows.
   inside Blender 5.2.2 on 2026-11-20).
 - The add-on lives in this repository.
 
-**Decision (Rafael, 2026-11-23):** integrate the control surface with the
-Human Model Editor (`mocap-studio/human-model/hm_editor`, the MPFB human),
-as a floating Human menu, one more in the set with Add and Properties (not
-a work mode taking the whole controller; deck D stays for design work),
-that works only with a human in the scene or to add one; then knobs and
-faders that follow its open level. Epic `human`.
+**Decision (Rafael, 2026-11-23):** a **Human Mode** of the control surface
+for the characters built by `mocap-studio/human-model` (the MPFB human):
+offered only when a character is selected (Blender's own mode list can't be
+extended by an add-on), it puts the rig in Pose Mode and gives the
+controller its own mapping for posing, the face and the timeline. Creating
+characters (the MPFB editor) is rare and stays on the mouse; deck D stays
+for design work. Epic `human`.
 
 **Initiative gate** (revised 2026-11-20, because A–D have no LED): with the
 4-Mix plugged into the Windows PC, Rafael uses the bundled mapping in Blender
