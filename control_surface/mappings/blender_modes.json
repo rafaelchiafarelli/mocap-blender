@@ -917,6 +917,28 @@
   {
    "control": "PLATTER L/A",
    "event": "cw",
+   "action": "cursor_pick_step",
+   "args": {
+    "pulses": 1
+   },
+   "when": {
+    "cursor_pick": true
+   }
+  },
+  {
+   "control": "PLATTER L/A",
+   "event": "ccw",
+   "action": "cursor_pick_step",
+   "args": {
+    "pulses": -1
+   },
+   "when": {
+    "cursor_pick": true
+   }
+  },
+  {
+   "control": "PLATTER L/A",
+   "event": "cw",
    "action": "cursor_move",
    "args": {
     "amount": 1
@@ -1069,9 +1091,8 @@
   {
    "control": "CUP L/A",
    "event": "press",
-   "operator": "view3d.snap_cursor_to_active",
-   "args": {},
-   "flash_ms": 1000
+   "flash_ms": 1000,
+   "action": "cursor_cup"
   },
   {
    "control": "CUP L/A+SHIFT",
@@ -1567,6 +1588,14 @@
    "led": "blink",
    "on_ms": 150,
    "off_ms": 150
+  },
+  {
+   "control": "CUP L/A",
+   "state": "cursor_pick",
+   "equals": true,
+   "led": "blink",
+   "on_ms": 200,
+   "off_ms": 200
   }
  ]
 }

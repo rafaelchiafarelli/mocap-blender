@@ -3,7 +3,7 @@
 The DJ-Tech 4-Mix as an extension of Blender's interface: its controls run
 Blender commands, its LEDs show Blender's state. The add-on code is described
 file by file in [`CLAUDE.md`](CLAUDE.md); this page is the quick start for the
-next change. State on 2026-11-22: version 0.1.50, installed in the portable
+next change. State on 2026-11-22: version 0.1.51, installed in the portable
 Blender on G:.
 
 ## Use it
@@ -44,7 +44,7 @@ All of this comes from [`mappings/blender_modes.json`](mappings/blender_modes.js
 | CUE B | Top view; again → Bottom | on in Top, blinks in Bottom, off otherwise |
 | CUE D | toggles the camera view | on while in camera view |
 | C FILTER (after reaching its centre) | selects one object (and makes it active), see below | — |
-| VINYL MODE, left side (deck A or C, any mode) | snapping (Blender's magnet, Shift+Tab): off → grid → geometry → off. Grid: a move lands on multiples of `step` (on the moving axes), a scale factor on multiples of 10 × `step`, the 3D cursor's platter moves on the step. Geometry: the selection (or the 3D cursor with deck A's 1) snaps to the vertex, edge or face under the mouse (Blender's Snap With picks the point of the selection) | on = grid, blinking = geometry |
+| VINYL MODE, left side (deck A or C, any mode) | snapping (Blender's magnet, Shift+Tab): off → grid → geometry → off. Grid: a move lands on multiples of `step` (on the moving axes), a scale factor on multiples of 10 × `step`, the 3D cursor's platter moves on the step. Geometry: the selection (or the 3D cursor with deck A's 1) snaps to the vertex, edge or face under the mouse (Blender's Snap With picks the point of the selection) While a grab runs, an orange marker shows it: a ring and VERTEX / EDGE / FACE on the target, a dot on the snapping point, or "snap: grid N cm" at the bottom left. Moving, the point that snaps is the one nearest the mouse on screen | on = grid, blinking = geometry |
 | VINYL MODE, right side (deck B or D) | Edit Mode: select mode vertex → edge → face. Object Mode: toggles Preferences → Navigation → Orbit Around Selection | Edit: off / on / blinking. Object: blinks while Orbit Around Selection is on |
 | Encoder (PRESS TO ENTER), turn | zoom in (right) / out (left); in camera view: dolly the camera forward/back by `step` | — |
 | Encoder, press | nothing (the camera view moved to CUE D) | — |
@@ -65,7 +65,7 @@ All of this comes from [`mappings/blender_modes.json`](mappings/blender_modes.js
 | SHIFT + CUP (deck C) | Apply Location (Ctrl+A) | lit 2 s after it worked |
 | SHIFT + CUE (deck C) | Apply Rotation | lit 2 s after it worked |
 | SHIFT + PLAY/PAUSE (deck C) | Apply Scale | lit 2 s after it worked |
-| OUT (any deck, no menu open) | 1st press arms the delete (one state for the four decks: arm on one, delete on another); 2nd press deletes the selected objects (Edit Mode: vertices/edges/faces by the select mode). A change of selection or mode, or another deck tool, disarms it. A running grab is confirmed first | blinks fast while armed; lit 2 s after it deleted |
+| OUT (any deck, no menu open) | 1st press arms the delete (one state for the four decks: arm on one, delete on another); 2nd press deletes the selected objects (Edit Mode: vertices/edges/faces by the select mode). It disarms after 5 s, on any other key of any deck, on a change of selection or mode, or with another deck tool. A running grab is confirmed first | blinks fast while armed; lit 2 s after it deleted |
 | IN (deck A) | opens the Add menu (Shift+A) in the 4-Mix window; on a submenu: enters it; on an item: adds it (at the 3D Cursor) and closes | on while the menu is open |
 | Left platter (deck A), menu open | moves through the items (~14 pulses per item) | — |
 | OUT (deck A), menu open | short: one level back (at the top, closes); held 0.5 s: closes | blinks while the menu is open |
@@ -73,6 +73,7 @@ All of this comes from [`mappings/blender_modes.json`](mappings/blender_modes.js
 | 1 (deck A) | the 3D cursor to the mouse (like Shift + right click: on the surface under it) | lit 1 s after it worked |
 | 2 / 3 / 4 (deck A) | the left platter moves the 3D cursor along X / Y / Z by `step`; the same button again: off | on while that axis is chosen |
 | SYNC / CUP / CUE / PLAY (deck A) | Blender's Snap menu (Shift+S), the 3D cursor: to Selected / to Active / to Grid / to World Origin (SYNC closes the Add menu first while it is open) | lit 1 s after it worked |
+| CUP (deck A) again within 3 s | vertex pick: the left platter moves the 3D cursor from vertex to neighbouring vertex of the active mesh (~14 pulses each); CUP again ends, the cursor stays | blinks while picking |
 | SHIFT + SYNC / CUP / CUE / PLAY (deck A) | the selection: to Cursor / to Active / to Grid / to Cursor (Keep Offset) | lit 1 s after it worked |
 | Right platter | nothing (free) | — |
 | Deck switch | plays an animation on that deck's LEDs, then the LEDs show the state again | — |

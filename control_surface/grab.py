@@ -24,6 +24,7 @@ running grab.
 
 import math
 
+import blf
 import bmesh
 import bpy
 import gpu
@@ -159,6 +160,65 @@ def _draw_cage():
     gpu.state.point_size_set(1)
     gpu.state.line_width_set(1)
     gpu.state.blend_set("NONE")
+
+
+# --- Snap marker (task 49): what the snapping is doing, drawn during a grab --
+
+_snap_marker = None   # {"hit": Vector | None, "kind": str, "src": Vector | None, "grid": float | None}
+_marker_handle = None
+
+
+def _draw_snap_marker():
+    m = _snap_marker
+    if not m:
+        return
+    region, rv3d = bpy.context.region, bpy.context.region_data
+    if region is None or rv3d is None:
+        return
+    shader = gpu.shader.from_builtin("UNIFORM_COLOR")
+    gpu.state.blend_set("ALPHA")
+    font = 0
+    blf.size(font, 13 * bpy.context.preferences.system.ui_scale)
+    if m.get("hit") is not None:
+        c = view3d_utils.location_3d_to_region_2d(region, rv3d, m["hit"])
+        if c is not None:
+            r = 9 * bpy.context.preferences.system.ui_scale
+            ring = [(c.x + r * math.cos(a * math.pi / 12), c.y + r * math.sin(a * math.pi / 12)) for a in range(25)]
+            gpu.state.line_width_set(2)
+            shader.uniform_float("color", (1.0, 0.55, 0.0, 1.0))
+            batch_for_shader(shader, "LINE_STRIP", {"pos": ring}).draw(shader)
+            if m.get("src") is not None:
+                s = view3d_utils.location_3d_to_region_2d(region, rv3d, m["src"])
+                if s is not None:
+                    gpu.state.point_size_set(8)
+                    shader.uniform_float("color", (1.0, 1.0, 1.0, 0.9))
+                    batch_for_shader(shader, "POINTS", {"pos": [s]}).draw(shader)
+            blf.color(font, 1.0, 0.6, 0.1, 1.0)
+            blf.position(font, c.x + r + 4, c.y + r, 0)
+            blf.draw(font, m.get("kind", ""))
+    if m.get("grid") or m.get("factor"):
+        blf.color(font, 1.0, 0.6, 0.1, 1.0)
+        blf.position(font, 20, 20, 0)
+        blf.draw(font, f"snap: grid {m['grid'] * 100:g} cm" if m.get("grid")
+                 else f"snap: scale in steps of {m['factor']:g}")
+    elif m.get("kind") is not None and m.get("hit") is None:
+        blf.color(font, 1.0, 0.6, 0.1, 1.0)
+        blf.position(font, 20, 20, 0)
+        blf.draw(font, "snap: geometry (no target under the mouse)")
+    gpu.state.point_size_set(1)
+    gpu.state.line_width_set(1)
+    gpu.state.blend_set("NONE")
+
+
+def _marker_show(on):
+    global _marker_handle, _snap_marker
+    if on and _marker_handle is None:
+        _marker_handle = bpy.types.SpaceView3D.draw_handler_add(_draw_snap_marker, (), "WINDOW", "POST_PIXEL")
+    elif not on:
+        _snap_marker = None
+        if _marker_handle is not None:
+            bpy.types.SpaceView3D.draw_handler_remove(_marker_handle, "WINDOW")
+            _marker_handle = None
 
 
 def _tag_redraw():
@@ -344,6 +404,8 @@ class CONTROLSURFACE_OT_grab(bpy.types.Operator):
         self.push_angle = 0.0
         self.snap = None  # the 90° mode's angle, or None
         self.targets = None  # snapping.Targets, built the first time geometry snapping is needed
+        self._hit_kind = None
+        _marker_show(True)
         self.shared = _running = {"axis": self.axis, "mode": self.mode, "pushes": [], "end": None,
                                   "rebase": False}
         self.timer = context.window_manager.event_timer_add(TIMER_S, window=context.window)
@@ -447,6 +509,7 @@ class CONTROLSURFACE_OT_grab(bpy.types.Operator):
         if self.targets is None:
             self.targets = snapping.Targets(bpy.context, exclude={o.name for o in self.objs})
         hit = self.targets.find(bpy.context, self.region, self.rv3d, self.mouse, snapping.elements())
+        self._hit_kind = hit[1] if hit else None
         return hit[0] if hit else None
 
     def _snap_points(self):
@@ -461,12 +524,33 @@ class CONTROLSURFACE_OT_grab(bpy.types.Operator):
             pts += [m0 @ Vector(c) for c in o.bound_box]
         return pts
 
-    def _snap_source(self, hit, for_scale=False):
-        """The point of the selection that lands on hit (Blender's Snap With)."""
+    def _marker(self, off=False, **m):
+        """What the snapping does now, for the marker drawn in the viewport."""
+        global _snap_marker
+        if off:
+            _snap_marker = None
+            return
+        grid = "grid" in m or "factor" in m
+        _snap_marker = {"hit": m.get("hit"), "src": m.get("src"), "grid": m.get("grid"),
+                        "factor": m.get("factor"), "kind": None if grid else (self._hit_kind or "")}
+
+    def _snap_source(self, hit, for_scale=False, moved_by=None):
+        """The point of the selection that lands on hit (Blender's Snap With).
+        CLOSEST, moving: the point that is nearest the mouse on screen where the
+        mouse is taking the selection (moved_by) — the corner/vertex being
+        pointed at; in 3D the nearest point swaps between top and bottom
+        corners with the depth (seen 2026-11-22). Scale: nearest in 3D."""
         how = snapping.snap_target()
         if for_scale or how == "CLOSEST":
             pts = [p for p in self._snap_points() if not for_scale or (p - self.pivot).length > 1e-6]
-            return min(pts, key=lambda p: (p - hit).length) if pts else self.pivot
+            if not pts:
+                return self.pivot
+            if moved_by is not None and self.mouse is not None:
+                def screen_dist(p):
+                    xy = view3d_utils.location_3d_to_region_2d(self.region, self.rv3d, p + moved_by)
+                    return (xy - self.mouse).length if xy is not None else float("inf")
+                return min(pts, key=screen_dist)
+            return min(pts, key=lambda p: (p - hit).length)
         if how == "ACTIVE" and not self.edit:
             act = bpy.context.view_layer.objects.active
             if act is not None and act.name in self.start:
@@ -489,9 +573,17 @@ class CONTROLSURFACE_OT_grab(bpy.types.Operator):
             elif snap_mode == "geometry" and moved:
                 hit = self._snap_hit()
                 if hit is not None:
-                    d = hit - self._snap_source(hit)
+                    src = self._snap_source(hit, moved_by=d)
+                    d = hit - src
                     if axis != "FREE":
                         d = self._axis_vec(axis) * d.dot(self._axis_vec(axis))
+                    self._marker(hit=hit, src=src + d)
+                else:
+                    self._marker(hit=None)
+            if snap_mode == "grid":
+                self._marker(grid=grid_size())
+            elif snap_mode == "off":
+                self._marker(off=True)
             if self.edit:
                 self._set_verts(lambda w0: w0 + d)
             for o in self.objs:
@@ -504,8 +596,12 @@ class CONTROLSURFACE_OT_grab(bpy.types.Operator):
             if snap_mode == "grid":
                 q = 10 * grid_size()
                 f = snapping.round_to(f, q) or (q if f >= 0 else -q)
+                self._marker(factor=q)
+            elif snap_mode == "off":
+                self._marker(off=True)
             elif snap_mode == "geometry" and moved:
                 hit = self._snap_hit()
+                self._marker(hit=hit)
                 if hit is not None:
                     src = self._snap_source(hit, for_scale=True)
                     if axis in ("FREE", "NORMAL"):
@@ -597,6 +693,7 @@ class CONTROLSURFACE_OT_grab(bpy.types.Operator):
     def _end(self, context, confirm):
         global _running
         context.window_manager.event_timer_remove(self.timer)
+        _marker_show(False)
         if not confirm:
             self.start, self.vstart = self.orig
             for o in self.objs:

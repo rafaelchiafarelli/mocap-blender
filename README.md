@@ -23,7 +23,7 @@ doesn't cap its Python version.
 
 ## Status
 
-**Control surface (2026-11-22, version 0.1.49):** `control_surface/` is a
+**Control surface (2026-11-22, version 0.1.51):** `control_surface/` is a
 Blender extension that turns the DJ-Tech 4-Mix MIDI controller into an
 extension of Blender's interface (buttons → operators, LEDs ← Blender
 state).

@@ -89,6 +89,8 @@ Blender state → LED messages to the controller.
     the indicators (`Engine._flash`).
   - **`value` bindings** (task 16): an absolute control's value goes to an
     action as `value=` (validated: absolute control + action).
+  - **`on_event`** (task 49): an optional callable(control id, event) run
+    for every decoded event of the owning Blender before its bindings.
   - **`_fire()`** (`engine.py:297`) runs the operator or action and reports a
     raised error, or a `{'CANCELLED'}` result (`engine.py:310`), in
     `last_error`.
@@ -112,7 +114,13 @@ Blender state → LED messages to the controller.
   - `resend()` (`leds.py:44`) forgets what was sent, so the next tick sends
     every LED again.
 - `grab.py` — the add-on's own modal grab/scale/rotate
-  (snapping, task 45: in `_apply`, grid mode rounds a move's target
+  (snap marker, task 49: `_draw_snap_marker`, a POST_PIXEL handler shown
+  during a grab — an orange ring with VERTEX/EDGE/FACE on the target, a
+  white dot on the snapping point, or "snap: grid N cm" / "scale in steps
+  of q" at the bottom left; moving, CLOSEST takes the selection point
+  nearest the mouse on screen where the mouse is taking it — the nearest in
+  3D swapped between top and bottom corners with the depth;
+  snapping, task 45: in `_apply`, grid mode rounds a move's target
   `pivot + d` to `grid_size()` = `step` on the moving axes, and a scale
   factor to multiples of 10 × `step`; geometry mode moves the selection's
   snap point — Blender's Snap With: CLOSEST = the nearest of the start
@@ -244,7 +252,14 @@ Blender state → LED messages to the controller.
   vertices; up to `MAX_VERTS`); `find(context, region, rv3d, mouse,
   elems)` projects them and returns the nearest vertex, else edge point,
   within `RADIUS_PX` × ui_scale, else the face under the mouse
-  (`ray_under_mouse`, skipping excluded and edited objects).
+  (`ray_under_mouse`, skipping excluded and edited objects; it steps past an
+  excluded surface by max(1 mm, 1e-5 × distance), up to 64 times — 0.1 mm
+  kept re-hitting the same face far from the camera, task 49).
+- `tour.py` (task 49, pure numpy) — `vertex_tour(co, start)`: vertex
+  indices in a nearest-neighbour walk from the vertex nearest `start`, so
+  the deck A vertex pick goes to a neighbour; index order above `TOUR_MAX`
+  (5000). Tested in `blender_smoke.py` (WSL's Python has no numpy;
+  `tests/test_tour.py` skips there).
 - `knob_select.py` — `pick(n, anchor, value)`: the object index for a
   centre-tap knob's position, proportional (the travel is split evenly over
   the objects; the ends land on the last/first). Pure.
@@ -353,6 +368,14 @@ Blender state → LED messages to the controller.
     Mode (LED off/on/blink for vertex/edge/face, `mesh_select_mode`), and
     `orbit_selection_toggle` in Object Mode (LED blinking while it is on,
     shown in Object Mode only).
+  - **Deck A, CUP vertex pick** (task 49): CUP L/A → `cursor_cup`: the
+    cursor to the active object (`view3d.snap_cursor_to_active`); again
+    within `CUP_AGAIN_S` (3 s) → the vertex pick (`_pick`: the active mesh's
+    world vertices, evaluated in Object Mode / the edit mesh in Edit Mode,
+    ordered by `tour.vertex_tour` from the cursor; state `cursor_pick`, CUP
+    blinks); the left platter → `cursor_pick_step` (one vertex per
+    `PULSES_PER_VERTEX` ≈ 14 pulses, wrapping; placed before `cursor_move`);
+    CUP again ends it, the cursor stays.
   - **Deck A, Snap menu** (task 44; Blender's Shift+S operators, run in
     the 3D View, `flash_ms` 1000): SYNC → `view3d.snap_cursor_to_selected`,
     CUP → `snap_cursor_to_active`, CUE → `snap_cursor_to_grid`, PLAY/PAUSE
@@ -377,8 +400,11 @@ Blender state → LED messages to the controller.
   - **OUT** (task 36: two presses; task 48: on every deck — L/A, R/B, L/C,
     R/D — with `when` add_menu and props_menu false, after decks A/B's menu
     OUT bindings, so a menu keeps its OUT; one shared armed state) → `delete_arm` (first press; state
-    `delete_armed`, the LED blinks 150/150 ms; disarmed when the mode or
-    the selection changes, or by `grab.end_tools` through
+    `delete_armed`, the LED blinks 150/150 ms; disarmed after
+    `DELETE_ARMED_S` (5 s), by any other key press of any deck
+    (`blender_glue.on_event`, set as `Engine.on_event`; OUT presses and
+    platter touches excepted; task 49), when the mode or the selection
+    changes, or by `grab.end_tools` through
     `END_TOOLS_HOOKS`), then `delete_confirm` (second press) →
     `delete_selected`: `grab.end_tools()` first (a
     running grab must not hold deleted objects), then `object.delete`
@@ -438,7 +464,8 @@ Blender state → LED messages to the controller.
 - `tests/` — pytest:
   - `test_profile.py`, `test_leds.py`, `test_engine.py` and `test_layers.py`
     are pure, with fakes; `test_oswindow.py` checks `outside_click` and the
-    no-ops off Windows.
+    no-ops off Windows; `test_tour.py` the vertex walk (skipped without
+    numpy).
   - `data/modes_cue_leds.json` — test mapping: mode bindings plus mode LEDs
     on CUE A–D, so the LED path is tested.
   - `test_blender_smoke.py` runs `blender_smoke.py` inside the pinned

@@ -172,11 +172,13 @@ def ray_under_mouse(context, region, rv3d, mouse, exclude=()):
     origin = view3d_utils.region_2d_to_origin_3d(region, rv3d, mouse)
     direction = view3d_utils.region_2d_to_vector_3d(region, rv3d, mouse)
     dg = context.evaluated_depsgraph_get()
-    for _ in range(16):
+    for _ in range(64):
         ok, loc, _n, _i, obj, _m = context.scene.ray_cast(dg, origin, direction)
         if not ok:
             return None
         if obj is None or obj.original.name not in exclude:
             return loc
-        origin = loc + direction * 1e-4
+        # Step past the excluded surface; 0.1 mm was too little far from the
+        # camera: the ray kept hitting the same face (seen 2026-11-22).
+        origin = loc + direction * max(1e-3, (loc - origin).length * 1e-5)
     return None

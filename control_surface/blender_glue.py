@@ -14,7 +14,7 @@ from pathlib import Path
 import bpy
 from mathutils import Matrix, Vector
 
-from . import add_menu, adjust, grab, knob_select, menu_window, props_menu, snap
+from . import add_menu, adjust, grab, knob_select, menu_window, props_menu, snap, tour
 
 grab.END_TOOLS_HOOKS.append(adjust.end)
 from .engine import Engine, Mapping
@@ -88,6 +88,7 @@ STATES = {
     "add_menu": add_menu.is_open,
     "grab_axis": _grab_axis,
     "cursor_axis": lambda: _cursor_axis,
+    "cursor_pick": lambda: cursor_pick(),
     "snap_mode": lambda: snap.mode(),
     "object_mode": _object_mode, "view_perspective": _view_perspective,
     "view_axis": _view_axis, "orbit_selection": _orbit_selection,
@@ -222,6 +223,77 @@ def cursor_to_mouse():
     return run_operator("control_surface.cursor_to_mouse", {}, "INVOKE_DEFAULT")
 
 
+CUP_AGAIN_S = 3.0        # a second CUP within this enters the vertex pick
+PULSES_PER_VERTEX = 390 / 27  # ~14 platter pulses per vertex, like the menus
+_cup_at = None           # when CUP (deck A) last sent the cursor to the active object
+_pick = None             # {"points": [Vector], "index": int, "acc": float} while picking a vertex
+
+
+def _active_vertices():
+    """World positions of the active mesh's vertices (Edit Mode: its edit mesh;
+    else the evaluated mesh, modifiers included)."""
+    import numpy as np
+    obj = bpy.context.view_layer.objects.active
+    if obj is None or obj.type != "MESH":
+        raise RuntimeError("the active object is not a mesh")
+    if obj.mode == "EDIT":
+        import bmesh
+        bm = bmesh.from_edit_mesh(obj.data)
+        co = np.array([v.co for v in bm.verts], dtype=np.float64).reshape(-1, 3)
+    else:
+        me = obj.evaluated_get(bpy.context.evaluated_depsgraph_get()).data
+        co = np.empty(len(me.vertices) * 3, dtype=np.float64)
+        me.vertices.foreach_get("co", co)
+        co = co.reshape(-1, 3)
+    m = np.array(obj.matrix_world, dtype=np.float64)
+    return co @ m[:3, :3].T + m[:3, 3]
+
+
+def cursor_pick():
+    return _pick is not None
+
+
+def cursor_cup():
+    """CUP (deck A): the 3D cursor to the active object; CUP again within 3 s:
+    pick one of its vertices with the platter (CUP blinks); CUP again: done,
+    the cursor stays there."""
+    global _cup_at, _pick
+    if _pick is not None:
+        _pick = None
+        return {"FINISHED"}
+    now = time.monotonic()
+    if _cup_at is not None and now - _cup_at <= CUP_AGAIN_S:
+        _cup_at = None
+        co = _active_vertices()
+        order = tour.vertex_tour(co, bpy.context.scene.cursor.location)
+        if not order:
+            raise RuntimeError("the active object has no vertices")
+        _pick = {"points": [Vector(co[i]) for i in order], "index": 0, "acc": 0.0}
+        bpy.context.scene.cursor.location = _pick["points"][0]
+        _redraw()
+        return {"FINISHED"}
+    _cup_at = now
+    return run_operator("view3d.snap_cursor_to_active", {})
+
+
+def cursor_pick_step(pulses):
+    """Left platter (deck A) while picking: the cursor to the next / previous vertex."""
+    if _pick is None:
+        return {"FINISHED"}
+    sign = 1 if pulses > 0 else -1
+    if _pick["acc"] * sign < 0:
+        _pick["acc"] = 0.0
+    _pick["acc"] += sign
+    n = int(_pick["acc"] / PULSES_PER_VERTEX)
+    if n:
+        _pick["acc"] -= n * PULSES_PER_VERTEX
+        pts = _pick["points"]
+        _pick["index"] = (_pick["index"] + n) % len(pts)
+        bpy.context.scene.cursor.location = pts[_pick["index"]]
+        _redraw()
+    return {"FINISHED"}
+
+
 def cursor_axis_toggle(axis):
     """2/3/4 (deck A): the platter moves the 3D cursor along X/Y/Z; the same button again: off."""
     global _cursor_axis
@@ -287,6 +359,8 @@ def move_start(axis):
 
 
 _delete_armed = None  # (mode, selection) when OUT was pressed once, else None
+_delete_armed_at = 0.0
+DELETE_ARMED_S = 5.0  # the armed delete ends by itself after this (Rafael, 2026-11-22)
 
 
 def _selection_key():
@@ -303,17 +377,27 @@ def _selection_key():
 def delete_armed():
     """True while OUT was pressed once and the selection has not changed."""
     global _delete_armed
-    if _delete_armed is not None and _delete_armed != _selection_key():
+    if _delete_armed is not None and (_delete_armed != _selection_key()
+                                      or time.monotonic() - _delete_armed_at > DELETE_ARMED_S):
         _delete_armed = None
     return _delete_armed is not None
 
 
 def delete_arm():
     """OUT, first press: arm the delete (OUT blinks); the second press deletes."""
-    global _delete_armed
+    global _delete_armed, _delete_armed_at
     grab.end_tools()
     _delete_armed = _selection_key()
+    _delete_armed_at = time.monotonic()
     return {"FINISHED"}
+
+
+def on_event(cid, event):
+    """Every decoded event of the owning Blender, before its bindings: any key
+    other than an OUT (on any deck, platter touches excepted) disarms the delete."""
+    if (_delete_armed is not None and event == "press" and not cid.startswith("OUT ")
+            and not cid.endswith(" touch")):
+        _delete_disarm()
 
 
 def _delete_disarm():
@@ -467,6 +551,8 @@ ACTIONS = {
     "cursor_to_mouse": cursor_to_mouse,
     "cursor_axis_toggle": cursor_axis_toggle,
     "cursor_move": cursor_move,
+    "cursor_cup": cursor_cup,
+    "cursor_pick_step": cursor_pick_step,
     "snap_cycle": lambda: snap.cycle(),
     "sync_cycle": lambda: grab.sync_cycle(),
     "cage_step": lambda delta: grab.cage_step(delta),
@@ -609,6 +695,7 @@ class Session:
             profile, mapping, send, run_operator, read_state,
             lambda: int(time.monotonic() * 1000), run_action,
         )
+        self.engine.on_event = on_event
         if intro:
             self.engine.start_intro()
         self.device = profile.device

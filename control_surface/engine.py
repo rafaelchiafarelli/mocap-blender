@@ -168,6 +168,10 @@ class Engine:
         self._tap_last = {}
         self.armed = set()
         self.last_error = ""
+        # Optional callable(control id, event) for every decoded event of the
+        # owning Blender, before the bindings run (e.g. any other key disarms
+        # the delete, task 49).
+        self.on_event = None
         # Layer states: select -> UNKNOWN until its first press; hold -> False.
         self.layers = {}
         self._held = {}  # hold layer -> set of its controls currently held
@@ -268,6 +272,8 @@ class Engine:
                 event, value = VALUE, event[1]
             if not self.active:
                 continue
+            if self.on_event is not None:
+                self.on_event(cid, event)
             for b in self.mapping.bindings:
                 if b["control"] == cid and b["event"] == event and self._when_ok(b):
                     self._fire(cid, event, b, value)

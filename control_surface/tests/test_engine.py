@@ -12,8 +12,8 @@ MODES = ROOT / "mappings" / "blender_modes.json"
 # Test mapping: the bundled bindings plus mode LEDs on CUE A-D (A-D have no LED).
 CUE_LEDS = Path(__file__).resolve().parent / "data" / "modes_cue_leds.json"
 A_LED, B_LED = (0x90, 0x27), (0x90, 0x28)  # CUE A, CUE B
-BUNDLED_ACTIONS = {"add_menu_close", "add_out_down", "add_out_up", "props_close", "props_out_down", "props_out_up", "delete_arm", "delete_confirm", "props_toggle", "props_step", "props_cancel", "extrude_start", "adjust_start", "adjust_change", "adjust_end", "loopcut_start", "select_mode_cycle", "rotate_snap_on", "rotate_tip", "add_menu_toggle", "add_menu_step", "add_menu_back", "add_menu_cancel", "delete_selected", "cage_step", "tool_toggle", "move_start", "sync_cycle", "grab_start", "grab_confirm", "grab_axis", "grab_push", "select_by_knob", "camera_move", "view_move", "view_projection", "orbit_selection_toggle", "cursor_to_mouse", "cursor_axis_toggle", "cursor_move", "snap_cycle"}
-BUNDLED_STATES = {"delete_armed", "props_menu", "props_editing", "adjusting", "adjust_active", "mesh_select_mode", "grab_snap", "add_menu", "cage", "rotate_mode", "sync_mode", "scale_mode", "grabbing", "grab_axis", "object_mode", "view_axis", "view_perspective", "orbit_selection", "cursor_axis", "snap_mode"}
+BUNDLED_ACTIONS = {"add_menu_close", "add_out_down", "add_out_up", "props_close", "props_out_down", "props_out_up", "delete_arm", "delete_confirm", "props_toggle", "props_step", "props_cancel", "extrude_start", "adjust_start", "adjust_change", "adjust_end", "loopcut_start", "select_mode_cycle", "rotate_snap_on", "rotate_tip", "add_menu_toggle", "add_menu_step", "add_menu_back", "add_menu_cancel", "delete_selected", "cage_step", "tool_toggle", "move_start", "sync_cycle", "grab_start", "grab_confirm", "grab_axis", "grab_push", "select_by_knob", "camera_move", "view_move", "view_projection", "orbit_selection_toggle", "cursor_to_mouse", "cursor_axis_toggle", "cursor_move", "snap_cycle", "cursor_cup", "cursor_pick_step"}
+BUNDLED_STATES = {"delete_armed", "props_menu", "props_editing", "adjusting", "adjust_active", "mesh_select_mode", "grab_snap", "add_menu", "cage", "rotate_mode", "sync_mode", "scale_mode", "grabbing", "grab_axis", "object_mode", "view_axis", "view_perspective", "orbit_selection", "cursor_axis", "snap_mode", "cursor_pick"}
 
 
 class FakeBlender:
@@ -25,7 +25,7 @@ class FakeBlender:
                      "add_menu": False, "grab_snap": False,
                      "adjusting": "NONE", "adjust_active": False, "mesh_select_mode": "NONE",
                      "props_menu": False, "props_editing": False, "delete_armed": False,
-                     "cursor_axis": "NONE", "snap_mode": "off"}
+                     "cursor_axis": "NONE", "snap_mode": "off", "cursor_pick": False}
         self.actions = []
         self.calls = []
         self.contexts = []
@@ -844,8 +844,9 @@ def test_bundled_deck_a_snap_menu_functions():
         press(e, (0x91, note))
     for note in (0x45, 0x4A, 0x4B, 0x4C):        # the same with SHIFT (note + 40H)
         press(e, (0x91, note))
+    assert fb.actions == [("cursor_cup", {})]            # CUP: to the active object / vertex pick
     assert fb.calls == [
-        ("view3d.snap_cursor_to_selected", {}), ("view3d.snap_cursor_to_active", {}),
+        ("view3d.snap_cursor_to_selected", {}),
         ("view3d.snap_cursor_to_grid", {}), ("view3d.snap_cursor_to_center", {}),
         ("view3d.snap_selected_to_cursor", {"use_offset": False}), ("view3d.snap_selected_to_active", {}),
         ("view3d.snap_selected_to_grid", {}), ("view3d.snap_selected_to_cursor", {"use_offset": True})]
@@ -932,4 +933,29 @@ def test_bundled_out_on_a_and_b_drive_their_menu_when_it_is_open():
     press(e, (0x92, 0x03))
     assert fb.actions == [("add_out_down", {}), ("add_out_up", {}),
                           ("props_out_down", {}), ("props_out_up", {})]
+
+
+def test_bundled_cup_vertex_pick_platter():
+    e, fb, sent = make_bundled()
+    press(e, (0x91, 0x0A))                  # CUP: to the object
+    press(e, (0x91, 0x0A))                  # CUP again: vertex pick
+    fb.view["cursor_pick"] = True
+    fb.view["cursor_axis"] = "X"            # the pick comes before the axis move
+    e.handle(0xB1, 0x0F, 0x41)
+    e.handle(0xB1, 0x0F, 0x3F)
+    assert fb.actions == [("cursor_cup", {}), ("cursor_cup", {}),
+                          ("cursor_pick_step", {"pulses": 1}), ("cursor_pick_step", {"pulses": -1})]
+    fb.now = 5000                           # after the 1 s flash
+    e.update()
+    assert led_values(sent, (0x91, 0x0A))[-1] == LED_ON   # blinking while picking
+
+
+def test_on_event_sees_every_event_of_the_owner_only():
+    seen = []
+    e, fb, _ = make_bundled()
+    e.on_event = lambda cid, ev: seen.append((cid, ev))
+    press(e, (0x91, 0x0A))
+    e.set_active(False)
+    press(e, (0x91, 0x0B))
+    assert seen == [("CUP L/A", "press"), ("CUP L/A", "release")]
 

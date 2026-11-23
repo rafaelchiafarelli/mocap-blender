@@ -1,4 +1,4 @@
-# DJ-Tech 4-Mix no Blender — ações (add-on control_surface 0.1.50)
+# DJ-Tech 4-Mix no Blender — ações (add-on control_surface 0.1.51)
 
 Atualizado em 2026-11-22. "Object" e "Edit" indicam o modo do Blender em que a
 ação funciona; "—" = sem efeito nesse modo.
@@ -33,9 +33,9 @@ ação funciona; "—" = sem efeito nesse modo.
 | 17c | 1 (deck A) | leva o 3D Cursor para o mouse (o mesmo do Shift + botão direito: na superfície embaixo do mouse) | aceso 1 s depois de funcionar | ✔ | ✔ |
 | 17d | 2 / 3 / 4 (deck A) | escolhe o eixo X / Y / Z: o platter esquerdo move o 3D Cursor nesse eixo, pelo `step` do S1 VOL; o mesmo botão de novo desliga | aceso enquanto o eixo está escolhido | ✔ | ✔ |
 | 17e | Platter esquerdo, menu fechado, eixo escolhido | move o 3D Cursor no eixo escolhido (1–10 cm por pulso, pelo S1 VOL) | — | ✔ | ✔ |
-| 17n | VINYL MODE do lado esquerdo (deck A ou C, Object e Edit) | snap (o imã do Blender, Shift+Tab): desligado → **A, grade** → **B, geometria** → desligado. Grade: mover cai em múltiplos do passo do S1 VOL; escalar em passos de 10 × o passo (0,1–1,0); o platter do cursor anda na grade. Geometria: o objeto (ou o vértice, no Edit) gruda no vértice/aresta/face de outro objeto embaixo do mouse; o botão 1 leva o cursor ao vértice/aresta/face embaixo do mouse. Vale também para o G/S do teclado | aceso = grade, piscando = geometria | ✔ | ✔ |
+| 17n | VINYL MODE do lado esquerdo (deck A ou C, Object e Edit) | snap (o imã do Blender, Shift+Tab): desligado → **A, grade** → **B, geometria** → desligado. Grade: mover cai em múltiplos do passo do S1 VOL; escalar em passos de 10 × o passo (0,1–1,0); o platter do cursor anda na grade. Geometria: o objeto (ou o vértice, no Edit) gruda no vértice/aresta/face de outro objeto embaixo do mouse; o botão 1 leva o cursor ao vértice/aresta/face embaixo do mouse. Vale também para o G/S do teclado. Durante o mover/escalar aparece uma marca laranja: um anel com VERTEX/EDGE/FACE no alvo e um ponto no canto que gruda (o canto mais perto do mouse na tela), ou "snap: grid N cm" embaixo à esquerda | aceso = grade, piscando = geometria | ✔ | ✔ |
 | 17f | SYNC (menu fechado) | Cursor to Selected: o cursor vai para o centro da seleção | aceso 1 s | ✔ | ✔ |
-| 17g | CUP | Cursor to Active: o cursor vai para o objeto ativo (Edit: vértice ativo) | aceso 1 s | ✔ | ✔ |
+| 17g | CUP | Cursor to Active: o cursor vai para o objeto ativo (Edit: vértice ativo). **CUP de novo em até 3 s**: escolher vértice — o platter esquerdo leva o cursor de um vértice ao vizinho (~14 pulsos cada); **mais um CUP** encerra e o cursor fica | aceso 1 s; piscando escolhendo vértice | ✔ | ✔ |
 | 17h | CUE | Cursor to Grid: o cursor vai para o ponto da grade mais próximo (grade do Blender, 1 m) | aceso 1 s | ✔ | ✔ |
 | 17i | PLAY/PAUSE | Cursor to World Origin: o cursor volta para (0, 0, 0) | aceso 1 s | ✔ | ✔ |
 | 17j | SHIFT + SYNC | Selection to Cursor: cada selecionado vai para o cursor (todos no mesmo ponto) | aceso 1 s | ✔ | ✔ |
@@ -62,7 +62,7 @@ ação funciona; "—" = sem efeito nesse modo.
 | 29 | SHIFT + CUP | Object: Apply Location. Edit: **Loop Cut** no anel da aresta ativa (ou primeira selecionada); platter = número de cortes; SHIFT + CUP de novo termina | Object: aceso 2 s. Edit: piscando ajustando | ✔ | ✔ |
 | 30 | SHIFT + CUE | Object: Apply Rotation. Edit: **Subdivide** | aceso 2 s se funcionou | ✔ | ✔ |
 | 31 | SHIFT + PLAY/PAUSE | Object: Apply Scale. Edit: **Merge at Center** | aceso 2 s se funcionou | ✔ | ✔ |
-| 32 | OUT (qualquer deck, sem menu aberto) | 1º toque arma a deleção (vale para os 4 decks: arma num, apaga em outro; com um menu aberto, o OUT de A/B fica no menu e o de C/D não faz nada); 2º toque apaga a seleção (Edit: vértices/arestas/faces pelo modo de seleção). Mudar a seleção ou o modo, ou ligar outra ferramenta, desarma. Confirma antes um grab em andamento | pisca rápido enquanto armado; aceso 2 s depois de apagar | ✔ objetos | ✔ |
+| 32 | OUT (qualquer deck, sem menu aberto) | 1º toque arma a deleção (vale para os 4 decks: arma num, apaga em outro; com um menu aberto, o OUT de A/B fica no menu e o de C/D não faz nada); 2º toque apaga a seleção (Edit: vértices/arestas/faces pelo modo de seleção). Desarma sozinho depois de 5 s, ou ao apertar qualquer outra tecla (de qualquer deck), mudar a seleção ou o modo, ou ligar outra ferramenta. Confirma antes um grab em andamento | pisca rápido enquanto armado; aceso 2 s depois de apagar | ✔ objetos | ✔ |
 
 | 32b | VINYL MODE (deck C) | o snap, igual ao 17n (o VINYL não depende do deck) | aceso = grade, piscando = geometria | ✔ | ✔ |
 

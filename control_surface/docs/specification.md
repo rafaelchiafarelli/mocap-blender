@@ -1,6 +1,6 @@
 # control_surface — software specification
 
-State: version 0.1.50, 2026-11-22. This page describes what the add-on does
+State: version 0.1.51, 2026-11-22. This page describes what the add-on does
 and how it is built. What each button does today, in one table, is in
 [`../README.md`](../README.md) and, in Portuguese, in
 [`../acoes-4mix.md`](../acoes-4mix.md). The file-by-file as-built notes are in
@@ -146,6 +146,8 @@ See `03-message-flow.drawio` and `06-seq-button-press.drawio`.
 6. **Toggles** step; **layers from presses** (deck switches, SHIFT held);
    a deck switch plays a short animation on that deck's LEDs.
 7. **Standby** (another Blender owns the controller): stop here.
+   Otherwise `Engine.on_event(control, event)` runs first (the add-on uses it
+   to disarm the delete on any other key).
 8. **Bindings**: the first matching one fires (`_fire`). A raised exception
    or a `{'CANCELLED'}` result goes to `engine.last_error` (shown in the
    panel); success starts its `flash_ms`.
@@ -186,6 +188,7 @@ mapping's toggles), usable in `when` and in indicators:
 | `mesh_select_mode` | VERT, EDGE, FACE, NONE | Edit Mode tool settings |
 | `add_menu`, `props_menu`, `props_editing` | true/false | the menus |
 | `cursor_axis` | NONE, X, Y, Z | deck A 3D cursor |
+| `cursor_pick` | true/false | deck A vertex pick (CUP twice) |
 | `snap_mode` | off, grid, geometry | Blender's magnet (`snap.py`) |
 
 Actions (`ACTIONS` in `blender_glue.py`):
@@ -199,7 +202,7 @@ Actions (`ACTIONS` in `blender_glue.py`):
 | Edit Mode tools | `extrude_start`, `adjust_start(op, props, main, second)`, `adjust_change(which, amount)`, `adjust_end`, `loopcut_start` |
 | Add menu (deck A) | `add_menu_toggle`, `add_menu_step(pulses)`, `add_menu_back`, `add_menu_cancel`, `add_menu_close`, `add_out_down`, `add_out_up` |
 | Properties menu (deck B) | `props_toggle`, `props_step(pulses, amount)`, `props_cancel`, `props_close`, `props_out_down`, `props_out_up` |
-| 3D cursor (deck A) | `cursor_to_mouse`, `cursor_axis_toggle(axis)`, `cursor_move(amount)` |
+| 3D cursor (deck A) | `cursor_to_mouse`, `cursor_axis_toggle(axis)`, `cursor_move(amount)`, `cursor_cup`, `cursor_pick_step(pulses)` |
 | Snapping | `snap_cycle` |
 
 ## 9. Features
@@ -233,8 +236,9 @@ ROTATE (IN). Turning one on turns the others off and confirms a running grab.
 - **Clear / Apply / Delete**: CUP/CUE/PLAY clear location/rotation/scale,
   with SHIFT apply them. **Delete**: with no menu open, OUT on any deck arms
   the delete (all four OUT LEDs blink fast), a second OUT on any deck deletes
-  (objects; in Edit Mode by the select mode); a change of selection or mode, or
-  another tool, disarms it. With a menu open, OUT on deck A/B drives the menu
+  (objects; in Edit Mode by the select mode); it disarms after 5 s, on any
+  other key of any deck, on a change of selection or mode, or with another
+  tool. With a menu open, OUT on deck A/B drives the menu
   and OUT on C/D does nothing.
 - **Edit Mode tools**: CUP extrude (then a grab along the normal), CUE inset,
   PLAY bevel, SHIFT+CUP loop cut (`adjust.py`: the platter changes the value
@@ -260,7 +264,13 @@ default VERTEX/EDGE/FACE) → off.
   selection that lands on it follows Blender's *Snap With* (CLOSEST: the
   nearest origin, box corner or vertex; ACTIVE; else the pivot). A scale
   takes the factor that brings the nearest selection point onto it. Deck A's
-  1 puts the 3D cursor on it.
+  1 puts the 3D cursor on it. Moving with CLOSEST, the point that snaps is
+  the selection point nearest the mouse *on screen* (the corner being pointed
+  at); picking the nearest in 3D made the object swap corners as the mouse
+  crossed it.
+- **Marker**: during a grab an orange ring with VERTEX / EDGE / FACE marks
+  the target and a white dot the snapping point; in grid mode the bottom
+  left reads "snap: grid N cm" (or "scale in steps of q").
 
 ### 9.4 Deck A: Add menu, 3D cursor, Snap menu
 
@@ -271,6 +281,10 @@ default VERTEX/EDGE/FACE) → off.
 - **3D cursor**: 1 → the cursor to the mouse (Blender's `view3d.cursor3d`
   run in the 3D View region under the window's last mouse position); 2/3/4 →
   the platter moves the cursor along X/Y/Z by `step` (same button: off).
+  CUP sends the cursor to the active object; CUP again within 3 s starts the
+  **vertex pick**: the platter walks the active mesh's vertices in a
+  nearest-neighbour order starting at the cursor (`tour.py`; ~14 pulses per
+  vertex; CUP blinks); a third CUP ends it and the cursor stays.
 - **Snap menu** (Shift+S): SYNC/CUP/CUE/PLAY → cursor to Selected / Active /
   Grid / World Origin; with SHIFT → selection to Cursor / Active / Grid /
   Cursor (Keep Offset).

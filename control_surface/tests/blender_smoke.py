@@ -88,4 +88,13 @@ if not any("4-mix" in n.lower() for n in ins):
         raise AssertionError("expected MidiError without the controller")
     except winmm.MidiError as e:
         assert "not found" in str(e), e
+# tour.vertex_tour (numpy, Blender's Python): nearest-neighbour walk (task 49)
+import numpy as np  # noqa: E402
+from control_surface.tour import TOUR_MAX, vertex_tour  # noqa: E402
+_co = np.array([[0, 0, 0], [10, 0, 0], [1, 0, 0], [9, 0, 0], [2, 0, 0]], dtype=float)
+assert vertex_tour(_co, (0.1, 0, 0)) == [0, 2, 4, 3, 1], vertex_tour(_co, (0.1, 0, 0))
+assert sorted(vertex_tour(np.random.default_rng(1).random((200, 3)), (0, 0, 0))) == list(range(200))
+assert vertex_tour(np.empty((0, 3)), (0, 0, 0)) == []
+assert vertex_tour(np.zeros((TOUR_MAX + 1, 3)), (0, 0, 0)) == list(range(TOUR_MAX + 1))
+
 print("SMOKE OK")

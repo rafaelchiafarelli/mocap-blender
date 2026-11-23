@@ -4,7 +4,7 @@ Three levels, from cheapest to the hardware.
 
 ## 1. pytest (every commit)
 
-From the `mocap-blender` root: `pytest -q` (153 tests on 2026-11-22, ~1 s).
+From the `mocap-blender` root: `pytest -q` (165 tests + 1 skipped without numpy, 2026-11-22, ~1 s).
 
 | File | What |
 |---|---|
@@ -14,6 +14,7 @@ From the `mocap-blender` root: `pytest -q` (153 tests on 2026-11-22, ~1 s).
 | `tests/test_layers.py` | deck and SHIFT layers |
 | `tests/test_knob_select.py` | the C FILTER object choice |
 | `tests/test_oswindow.py` | `outside_click` and the no-ops off Windows |
+| `tests/test_tour.py` | the vertex walk of the deck A vertex pick (needs numpy: skipped in WSL, the same checks run in the smoke test) |
 | `tests/test_blender_smoke.py` | runs `tests/blender_smoke.py` inside the pinned Blender 5.2.2 (`-b`, skipped if G: is not mounted): registers the add-on, round trip with fake ports, unregister releases the ports, WinMM port listing |
 
 A new binding or indicator gets a test in `test_engine.py` that presses the
@@ -44,6 +45,8 @@ cd control_surface/tests/windowed
 | `check_snap_menu.py` | the eight Shift+S operators |
 | `check_snapping.py` | snap cycle; grid move and scale; geometry move onto a vertex; cursor onto a vertex |
 | `check_snapping_edit_mode.py` | geometry snapping of a vertex in Edit Mode |
+| `check_snap_sweep.py` | geometry snapping while the mouse sweeps a plane and another cube: rests on the plane, grabs vertex/edge, no corner swapping; marker screenshots |
+| `check_delete_and_vertex_pick.py` | through a Session with fake ports: delete expires after 5 s, another key disarms, arm on A / delete on D; CUP vertex pick walks the cube's corners |
 
 They are not collected by pytest (named `check_*`). `run.sh` deletes the
 4-Mix window position they leave in the portable Blender's config.
@@ -80,7 +83,16 @@ Not yet seen on the hardware, or not covered by an automatic check:
    moves vertices) and in Pose Mode.
 10. LEDs of 2/3/4 (axis) and the 1 s flashes on the hardware.
 
-**Snapping (tasks 45–46)**
+**Snapping (tasks 45–46, 49)**
+11b. The snap marker on the hardware: visible, and does the "nearest on
+    screen" corner match what you aim at?
+11c. Grid snapping with S1 VOL at 1 cm is barely visible; decide whether the
+    grid should follow Blender's visible grid instead.
+
+**Delete and vertex pick (task 49)**
+25. Delete: 5 s expiry and another key (any deck) disarming, on the hardware.
+26. CUP vertex pick on a big mesh (over 5000 vertices: index order), in Edit
+    Mode, and with a non-mesh active object (an error in the panel).
 11. Grid and geometry while pushing with the platter (the push and the grid).
 12. Geometry snapping to an object with modifiers (the evaluated mesh), to a
     large mesh (speed), and with nothing under the mouse.
