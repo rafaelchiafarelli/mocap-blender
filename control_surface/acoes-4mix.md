@@ -113,3 +113,117 @@ ação funciona; "—" = sem efeito nesse modo.
 | 44 | A, B e D FILTER; knobs HI, MID, LOW |
 | 45 | Deck A: RE e os outros SHIFT; deck B exceto IN, OUT, platter e VINYL MODE; deck D exceto VINYL MODE e OUT |
 | 47 | Deck C: SHIFT + os outros botões |
+
+## Ferramentas de desenho do Blender (referência para planejar)
+
+Todas as ferramentas de edição de malha do Edit Mode que não são
+modificadores. **4-Mix**: ✔ = já tem controle (o número da tabela acima);
+— = ainda não. **Prioridade**: em branco, para o Rafael marcar. Lista
+escrita de memória em 2026-11-23: conferir nomes e atalhos no Blender 5.2.2.
+
+### Criar geometria nova
+
+| # | Ferramenta | Atalho / menu | O que faz | 4-Mix | Prioridade |
+|---|---|---|---|---|---|
+| D1 | Extrude Region | E | puxa a seleção criando faces novas | ✔ 26 (ao longo da normal) | |
+| D2 | Extrude Along Normals | Alt+E | cada face sai pela própria normal, juntas | — | |
+| D3 | Extrude Individual Faces | Alt+E | cada face sai separada | — | |
+| D4 | Extrude Manifold | barra de ferramentas | extrude que corta/funde a geometria vizinha | — | |
+| D5 | Extrude to Cursor | Ctrl + botão direito | cria um vértice/aresta/face onde se clica: desenhar ponto a ponto | — | |
+| D6 | Extrude Vertices / Edges | E com vértice/aresta | puxa um vértice ou aresta solta | — | |
+| D7 | Add (primitivas na malha) | Shift+A | cubo, círculo, plano… dentro da malha em edição | ✔ 15 | |
+| D8 | Duplicate | Shift+D | copia a seleção e já move | — | |
+| D9 | Fill / New Edge-Face from Vertices | F | liga vértices com aresta ou face | — | |
+| D10 | Grid Fill | Face › Grid Fill | preenche um contorno com grade de quads | — | |
+| D11 | Fill (triângulos) | Alt+F | preenche um contorno com triângulos | — | |
+| D12 | Beautify Faces | Face › Beautify | reorganiza triângulos | — | |
+| D13 | Bridge Edge Loops | Edge › Bridge | liga dois contornos com faces | — | |
+| D14 | Spin / Spin Duplicates | barra / Mesh › Spin | revolução em volta do 3D Cursor | — | |
+| D15 | Screw | Edge › Screw | hélice a partir de um perfil | — | |
+| D16 | Poly Build | barra de ferramentas | desenha faces direto com clique e arrasto | — | |
+| D17 | Solidify Faces | Face › Solidify | dá espessura (ferramenta, não o modificador) | — | |
+| D18 | Wireframe | Face › Wireframe | troca as faces por um aramado com espessura | — | |
+| D19 | Convex Hull | Mesh › Convex Hull | casca em volta dos vértices | — | |
+
+### Cortar e subdividir
+
+| # | Ferramenta | Atalho / menu | O que faz | 4-Mix | Prioridade |
+|---|---|---|---|---|---|
+| D20 | Loop Cut and Slide | Ctrl+R | corte em anel | ✔ 29 | |
+| D21 | Offset Edge Loops Slide | Edge › Offset Edge Slide | dois anéis paralelos a uma aresta | — | |
+| D22 | Subdivide | Edge › Subdivide | divide as arestas selecionadas | ✔ 30 | |
+| D23 | Subdivide Edge-Ring | Edge › Subdivide Edge-Ring | divide um anel de arestas | — | |
+| D24 | Un-Subdivide | Edge › Un-Subdivide | desfaz uma subdivisão | — | |
+| D25 | Knife | K | corta desenhando com o mouse | — | |
+| D26 | Knife Project | Mesh › Knife Project | corta com o contorno de outro objeto | — | |
+| D27 | Bisect | Mesh › Bisect | corta por um plano | — | |
+| D28 | Connect Vertex Path | J | liga vértices com arestas cortando as faces | — | |
+| D29 | Connect Vertex Pairs | Vertex › Connect Pairs | liga pares de vértices | — | |
+| D30 | Poke Faces | Face › Poke | vértice no centro de cada face | — | |
+| D31 | Triangulate | Ctrl+T | faces viram triângulos | — | |
+| D32 | Tris to Quads | Alt+J | triângulos viram quads | — | |
+| D33 | Inset | I | face menor dentro da face | ✔ 27 | |
+| D34 | Bevel (arestas) | Ctrl+B | chanfra arestas | ✔ 28 | |
+| D35 | Bevel (vértices) | Ctrl+Shift+B | chanfra vértices | — | |
+
+### Combinar (union)
+
+| # | Ferramenta | Atalho / menu | O que faz | 4-Mix | Prioridade |
+|---|---|---|---|---|---|
+| D36 | Intersect (Boolean) | Face › Intersect (Boolean) | Union / Difference / Intersect entre partes da malha, sem modificador | — | |
+| D37 | Intersect (Knife) | Face › Intersect (Knife) | só corta onde as partes se cruzam | — | |
+| D38 | Weld Edges into Faces | Face › Weld Edges into Faces | solda arestas soltas nas faces | — | |
+| D39 | Merge At Center | M | junta no centro | ✔ 31 | |
+| D40 | Merge At Cursor / Collapse / At First / At Last | M | junta no cursor, por grupo, no primeiro/último | — | |
+| D41 | Merge By Distance | M | remove vértices duplicados | — | |
+| D42 | Join (Object Mode) | Ctrl+J | junta objetos numa malha só | — | |
+
+### Separar e rasgar
+
+| # | Ferramenta | Atalho / menu | O que faz | 4-Mix | Prioridade |
+|---|---|---|---|---|---|
+| D43 | Rip | V | rasga nos vértices selecionados | — | |
+| D44 | Rip Fill / Rip and Extend | Alt+V | rasga e preenche / estende | — | |
+| D45 | Split | Y | solta a seleção do resto (mesmo objeto) | — | |
+| D46 | Edge Split | Edge › Edge Split | separa ao longo das arestas | — | |
+| D47 | Separate | P | a seleção vira outro objeto | — | |
+
+### Mover e deformar dentro da malha
+
+| # | Ferramenta | Atalho / menu | O que faz | 4-Mix | Prioridade |
+|---|---|---|---|---|---|
+| D48 | Grab / Rotate / Scale | G / R / S | com eixos, cage, 90° e snap | ✔ 21–24b | |
+| D49 | Edge Slide / Vertex Slide | G G | desliza ao longo das arestas | — | |
+| D50 | Shrink/Fatten | Alt+S | move pelas normais | — | |
+| D51 | Push/Pull | Mesh › Transform | aproxima/afasta do centro | — | |
+| D52 | To Sphere | Shift+Alt+S | arredonda a seleção | — | |
+| D53 | Shear / Bend / Warp | Mesh › Transform | cisalha / dobra / enrola | — | |
+| D54 | Randomize | Mesh › Transform | desloca ao acaso | — | |
+| D55 | Smooth Vertices / Smooth Laplacian | Vertex › Smooth | suaviza | — | |
+| D56 | Rotate Edge CW / CCW | Edge › Rotate Edge | gira a aresta entre duas faces | — | |
+| D57 | Mirror / Symmetrize | Ctrl+M / Mesh › Symmetrize | espelha / copia um lado no outro | — | |
+
+### Apagar e limpar
+
+| # | Ferramenta | Atalho / menu | O que faz | 4-Mix | Prioridade |
+|---|---|---|---|---|---|
+| D58 | Delete | X | vértices, arestas, faces, só arestas e faces, só faces | ✔ 32 | |
+| D59 | Dissolve | Ctrl+X / X | vértices, arestas, faces, Limited Dissolve, Edge Loops | — | |
+| D60 | Clean Up | Mesh › Clean Up | Delete Loose, Decimate, Degenerate Dissolve, Make Planar, Split Non-Planar/Concave, Fill Holes | — | |
+
+### Normais e marcações (não criam forma)
+
+| # | Ferramenta | Atalho / menu | O que faz | 4-Mix | Prioridade |
+|---|---|---|---|---|---|
+| D61 | Recalculate Normals / Flip | Shift+N / Alt+N | acerta o lado de fora das faces | — | |
+| D62 | Shade Smooth / Flat | menu Face | sombreamento liso / facetado | — | |
+| D63 | Mark Seam / Sharp / Crease | Ctrl+E | marcações para UV, sombreamento, subdivisão | — | |
+
+## Menus flutuantes do Blender (referência)
+
+| # | Tipo | Onde aparece | Exemplos |
+|---|---|---|---|
+| F1 | Pie menu | em volta do mouse; escolhe-se arrastando na direção | Z sombreamento, ~ vistas, Shift+S snap/cursor, Ctrl+Tab modos |
+| F2 | Menu pop-up | onde o mouse está | botão direito (contexto), Shift+A Add, Ctrl+V/E/F Vertex/Edge/Face, Alt+E Extrude, M Merge, X Delete, Q Favoritos, F3 busca |
+| F3 | Gizmo | perto do objeto, com uma ferramenta da barra ativa | "+" do Extrude, setas do Spin, setas e anéis do Move/Rotate |
+| F4 | Adjust Last Operation | canto inferior esquerdo, depois de um comando (F9) | número de cortes, espessura, segmentos do último comando |

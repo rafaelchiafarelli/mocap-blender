@@ -31,7 +31,9 @@ Blender state → LED messages to the controller.
   generator script, not kept; edit them in draw.io from now on. Excluded
   from the zip.
 - `acoes-4mix.md` — Rafael's reference, in Portuguese: every control's
-  action and LED, numbered, with Object/Edit Mode columns. Keep it in step
+  action and LED, numbered, with Object/Edit Mode columns; then, for
+  planning, Blender's mesh drawing tools (D1–D63, which have a control) and
+  its floating menus (F1–F4). Keep it in step
   with the mapping on every change (a copy goes to the day's review folder
   on G:).
 - `__init__.py` — `register()` / `unregister()`; imports `bpy` only inside
