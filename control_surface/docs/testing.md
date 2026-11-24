@@ -4,7 +4,7 @@ Three levels, from cheapest to the hardware.
 
 ## 1. pytest (every commit)
 
-From the `mocap-blender` root: `pytest -q` (171 tests + 1 skipped without numpy, 2026-11-22, ~1 s).
+From the `mocap-blender` root: `pytest -q` (172 tests + 1 skipped without numpy, 2026-11-22, ~1 s).
 
 | File | What |
 |---|---|
@@ -48,6 +48,7 @@ cd control_surface/tests/windowed
 | `check_snapping_edit_mode.py` | geometry snapping of a vertex in Edit Mode |
 | `check_snap_sweep.py` | geometry snapping while the mouse sweeps a plane and another cube: rests on the plane, grabs vertex/edge, no corner swapping; marker screenshots |
 | `check_grid_s2_vol.py` | S2 VOL values → every 3D View's grid scale; jitter at a boundary keeps it; the grid move lands on it (real mouse); the deck A cursor walk crosses a 50 cm grid with 1 cm steps; screenshot with the note |
+| `check_add_config.py` | task 52: after an add like Shift+A, deck A's add is Blender's last operator; the settings level opens; IN/platter/IN rebuilds the cylinder (not a duplicate) and the registered operator gets the value; a field set directly rebuilds; OUT closes; Edit Mode add + resize; a real Ctrl+Z with the settings open ends them cleanly |
 | `check_delete_and_vertex_pick.py` | through a Session with fake ports: delete expires after 5 s, another key disarms, arm on A / delete on D; CUP vertex pick walks the cube's corners; task 51: the second CUP counts only while CUP is lit (Object Mode), deck A CUP/CUE/PLAY/SHIFT+CUP turn the axis off, SYNC keeps it |
 
 They are not collected by pytest (named `check_*`). `run.sh` deletes the

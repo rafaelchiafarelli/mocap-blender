@@ -67,7 +67,7 @@ All of this comes from [`mappings/blender_modes.json`](mappings/blender_modes.js
 | SHIFT + CUE (deck C) | Apply Rotation | lit 2 s after it worked |
 | SHIFT + PLAY/PAUSE (deck C) | Apply Scale | lit 2 s after it worked |
 | OUT (any deck, no menu open) | 1st press arms the delete (one state for the four decks: arm on one, delete on another); 2nd press deletes the selected objects (Edit Mode: vertices/edges/faces by the select mode). It disarms after 5 s, on any other key of any deck, on a change of selection or mode, or with another deck tool. A running grab is confirmed first | blinks fast while armed; lit 2 s after it deleted |
-| IN (deck A) | opens the Add menu (Shift+A) in the 4-Mix window; on a submenu: enters it; on an item: adds it (at the 3D Cursor) and closes | on while the menu is open |
+| IN (deck A) | opens the Add menu (Shift+A) in the 4-Mix window; on a submenu: enters it; on an item: adds it (at the 3D Cursor, with an undo step) and opens its settings at once (task 52: the operator's fields — Vertices, Radius… — as a Properties level; IN edit/keep, platter, OUT/SYNC close; the object is rebuilt on each change) | on while the menu or the settings are open |
 | Left platter (deck A), menu open | moves through the items (~14 pulses per item) | — |
 | OUT (deck A), menu open | short: one level back (at the top, closes); held 0.5 s: closes | blinks while the menu is open |
 | SYNC (deck A), menu open | closes the menu from any level | on while the menu is open |

@@ -1,6 +1,6 @@
 # control_surface — software specification
 
-State: version 0.1.53, 2026-11-22. This page describes what the add-on does
+State: version 0.1.54, 2026-11-22. This page describes what the add-on does
 and how it is built. What each button does today, in one table, is in
 [`../README.md`](../README.md) and, in Portuguese, in
 [`../acoes-4mix.md`](../acoes-4mix.md). The file-by-file as-built notes are in
@@ -283,6 +283,20 @@ default VERTEX/EDGE/FACE) → off.
   calling the menu classes' `draw()` with a recording layout (so add-ons'
   items appear too). Platter moves, IN enters/adds, OUT back (held: close),
   SYNC closes.
+- **The added object's settings** (task 52, `add_config.py`): an add runs
+  with bpy.ops' undo flag (an undo step, registered: Blender's Adjust Last
+  Operation panel is this operator — without it, changing that panel undid
+  back to the previous Shift+A and the controller's object vanished). Then
+  the operator's visible properties open at once as a Properties-menu
+  level in the 4-Mix window ("Add Cylinder": Vertices, Radius, …), edited
+  with deck A (IN edit/keep, platter value, OUT close, SYNC close) or the
+  mouse. Each tick a changed value redoes the add without Blender's undo:
+  Object Mode deletes the added objects and runs the operator again with
+  every value (same location and rotation), Edit Mode restores a mesh
+  snapshot and runs it again. The values are a PropertyGroup copy (the
+  registered operator can be freed under the window); the registered
+  operator gets them too. Closing pushes an undo step if anything changed.
+  Ends by itself on a mode change, Ctrl+Z, or the object deleted.
 - **3D cursor**: 1 → the cursor to the mouse (Blender's `view3d.cursor3d`
   run in the 3D View region under the window's last mouse position); 2/3/4 →
   the platter moves the cursor along X/Y/Z by `step` (same button, or deck

@@ -44,7 +44,8 @@ controller; the other shows "Standby" and does nothing until it is clicked.
   CUP/CUE/PLAY clear (Object) or extrude/inset/bevel (Edit).
 - **OUT, any deck, no menu open**: twice deletes the selection (the first press
   arms it and every OUT blinks; 5 s or any other key disarms it).
-- **Deck A (left)**: IN opens the Add menu; 1 puts the 3D cursor at the mouse;
+- **Deck A (left)**: IN opens the Add menu (an added object's settings open
+  right after: platter, IN to edit, OUT/SYNC to close); 1 puts the 3D cursor at the mouse;
   2/3/4 choose an axis for the platter to move the cursor (CUP, CUE or PLAY/PAUSE turn it off); SYNC/CUP/CUE/PLAY
   are the Snap menu (alone: the cursor, with SHIFT: the selection). CUP twice
   (the second while CUP is lit, 3 s) = vertex pick: the platter walks the active object's

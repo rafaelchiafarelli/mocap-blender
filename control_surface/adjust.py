@@ -48,7 +48,10 @@ def _restore(copies):
 
 def _free(copies):
     for _, copy in copies:
-        bpy.data.meshes.remove(copy)
+        try:
+            bpy.data.meshes.remove(copy)
+        except ReferenceError:  # Ctrl+Z already removed it (made after the undo step; task 52)
+            pass
 
 
 def adjusting():

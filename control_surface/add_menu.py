@@ -194,8 +194,8 @@ def toggle():
         _redraw()
         return {"FINISHED"}
     close()
-    from .blender_glue import run_operator  # 3D View context, like the menu
-    return run_operator(item["op"], item["props"], "INVOKE_DEFAULT")
+    from . import add_config  # adds with an undo step, then opens its settings (task 52)
+    return add_config.run(item["op"], item["props"])
 
 
 def step(pulses):

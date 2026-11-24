@@ -13,7 +13,7 @@ MODES = ROOT / "mappings" / "blender_modes.json"
 CUE_LEDS = Path(__file__).resolve().parent / "data" / "modes_cue_leds.json"
 A_LED, B_LED = (0x90, 0x27), (0x90, 0x28)  # CUE A, CUE B
 BUNDLED_ACTIONS = {"add_menu_close", "add_out_down", "add_out_up", "props_close", "props_out_down", "props_out_up", "delete_arm", "delete_confirm", "props_toggle", "props_step", "props_cancel", "extrude_start", "adjust_start", "adjust_change", "adjust_end", "loopcut_start", "select_mode_cycle", "rotate_snap_on", "rotate_tip", "add_menu_toggle", "add_menu_step", "add_menu_back", "add_menu_cancel", "delete_selected", "cage_step", "tool_toggle", "move_start", "sync_cycle", "grab_start", "grab_confirm", "grab_axis", "grab_push", "select_by_knob", "camera_move", "view_move", "view_projection", "orbit_selection_toggle", "cursor_to_mouse", "cursor_axis_toggle", "cursor_move", "snap_cycle", "cursor_cup", "cursor_pick_step", "grid_set"}
-BUNDLED_STATES = {"delete_armed", "props_menu", "props_editing", "adjusting", "adjust_active", "mesh_select_mode", "grab_snap", "add_menu", "cage", "rotate_mode", "sync_mode", "scale_mode", "grabbing", "grab_axis", "object_mode", "view_axis", "view_perspective", "orbit_selection", "cursor_axis", "snap_mode", "cursor_pick"}
+BUNDLED_STATES = {"delete_armed", "props_menu", "props_editing", "adjusting", "adjust_active", "mesh_select_mode", "grab_snap", "add_menu", "cage", "rotate_mode", "sync_mode", "scale_mode", "grabbing", "grab_axis", "object_mode", "view_axis", "view_perspective", "orbit_selection", "cursor_axis", "snap_mode", "cursor_pick", "add_config"}
 
 
 class FakeBlender:
@@ -25,7 +25,7 @@ class FakeBlender:
                      "add_menu": False, "grab_snap": False,
                      "adjusting": "NONE", "adjust_active": False, "mesh_select_mode": "NONE",
                      "props_menu": False, "props_editing": False, "delete_armed": False,
-                     "cursor_axis": "NONE", "snap_mode": "off", "cursor_pick": False}
+                     "cursor_axis": "NONE", "snap_mode": "off", "cursor_pick": False, "add_config": False}
         self.actions = []
         self.calls = []
         self.contexts = []
@@ -978,3 +978,20 @@ def test_on_event_sees_every_event_of_the_owner_only():
     press(e, (0x91, 0x0B))
     assert seen == [("CUP L/A", "press"), ("CUP L/A", "release")]
 
+
+
+def test_bundled_deck_a_edits_the_added_objects_settings():
+    e, fb, sent = make_bundled()
+    fb.view.update(add_config=True, props_menu=True)
+    press(e, (0x91, 0x02))                  # IN deck A: edit the field
+    e.handle(0xB1, 0x0F, 0x41)              # platter: value
+    press(e, (0x91, 0x05))                  # SYNC: close
+    press(e, (0x91, 0x03))                  # OUT: back / close (short press)
+    assert fb.actions == [("props_toggle", {}), ("props_step", {"pulses": 0.01, "amount": 0.01}),
+                          ("props_close", {}), ("props_out_down", {}), ("props_out_up", {})]
+    e.update()
+    assert led_values(sent, (0x91, 0x02))[-1] == LED_ON   # IN lit while the settings are open
+    fb.view["add_config"] = False
+    fb.actions.clear()
+    press(e, (0x91, 0x02))
+    assert fb.actions == [("add_menu_toggle", {})]       # closed: IN opens the Add menu again

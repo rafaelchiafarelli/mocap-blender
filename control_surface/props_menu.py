@@ -641,6 +641,21 @@ def editing():
     return _edit is not None
 
 
+def open_level(title, build, config=False):
+    """Open the menu on one level of its own (task 52: the settings of the object
+    just added, `config=True`); OUT at it, SYNC, or a long OUT close the menu."""
+    global _edit, _acc
+    close()
+    _stack.append({"title": title, "build": build, "items": build(), "index": 0, "config": config})
+    _edit, _acc = None, 0.0
+    _show()
+
+
+def config_open():
+    """The menu shows the settings of an added object (add_config)."""
+    return bool(_stack) and bool(_stack[0].get("config"))
+
+
 def _rebuild():
     for level in _stack:
         if level.get("build"):

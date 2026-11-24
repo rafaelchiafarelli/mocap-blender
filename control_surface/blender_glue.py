@@ -14,7 +14,7 @@ from pathlib import Path
 import bpy
 from mathutils import Matrix, Vector
 
-from . import add_menu, adjust, grab, grid_sizes, knob_select, menu_window, props_menu, snap, tour
+from . import add_config, add_menu, adjust, grab, grid_sizes, knob_select, menu_window, props_menu, snap, tour
 
 grab.END_TOOLS_HOOKS.append(adjust.end)
 from .engine import Engine, Mapping
@@ -86,6 +86,7 @@ STATES = {
     "sync_mode": grab.sync_mode,
     "cage": grab.cage_on,
     "add_menu": add_menu.is_open,
+    "add_config": lambda: props_menu.config_open(),
     "grab_axis": _grab_axis,
     "cursor_axis": lambda: _cursor_axis,
     "cursor_pick": lambda: cursor_pick(),
@@ -697,12 +698,15 @@ def _view3d():
     return None
 
 
-def run_operator(name, args, call="EXEC_DEFAULT"):
+def run_operator(name, args, call="EXEC_DEFAULT", undo=False):
     """Run bpy.ops.<name>(**args) in a 3D View context.
 
     call is Blender's execution context: EXEC_DEFAULT, or INVOKE_DEFAULT for
     operators that only have an invoke (e.g. view3d.view_pan), which otherwise
     fail with "Invalid operator call".
+    undo: bpy.ops' own flag. Without it a call from the timer makes no undo
+    step and is not registered as the last operator (Blender's "Adjust Last
+    Operation" stays on the one before; task 52).
     """
     module, op_name = name.split(".", 1)
     op = getattr(getattr(bpy.ops, module), op_name)
@@ -710,8 +714,8 @@ def run_operator(name, args, call="EXEC_DEFAULT"):
     if place:
         win, area, region = place
         with bpy.context.temp_override(window=win, area=area, region=region):
-            return op(call, **args)
-    return op(call, **args)  # background / no 3D View
+            return op(call, undo, **args)
+    return op(call, undo, **args)  # background / no 3D View
 
 
 # --- Two Blenders on one controller ------------------------------------------
@@ -847,6 +851,10 @@ class Session:
                 adjust.flush()  # at most one undo + redo per tick
             except Exception as e:
                 self.engine.last_error = f"adjust: {e}"
+            try:
+                add_config.flush()  # the added object's settings: one redo per tick
+            except Exception as e:
+                self.engine.last_error = f"add settings: {e}"
         self._log_state()
         self.engine.update()
 
@@ -975,7 +983,9 @@ def unregister():
     disconnect()
     grab.end_tools()
     add_menu.close()
+    add_config.end()
     props_menu.close()
+    add_config.unregister()
     menu_window.close()  # release the ports, or they stay locked until Blender quits
     for c in reversed(CLASSES):
         bpy.utils.unregister_class(c)

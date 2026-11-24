@@ -27,7 +27,8 @@ ação funciona; "—" = sem efeito nesse modo.
 
 | # | Controle | Ação | LED | Object | Edit |
 |---|---|---|---|---|---|
-| 15 | IN | abre o menu Add (o mesmo do Shift+A, na janela do 4-Mix com os ícones do Blender); com o menu aberto: entra no submenu ou insere o item no 3D Cursor e fecha | aceso com o menu aberto | ✔ | ✔ (menu de malha) |
+| 15 | IN | abre o menu Add (o mesmo do Shift+A, na janela do 4-Mix com os ícones do Blender); com o menu aberto: entra no submenu ou insere o item no 3D Cursor e abre na hora a **configuração do objeto** (15b) | aceso com o menu aberto | ✔ | ✔ (menu de malha) |
+| 15b | IN / platter / OUT / SYNC, configuração aberta | a configuração do objeto recém-adicionado (a mesma da caixa "Add Cylinder" do Blender: vértices, raio, profundidade…), na janela do 4-Mix: o platter anda pelos campos; IN edita, o platter muda o valor, IN guarda (OUT desfaz a edição); OUT ou SYNC fecham e o objeto fica. O objeto é refeito a cada mudança, no mesmo lugar. Também com o mouse na janela. A caixa "Add …" do Blender passa a ser a desse objeto (o bug do objeto que sumia) | IN aceso (piscando editando), OUT piscando | ✔ | ✔ |
 | 16 | Platter esquerdo, menu aberto | anda pelos itens (~14 pulsos por item) | — | ✔ | ✔ |
 | 17 | OUT, menu aberto | toque curto: volta um nível (no primeiro nível, fecha); segurado 0,5 s: fecha | pisca enquanto o menu está aberto | ✔ | ✔ |
 | 17b | SYNC (deck A), menu aberto | fecha o menu de qualquer nível | aceso com o menu aberto | ✔ | ✔ |

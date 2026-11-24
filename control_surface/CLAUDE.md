@@ -7,7 +7,7 @@ actions, and LEDs show Blender's state, whoever changed it. Plan:
 
 **Entry points:**
 - In Blender: the **DJ-Tech** tab in the 3D View sidebar (N panel), with
-  Connect / Disconnect (`blender_glue.py:898`).
+  Connect / Disconnect (`blender_glue.py:906`).
 - `register()` / `unregister()` in `__init__.py`.
 - Pure Python: `Profile.load` (`profile.py:73`), `Mapping.load`
   (`engine.py:66`), `Engine` (`engine.py:137`).
@@ -147,23 +147,49 @@ Blender state → LED messages to the controller.
   `operator`, `menu`, `operator_enum`, `operator_menu_enum`; the menu
   class's own helper methods are bound to the fake), so the items
   are Blender's (and add-ons'); `ROOT_MENUS` picks Shift+A's menu per mode.
-  `toggle` (IN: open / enter / run with INVOKE_DEFAULT and close), `step`
+  `toggle` (IN: open / enter / run and close — task 52: the run goes
+  through `add_config.run`), `step`
   (platter, ~14 pulses per item), `back` (OUT short), `close_all` (SYNC L/A, or
   OUT held 0.5 s via `_add_out_down`/`_add_out_up`; task 40); items keep their
   Shift+A icons, shown in the 4-Mix window above the Properties menu
   (`menu_window`; `_redraw` calls `menu_window.follow()`); the fallback
   overlay is drawn with `blf`/`gpu` in a POST_PIXEL handler right of the
   toolbar, only while that window is not open. State `add_menu`.
+- `add_config.py` — the settings of the object just added from the Add
+  menu (task 52). `run(op, args)` runs the item with `undo=True` (one undo
+  step, registered, so Blender's Adjust Last Operation panel is this one —
+  without it the panel stayed on the previous Shift+A and changing it undid
+  the controller's object away, Rafael 2026-11-23), then copies the
+  registered operator's visible properties into a PropertyGroup made for it
+  (`_make_group`/`_prop_def`: same types, limits, subtype/unit, static enum
+  items; `WindowManager.control_surface_add_config`) and opens it as a
+  Properties menu level (`props_menu.open_level`, `config=True`). Not the
+  operator's own properties: Blender frees registered operators (Ctrl+Z,
+  another operator, file load) while the window may still draw them; the
+  operator is only found again by pointer (`_registered`). `flush()` (each
+  `Session.tick`): ends when the level closed, the mode changed, the added
+  objects or the registered operator are gone; on a changed value
+  `_apply` redoes without Blender's undo — Object Mode removes the added
+  objects (and their now unused data) and runs the operator again
+  (EXEC_DEFAULT, the first run's values + the new ones, so location and
+  rotation stay), Edit Mode restores `adjust`'s mesh snapshot and runs it
+  again; the new values also go to the registered operator (Blender's panel
+  matches); a failed run goes back to the last good values. `end()` closes
+  the level, frees the snapshot and, if values changed (and the mode is the
+  same: not after a Ctrl+Z), pushes an undo step (`ed.undo_push`, works
+  from the timer). State `add_config`.
 - `adjust.py` — Inset / Bevel / Loop Cut adjusted by the platter (task 32):
   `start` keeps a copy of every Edit Mode mesh (`_snapshot`, a temporary
   Mesh datablock each), runs the operator; `change` records the platter
   (floats by the scaled amount, ints one per ~14 pulses); `flush` (once per
   `Session.tick`) restores the copy (`bm.clear()` + `bm.from_mesh`) and
   re-runs; a failing value falls back to the last good one; `end` frees the
-  copies (also from `grab.end_tools` through `END_TOOLS_HOOKS`). States
+  copies (`_free` skips a copy a Ctrl+Z already removed, task 52) (also from `grab.end_tools` through `END_TOOLS_HOOKS`). States
   `adjusting` (operator id or NONE), `adjust_active`. Not Blender's undo:
   `ed.undo` from the timer fails its poll or crashes Blender (2026-11-21).
-- `props_menu.py` — the Properties menu on deck B (tasks 33–34): `_root_rows`
+- `props_menu.py` — the Properties menu on deck B (tasks 33–34; task 52:
+  `open_level(title, build, config)` opens it on one level of its own,
+  `config_open()` tells whether that level is an added object's settings): `_root_rows`
   lists the editor's tabs (`TABS`, Blender's order, filtered by the active
   object). Python-drawn tabs: `_panel_rows(bl_context, tab)` runs each
   PROPERTIES panel's `draw_header`/`draw` through `_FakePanel` +
@@ -276,10 +302,10 @@ Blender state → LED messages to the controller.
   callback on a WinMM thread) and `MidiOut` (`winmm.py:125`). Short messages
   only.
 - `blender_glue.py` — the Blender side:
-  - **`Session`** (`blender_glue.py:757`) loads mapping + profile, validates
+  - **`Session`** (`blender_glue.py:761`) loads mapping + profile, validates
     the mapping against `STATES` and `ACTIONS`, finds and opens the ports by
     `port_name_contains`, builds the `Engine`, and starts the intro unless
-    `intro=False` (`blender_glue.py:801`).
+    `intro=False` (`blender_glue.py:805`).
   - **The timer:** a `bpy.app.timers` tick every 20 ms
     (`blender_glue.py:25`) drains the input queue and updates the LEDs.
   - **`STATES`** (`blender_glue.py:75`):
@@ -291,11 +317,11 @@ Blender state → LED messages to the controller.
       (also `NONE` in camera view);
     - `orbit_selection`: Preferences → Navigation → Orbit Around
       Selection (`True`/`False`).
-  - **`ACTIONS`** (`blender_glue.py:626`):
-    - `camera_move(x, y, forward)` (`blender_glue.py:102`) moves the scene
+  - **`ACTIONS`** (`blender_glue.py:627`):
+    - `camera_move(x, y, forward)` (`blender_glue.py:103`) moves the scene
       camera in metres along its own right/up axes and its view direction (a
       dolly; the lens is not touched);
-    - `view_move(x, y)` (`blender_glue.py:113`) moves the first 3D View's
+    - `view_move(x, y)` (`blender_glue.py:114`) moves the first 3D View's
       centre in metres along the view's right/up (the same directions as
       `view_pan` PANRIGHT/PANUP);
     - `view_projection(type)` sets the first 3D View to `ORTHO`/`PERSP`
@@ -330,10 +356,13 @@ Blender state → LED messages to the controller.
     - `orbit_selection_toggle()` flips Orbit Around Selection. Actions, not
       `wm.context_set_enum`/`wm.context_toggle`: those return
       `{'CANCELLED'}` for non-undo data and would show as an error.
-  - **`run_operator()`** (`blender_glue.py:700`) runs an operator with a
-    3D View context override and the `call` execution context.
+  - **`run_operator()`** (`blender_glue.py:701`) runs an operator with a
+    3D View context override and the `call` execution context; `undo=True`
+    passes bpy.ops' undo flag (task 52; only `add_config.run` uses it —
+    the other bindings make no undo step, bug
+    `initiatives/bugs/epics/control-surface/tasks/1-controller-operators-make-no-undo-step.md`).
   - **Operators and panel:** the panel also shows the layer states
-    (`blender_glue.py:953`), the scales in cm (`blender_glue.py:959`) and
+    (`blender_glue.py:961`), the scales in cm (`blender_glue.py:967`) and
     the viewport grid.
 - `devices/dj_tech_4mix.json` — DJ-Tech 4-Mix profile: 170 controls
   (125 buttons, 30 absolute CCs, 9 relative controls, 4 lights, 2 meters),
@@ -375,6 +404,12 @@ Blender state → LED messages to the controller.
     (task 28: closes the menu; it blinks while the menu is open) and the
     left platter → `add_menu_step` while the menu is open; IN's LED on while
     it is open.
+  - **Deck A, the added object's settings** (task 52; bindings with `when`
+    `add_config` placed before every other deck A binding): IN →
+    `props_toggle`, the left platter → `props_step` (scaled by `step`),
+    OUT → `props_out_down`/`props_out_up` (short: close, long: close),
+    SYNC → `props_close`; IN lit (blinking while editing), OUT blinking. The
+    deck B controls drive the same level.
   - **Deck A, 3D cursor** (task 43): 1 → `cursor_to_mouse` (flash 1 s);
     2/3/4 → `cursor_axis_toggle` X/Y/Z (state `cursor_axis`, that button's
     LED on; deck A's CUP, CUE, PLAY/PAUSE, with or without SHIFT, turn it
@@ -516,7 +551,7 @@ Blender state → LED messages to the controller.
 
 - **Threads:** WinMM calls `MidiIn`'s callback on its own thread. The callback
   only puts the message on a queue. `bpy` is touched only from the timer, on
-  the main thread (`blender_glue.py:836`).
+  the main thread (`blender_glue.py:840`).
 - **First match wins:** for one control event only one binding runs, so a
   binding with a `when` placed before one without acts as "if … otherwise"
   (e.g. CUE C: in Right view go Left, otherwise go Right).
@@ -552,8 +587,13 @@ Blender state → LED messages to the controller.
   knob gates followed, no binding runs, nothing is sent; on return every LED
   is resent. Injected ports (tests) are always active.
 - **Exclusive ports** (older Windows MIDI stack): a Windows MIDI port opens in one program at a time.
-  Disconnect (or disabling the add-on, `blender_glue.py:974`) releases it.
+  Disconnect (or disabling the add-on, `blender_glue.py:982`) releases it.
   While another program holds it, Connect reports "port in use".
+- **`bpy.ops` from the timer makes no undo step** and does not register the
+  operator (no Adjust Last Operation panel) unless called with its undo
+  flag (`op(call, True, ...)`; probed 2026-11-23). Blender's panel then
+  belongs to the operator before, and changing it undoes the timer's work
+  (task 52; open bug 1 in `initiatives/bugs/`).
 - **Invoke-only operators:** some operators (e.g. `view3d.view_pan`) have no
   exec. Called with `EXEC_DEFAULT`, Blender only logs
   `Invalid operator call` and returns `{'CANCELLED'}`. Their bindings need

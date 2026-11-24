@@ -859,6 +859,64 @@
   {
    "control": "IN L/A",
    "event": "press",
+   "action": "props_toggle",
+   "when": {
+    "add_config": true
+   }
+  },
+  {
+   "control": "OUT L/A",
+   "event": "press",
+   "action": "props_out_down",
+   "when": {
+    "add_config": true
+   }
+  },
+  {
+   "control": "OUT L/A",
+   "event": "release",
+   "action": "props_out_up",
+   "when": {
+    "add_config": true
+   }
+  },
+  {
+   "control": "PLATTER L/A",
+   "event": "cw",
+   "action": "props_step",
+   "args": {
+    "pulses": 1,
+    "amount": 1
+   },
+   "scale": "step",
+   "when": {
+    "add_config": true
+   }
+  },
+  {
+   "control": "PLATTER L/A",
+   "event": "ccw",
+   "action": "props_step",
+   "args": {
+    "pulses": -1,
+    "amount": -1
+   },
+   "scale": "step",
+   "when": {
+    "add_config": true
+   }
+  },
+  {
+   "control": "SYNC L/A",
+   "event": "press",
+   "action": "props_close",
+   "when": {
+    "add_config": true
+   }
+  },
+  {
+   "control": "IN L/A",
+   "event": "press",
    "action": "add_menu_toggle"
   },
   {
@@ -1444,9 +1502,34 @@
   },
   {
    "control": "IN L/A",
+   "state": "props_editing",
+   "equals": true,
+   "led": "blink",
+   "on_ms": 200,
+   "off_ms": 200,
+   "when": {
+    "add_config": true
+   }
+  },
+  {
+   "control": "IN L/A",
+   "state": "add_config",
+   "equals": true,
+   "led": "on"
+  },
+  {
+   "control": "IN L/A",
    "state": "add_menu",
    "equals": true,
    "led": "on"
+  },
+  {
+   "control": "OUT L/A",
+   "state": "add_config",
+   "equals": true,
+   "led": "blink",
+   "on_ms": 200,
+   "off_ms": 200
   },
   {
    "control": "OUT L/A",
