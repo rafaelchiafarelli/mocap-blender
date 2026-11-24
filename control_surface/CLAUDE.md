@@ -7,7 +7,7 @@ actions, and LEDs show Blender's state, whoever changed it. Plan:
 
 **Entry points:**
 - In Blender: the **DJ-Tech** tab in the 3D View sidebar (N panel), with
-  Connect / Disconnect (`blender_glue.py:906`).
+  Connect / Disconnect (`blender_glue.py:914`).
 - `register()` / `unregister()` in `__init__.py`.
 - Pure Python: `Profile.load` (`profile.py:73`), `Mapping.load`
   (`engine.py:66`), `Engine` (`engine.py:137`).
@@ -302,10 +302,10 @@ Blender state → LED messages to the controller.
   callback on a WinMM thread) and `MidiOut` (`winmm.py:125`). Short messages
   only.
 - `blender_glue.py` — the Blender side:
-  - **`Session`** (`blender_glue.py:761`) loads mapping + profile, validates
+  - **`Session`** (`blender_glue.py:769`) loads mapping + profile, validates
     the mapping against `STATES` and `ACTIONS`, finds and opens the ports by
     `port_name_contains`, builds the `Engine`, and starts the intro unless
-    `intro=False` (`blender_glue.py:805`).
+    `intro=False` (`blender_glue.py:813`).
   - **The timer:** a `bpy.app.timers` tick every 20 ms
     (`blender_glue.py:25`) drains the input queue and updates the LEDs.
   - **`STATES`** (`blender_glue.py:75`):
@@ -358,11 +358,16 @@ Blender state → LED messages to the controller.
       `{'CANCELLED'}` for non-undo data and would show as an error.
   - **`run_operator()`** (`blender_glue.py:701`) runs an operator with a
     3D View context override and the `call` execution context; `undo=True`
-    passes bpy.ops' undo flag (task 52; only `add_config.run` uses it —
+    passes bpy.ops' undo flag, with the window but no area in the context
+    (task 52; a registered operator lays out Blender's Adjust Last Operation
+    panel in the context's area at once, and from the timer, right after the
+    4-Mix window closed, there was no GPU context: crash in
+    `GPU_matrix_ortho_set` adding a Circle, 2026-11-23; without an area the
+    panel is laid out on the next redraw; only `add_config.run` uses it —
     the other bindings make no undo step, bug
     `initiatives/bugs/epics/control-surface/tasks/1-controller-operators-make-no-undo-step.md`).
   - **Operators and panel:** the panel also shows the layer states
-    (`blender_glue.py:961`), the scales in cm (`blender_glue.py:967`) and
+    (`blender_glue.py:969`), the scales in cm (`blender_glue.py:975`) and
     the viewport grid.
 - `devices/dj_tech_4mix.json` — DJ-Tech 4-Mix profile: 170 controls
   (125 buttons, 30 absolute CCs, 9 relative controls, 4 lights, 2 meters),
@@ -551,7 +556,7 @@ Blender state → LED messages to the controller.
 
 - **Threads:** WinMM calls `MidiIn`'s callback on its own thread. The callback
   only puts the message on a queue. `bpy` is touched only from the timer, on
-  the main thread (`blender_glue.py:840`).
+  the main thread (`blender_glue.py:848`).
 - **First match wins:** for one control event only one binding runs, so a
   binding with a `when` placed before one without acts as "if … otherwise"
   (e.g. CUE C: in Right view go Left, otherwise go Right).
@@ -587,11 +592,13 @@ Blender state → LED messages to the controller.
   knob gates followed, no binding runs, nothing is sent; on return every LED
   is resent. Injected ports (tests) are always active.
 - **Exclusive ports** (older Windows MIDI stack): a Windows MIDI port opens in one program at a time.
-  Disconnect (or disabling the add-on, `blender_glue.py:982`) releases it.
+  Disconnect (or disabling the add-on, `blender_glue.py:990`) releases it.
   While another program holds it, Connect reports "port in use".
 - **`bpy.ops` from the timer makes no undo step** and does not register the
   operator (no Adjust Last Operation panel) unless called with its undo
-  flag (`op(call, True, ...)`; probed 2026-11-23). Blender's panel then
+  flag (`op(call, True, ...)`; probed 2026-11-23). With that flag, never
+  give it an area from the timer: Blender lays out the panel there and then,
+  and may crash with no GPU context (see `run_operator`). Blender's panel then
   belongs to the operator before, and changing it undoes the timer's work
   (task 52; open bug 1 in `initiatives/bugs/`).
 - **Invoke-only operators:** some operators (e.g. `view3d.view_pan`) have no

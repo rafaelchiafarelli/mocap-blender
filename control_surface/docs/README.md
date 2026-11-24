@@ -1,7 +1,7 @@
 # control_surface — documentation
 
 The add-on turns a MIDI controller (the DJ-Tech 4-Mix) into part of
-Blender's interface. Version 0.1.54, 2026-11-22.
+Blender's interface. Version 0.1.55, 2026-11-22.
 
 | Page | For | Content |
 |---|---|---|

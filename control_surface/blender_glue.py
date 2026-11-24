@@ -711,6 +711,14 @@ def run_operator(name, args, call="EXEC_DEFAULT", undo=False):
     module, op_name = name.split(".", 1)
     op = getattr(getattr(bpy.ops, module), op_name)
     place = _view3d()
+    if place and undo:
+        # No area in the context: a registered operator makes Blender lay out
+        # its Adjust Last Operation panel in the context's area at once, which
+        # from the timer can have no GPU context (the 4-Mix window had just
+        # closed) and crashed in GPU_matrix_ortho_set (2026-11-23, Circle).
+        # Without an area the panel is laid out on the next normal redraw.
+        with bpy.context.temp_override(window=place[0], area=None, region=None):
+            return op(call, undo, **args)
     if place:
         win, area, region = place
         with bpy.context.temp_override(window=win, area=area, region=region):

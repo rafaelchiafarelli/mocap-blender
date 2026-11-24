@@ -28,3 +28,10 @@
   operator 34; radius 2 set on the field → 4 m wide; OUT closes, objects
   kept; Edit Mode add + size 0.5 keeps 16 vertices; real Ctrl+Z with the
   settings open ends them with no error.
+- **Fix (0.1.55, 2026-11-23):** Rafael's Blender crashed adding a Circle
+  from the menu (`ED_area_type_hud_ensure` → `GPU_matrix_ortho_set`, no GPU
+  context: the registered operator's panel was laid out from the timer right
+  after the 4-Mix window closed). `run_operator(undo=True)` now gives the
+  window but no area. Reproduced and checked by `check_add_from_menu.py`
+  (Circle, Cube, Circle through the real menu); `check_add_config.py` shows
+  the panel a keyboard add opened reading "Add Cylinder" after deck A's add.

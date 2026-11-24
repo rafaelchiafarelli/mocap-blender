@@ -1,6 +1,6 @@
 # control_surface — software specification
 
-State: version 0.1.54, 2026-11-22. This page describes what the add-on does
+State: version 0.1.55, 2026-11-22. This page describes what the add-on does
 and how it is built. What each button does today, in one table, is in
 [`../README.md`](../README.md) and, in Portuguese, in
 [`../acoes-4mix.md`](../acoes-4mix.md). The file-by-file as-built notes are in
@@ -285,7 +285,9 @@ default VERTEX/EDGE/FACE) → off.
   SYNC closes.
 - **The added object's settings** (task 52, `add_config.py`): an add runs
   with bpy.ops' undo flag (an undo step, registered: Blender's Adjust Last
-  Operation panel is this operator — without it, changing that panel undid
+  Operation panel is this operator; run with no area in the context, so
+  Blender does not lay out that panel from the timer, which crashed with no
+  GPU context — without it, changing that panel undid
   back to the previous Shift+A and the controller's object vanished). Then
   the operator's visible properties open at once as a Properties-menu
   level in the 4-Mix window ("Add Cylinder": Vertices, Radius, …), edited

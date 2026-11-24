@@ -72,7 +72,11 @@ def s0():
     win = bpy.context.window_manager.windows[0]
     u.SetCursorPos(pt.x + win.width // 3, pt.y + win.height // 2)
     st["s"] = g.connect(midi_in=FakeIn(), midi_out=FakeOut(), intro=False)
-    r = g.run_operator("mesh.primitive_cone_add", {"location": (-3, 0, 0)}, "INVOKE_DEFAULT", undo=True)
+    win = bpy.context.window_manager.windows[0]                # like Shift+A: with the area, so
+    area = next(a for a in win.screen.areas if a.type == "VIEW_3D")  # Blender lays out its panel
+    region = next(r for r in area.regions if r.type == "WINDOW")
+    with bpy.context.temp_override(window=win, area=area, region=region):
+        r = bpy.ops.mesh.primitive_cone_add("INVOKE_DEFAULT", True, location=(-3, 0, 0))
     log.append(["like Shift+A: cone", sorted(r), ops()])
 
 
@@ -85,7 +89,7 @@ def s1():
 
 
 def s2():
-    shot("add-config-window.png")
+    shot("add-config-window.png")   # Blender's panel (bottom left) must read "Add Cylinder"
     log.append(["4-Mix window open", menu_window.is_open()])
     press(0x91, 0x02)                                    # IN: edit Vertices (row 0)
     platter(30)                                          # +2 (~14 pulses each)
