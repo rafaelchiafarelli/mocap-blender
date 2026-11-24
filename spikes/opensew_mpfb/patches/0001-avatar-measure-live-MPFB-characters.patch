@@ -1,0 +1,197 @@
+From d5c957413207b1ee5e0fe0c91cfa9e2774bef9b8 Mon Sep 17 00:00:00 2001
+From: Claude <noreply@anthropic.com>
+Date: Tue, 24 Nov 2026 19:41:43 -0300
+Subject: [PATCH] avatar: measure live MPFB characters
+
+Teach the avatar measurement MPFB's rigs and vertex groups:
+
+- ignore MPFB's non-skin vertex groups (body, side masks, helper-*,
+  joint-*, mhmask-*) when picking a sample's dominant group; the full-weight
+  'body' group otherwise wins everywhere and the arms are measured as chest
+- RIG_DIALECTS: torso landmark bones for MPFB's default rig (spine numbered
+  top-down) and MPFB's Rigify metarig (neck on spine.005)
+- limb chains and limb groups for MPFB's default rig (upperarm01, lowerarm01,
+  wrist, upperleg01, lowerleg01)
+- keep upper_arm, lowerarm, finger, metacarpal and the Rigify deltoid helper
+  out of the torso cross-sections (MPFB's A-pose hangs the fingers at hip height)
+---
+ clothing_design/avatar.py | 115 ++++++++++++++++++++++++++++----------
+ 1 file changed, 84 insertions(+), 31 deletions(-)
+
+diff --git a/clothing_design/avatar.py b/clothing_design/avatar.py
+index 7ec633e..6db9b01 100644
+--- a/clothing_design/avatar.py
++++ b/clothing_design/avatar.py
+@@ -25,24 +25,56 @@ BONE_TABLE = {
+     "waist":  ["cc_base_waist", "mixamorig:spine", "spine.001", "waist", "spine01"],
+     "hip":    ["cc_base_pelvis", "mixamorig:hips", "pelvis", "hips", "spine"],
+ }
++# MPFB rigs whose spine bones the generic table above would misread: MPFB's
++# default rig numbers its spine top-down (spine01 is the upper chest, spine05
++# the pelvis), and MPFB's Rigify metarig puts the neck on spine.005, not on
++# spine.004 as a generated Rigify rig does. These only seed the landmarks -
++# waist, chest and hip are refined from the body's own cross-sections below.
++RIG_DIALECTS = {
++    "mpfb_default": {"neck": ["neck01"], "chest": ["spine01"],
++                     "waist": ["spine03"], "hip": ["spine05"]},
++    "mpfb_rigify":  {"neck": ["spine.005"], "chest": ["spine.004"],
++                     "waist": ["spine.002"], "hip": ["spine"]},
++}
++
++
++def rig_dialect(arm):
++    """Name of the RIG_DIALECTS entry for this armature, or None."""
++    if arm is None:
++        return None
++    names = {b.name.lower() for b in arm.data.bones}
++    if "spine05" in names and "neck01" in names:
++        return "mpfb_default"
++    if "spine.006" in names and "upper_arm.l" in names:
++        return "mpfb_rigify"
++    return None
++
++
++def bone_table(arm):
++    return RIG_DIALECTS.get(rig_dialect(arm), BONE_TABLE)
++
++
++
+ # Limb chains: (start bone, end bone). The axis runs start.head -> end.head,
+ # because CC4 bone tails stop at twist bones and badly understate limb length.
+ LIMB_CHAINS = {
+-    "arm_l":   (["cc_base_l_upperarm", "mixamorig:leftarm", "upper_arm.l"],
+-                ["cc_base_l_forearm", "mixamorig:leftforearm", "forearm.l"]),
+-    "arm_r":   (["cc_base_r_upperarm", "mixamorig:rightarm", "upper_arm.r"],
+-                ["cc_base_r_forearm", "mixamorig:rightforearm", "forearm.r"]),
+-    "farm_l":  (["cc_base_l_forearm", "mixamorig:leftforearm", "forearm.l"],
+-                ["cc_base_l_hand", "mixamorig:lefthand", "hand.l"]),
+-    "farm_r":  (["cc_base_r_forearm", "mixamorig:rightforearm", "forearm.r"],
+-                ["cc_base_r_hand", "mixamorig:righthand", "hand.r"]),
+-    "thigh_l": (["cc_base_l_thigh", "mixamorig:leftupleg", "thigh.l"],
+-                ["cc_base_l_calf", "mixamorig:leftleg", "shin.l"]),
+-    "thigh_r": (["cc_base_r_thigh", "mixamorig:rightupleg", "thigh.r"],
+-                ["cc_base_r_calf", "mixamorig:rightleg", "shin.r"]),
+-    "calf_l":  (["cc_base_l_calf", "mixamorig:leftleg", "shin.l"],
++    # last candidate in each list: MPFB's default rig (upperarm01/lowerarm01/
++    # wrist, upperleg01/lowerleg01/foot)
++    "arm_l":   (["cc_base_l_upperarm", "mixamorig:leftarm", "upper_arm.l", "upperarm01.l"],
++                ["cc_base_l_forearm", "mixamorig:leftforearm", "forearm.l", "lowerarm01.l"]),
++    "arm_r":   (["cc_base_r_upperarm", "mixamorig:rightarm", "upper_arm.r", "upperarm01.r"],
++                ["cc_base_r_forearm", "mixamorig:rightforearm", "forearm.r", "lowerarm01.r"]),
++    "farm_l":  (["cc_base_l_forearm", "mixamorig:leftforearm", "forearm.l", "lowerarm01.l"],
++                ["cc_base_l_hand", "mixamorig:lefthand", "hand.l", "wrist.l"]),
++    "farm_r":  (["cc_base_r_forearm", "mixamorig:rightforearm", "forearm.r", "lowerarm01.r"],
++                ["cc_base_r_hand", "mixamorig:righthand", "hand.r", "wrist.r"]),
++    "thigh_l": (["cc_base_l_thigh", "mixamorig:leftupleg", "thigh.l", "upperleg01.l"],
++                ["cc_base_l_calf", "mixamorig:leftleg", "shin.l", "lowerleg01.l"]),
++    "thigh_r": (["cc_base_r_thigh", "mixamorig:rightupleg", "thigh.r", "upperleg01.r"],
++                ["cc_base_r_calf", "mixamorig:rightleg", "shin.r", "lowerleg01.r"]),
++    "calf_l":  (["cc_base_l_calf", "mixamorig:leftleg", "shin.l", "lowerleg01.l"],
+                 ["cc_base_l_foot", "mixamorig:leftfoot", "foot.l"]),
+-    "calf_r":  (["cc_base_r_calf", "mixamorig:rightleg", "shin.r"],
++    "calf_r":  (["cc_base_r_calf", "mixamorig:rightleg", "shin.r", "lowerleg01.r"],
+                 ["cc_base_r_foot", "mixamorig:rightfoot", "foot.r"]),
+ }
+ # Vertex groups whose verts must not contribute to the torso cross-sections.
+@@ -52,17 +84,21 @@ LIMB_CHAINS = {
+ EXCLUDE_TORSO = ("upperarm", "forearm", "elbow", "wrist", "hand", "palm", "thumb",
+                  "index", "mid", "ring", "pinky", "head", "eye", "teeth", "tongue",
+                  "jaw", "facial", "brow", "nose", "lip", "cheek", "ear",
+-                 "leftarm", "rightarm")   # Mixamo upper arms have no "upperarm" in the name
++                 "leftarm", "rightarm",   # Mixamo upper arms have no "upperarm" in the name
++                 "upper_arm", "lowerarm",   # Rigify / MPFB default rig
++                 "finger", "metacarpal",   # MPFB default rig hands: in its A-pose
++                                           # the fingers hang at hip height
++                 "shoulder-helper")        # MPFB Rigify: the deltoid helper bone
+ # Keywords identifying the verts belonging to each limb.
+ LIMB_GROUPS = {
+-    "arm_l":   ("l_upperarm", "leftarm", "upper_arm.l"),
+-    "arm_r":   ("r_upperarm", "rightarm", "upper_arm.r"),
+-    "farm_l":  ("l_forearm", "leftforearm", "forearm.l"),
+-    "farm_r":  ("r_forearm", "rightforearm", "forearm.r"),
+-    "thigh_l": ("l_thigh", "leftupleg", "thigh.l"),
+-    "thigh_r": ("r_thigh", "rightupleg", "thigh.r"),
+-    "calf_l":  ("l_calf", "leftleg", "shin.l"),
+-    "calf_r":  ("r_calf", "rightleg", "shin.r"),
++    "arm_l":   ("l_upperarm", "leftarm", "upper_arm.l", "upperarm01.l", "upperarm02.l"),
++    "arm_r":   ("r_upperarm", "rightarm", "upper_arm.r", "upperarm01.r", "upperarm02.r"),
++    "farm_l":  ("l_forearm", "leftforearm", "forearm.l", "lowerarm01.l", "lowerarm02.l"),
++    "farm_r":  ("r_forearm", "rightforearm", "forearm.r", "lowerarm01.r", "lowerarm02.r"),
++    "thigh_l": ("l_thigh", "leftupleg", "thigh.l", "upperleg01.l", "upperleg02.l"),
++    "thigh_r": ("r_thigh", "rightupleg", "thigh.r", "upperleg01.r", "upperleg02.r"),
++    "calf_l":  ("l_calf", "leftleg", "shin.l", "lowerleg01.l", "lowerleg02.l"),
++    "calf_r":  ("r_calf", "rightleg", "shin.r", "lowerleg01.r", "lowerleg02.r"),
+ }
+ 
+ 
+@@ -138,6 +174,19 @@ def _bary_grid(k):
+ _BARY = {k: _bary_grid(k) for k in range(1, 6)}
+ 
+ 
++# MPFB characters carry vertex groups that are not skin weights: a full-weight
++# "body" group, side masks and the helper / joint-cube groups. Left in, "body"
++# wins the dominant-group vote on every vertex and the arms are measured as
++# part of the chest.
++_NON_SKIN_EXACT = {"body", "left", "mid", "right", "helpergeometry", "jointcubes"}
++_NON_SKIN_PREFIX = ("helper-", "joint-", "mhmask-")   # mhmask-*: added with the Rigify rig
++
++
++def _non_skin_group(name):
++    n = name.lower()
++    return n in _NON_SKIN_EXACT or n.startswith(_NON_SKIN_PREFIX)
++
++
+ def sample_body(ob, depsgraph, spacing=SPACING):
+     """Area-weighted samples over the body surface, each tagged with the dominant
+     vertex group of its triangle. Sampling the surface instead of the vertices
+@@ -152,14 +201,16 @@ def sample_body(ob, depsgraph, spacing=SPACING):
+     except Exception:
+         pass
+     mw = ev.matrix_world.copy()
+-    gname = {g.index: g.name.lower() for g in ob.vertex_groups}
++    gname = {g.index: g.name.lower() for g in ob.vertex_groups
++             if not _non_skin_group(g.name)}
+ 
+     co = [mw @ v.co for v in me.vertices]
+     dom_v = []
+     for v in me.vertices:
+-        if v.groups:
+-            top = max(v.groups, key=lambda g: g.weight)
+-            dom_v.append(gname.get(top.group, ""))
++        skin = [g for g in v.groups if g.group in gname and g.weight > 0.0]
++        if skin:
++            top = max(skin, key=lambda g: g.weight)
++            dom_v.append(gname[top.group])
+         else:
+             dom_v.append("")
+ 
+@@ -505,7 +556,7 @@ def measure(context, ob=None, force=False):
+     lm = {}
+     if arm is not None:
+         mw = arm.matrix_world
+-        for name, cands in BONE_TABLE.items():
++        for name, cands in bone_table(arm).items():
+             b = _find_bone(arm, cands)
+             if b is not None:
+                 lm[name] = (mw @ b.head).z
+@@ -667,12 +718,14 @@ def torso_bvh(context, ob=None):
+     except Exception:
+         return None
+     mw = ev.matrix_world.copy()
+-    gname = {g.index: g.name.lower() for g in ob.vertex_groups}
++    gname = {g.index: g.name.lower() for g in ob.vertex_groups
++             if not _non_skin_group(g.name)}
+     excl = []
+     for v in me.vertices:
+         d = ""
+-        if v.groups:
+-            d = gname.get(max(v.groups, key=lambda g: g.weight).group, "")
++        skin = [g for g in v.groups if g.group in gname and g.weight > 0.0]
++        if skin:
++            d = gname[max(skin, key=lambda g: g.weight).group]
+         excl.append(any(k in d for k in EXCLUDE_TORSO))
+     verts = [mw @ v.co for v in me.vertices]
+     tris = [tuple(t.vertices) for t in me.loop_triangles
+-- 
+2.43.0
+
