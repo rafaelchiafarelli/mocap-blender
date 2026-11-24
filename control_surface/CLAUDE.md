@@ -174,7 +174,10 @@ Blender state → LED messages to the controller.
   (EXEC_DEFAULT, the first run's values + the new ones, so location and
   rotation stay), Edit Mode restores `adjust`'s mesh snapshot and runs it
   again; the new values also go to the registered operator (Blender's panel
-  matches); a failed run goes back to the last good values. `end()` closes
+  matches); a failed run goes back to the last good values; before an
+  Object Mode redo the active object and selection of before the first run
+  come back (`_restore_selection`: Quick Fur works on the active mesh —
+  found by the validation round, task 53). `end()` closes
   the level, frees the snapshot and, if values changed (and the mode is the
   same: not after a Ctrl+Z), pushes an undo step (`ed.undo_push`, works
   from the timer). State `add_config`.
@@ -545,7 +548,13 @@ Blender state → LED messages to the controller.
   - `windowed/` (task 47): `check_*.py` scripts run in a windowed Blender
     (some move the real mouse) and print JSON results; `run.sh` runs one or
     all and deletes the window position they leave. Not collected by
-    pytest. Listed in `docs/testing.md`.
+    pytest. Listed in `docs/testing.md`. `CHECK_TIMEOUT` (seconds, default
+    150) for the long ones. The **validation round** (task 53):
+    `check_all_bindings.py` (every binding: its `when` reached by recipes,
+    the control sent, the binding that fired and the error recorded) and
+    `check_all_add_items.py` (every Add menu item through the real path, its
+    settings changed and closed); reports `all_bindings.md` /
+    `all_add_items.md`.
   - **Windowed check:** the view operators, the view states and
     `camera_move` (including `forward`: along the view direction, lens
     unchanged) and `view_move` (exact metres along the view's up/right) need a window, so they are not in the suite. They were

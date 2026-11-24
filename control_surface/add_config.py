@@ -144,6 +144,9 @@ def run(op, args):
 
     end()
     mode = bpy.context.mode
+    vl = bpy.context.view_layer
+    active = vl.objects.active.name if vl.objects.active else None
+    selected = [o.name for o in bpy.context.selected_objects]
     copies = adjust._snapshot() if mode == "EDIT_MESH" else []
     before = {o.as_pointer() for o in bpy.data.objects}
     result = run_operator(op, dict(args), "INVOKE_DEFAULT", undo=True)
@@ -160,6 +163,7 @@ def run(op, args):
     _session = {"op": op, "pointer": last.as_pointer(), "title": last.name, "names": names,
                 "objects": _new_objects(before) if mode != "EDIT_MESH" else [],
                 "copies": copies, "mode": mode, "base": _all_values(last.properties),
+                "active": active, "selected": selected,
                 "last": _group_values(names), "changed": False}
     props_menu.open_level(last.name, _rows, config=True)
     return result
@@ -202,6 +206,14 @@ _DATA_COLL = {"MESH": "meshes", "CURVE": "curves", "LIGHT": "lights", "CAMERA": 
               "POINTCLOUD": "pointclouds", "CURVES": "hair_curves"}
 
 
+def _restore_selection(s):
+    """The active object and the selection as they were before the first run."""
+    vl = bpy.context.view_layer
+    for o in vl.objects:
+        o.select_set(o.name in s["selected"])
+    vl.objects.active = bpy.data.objects.get(s["active"]) if s["active"] else None
+
+
 def _apply(values):
     """Redo the add with `values` over the first run's; True if it worked."""
     from .blender_glue import run_operator
@@ -212,6 +224,7 @@ def _apply(values):
         before = None
     else:
         _remove_objects(s["objects"])
+        _restore_selection(s)  # e.g. Quick Fur works on the active mesh (found by the validation round)
         before = {o.as_pointer() for o in bpy.data.objects}
     result = run_operator(s["op"], {**s["base"], **values})
     if before is not None:

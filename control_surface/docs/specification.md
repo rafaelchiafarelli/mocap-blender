@@ -1,6 +1,6 @@
 # control_surface — software specification
 
-State: version 0.1.55, 2026-11-22. This page describes what the add-on does
+State: version 0.1.56, 2026-11-22. This page describes what the add-on does
 and how it is built. What each button does today, in one table, is in
 [`../README.md`](../README.md) and, in Portuguese, in
 [`../acoes-4mix.md`](../acoes-4mix.md). The file-by-file as-built notes are in

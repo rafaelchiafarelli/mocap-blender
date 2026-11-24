@@ -50,7 +50,32 @@ cd control_surface/tests/windowed
 | `check_grid_s2_vol.py` | S2 VOL values → every 3D View's grid scale; jitter at a boundary keeps it; the grid move lands on it (real mouse); the deck A cursor walk crosses a 50 cm grid with 1 cm steps; screenshot with the note |
 | `check_add_config.py` | task 52: after an add like Shift+A (its panel laid out), deck A's add is Blender's last operator and that panel reads its name; the settings level opens; IN/platter/IN rebuilds the cylinder (not a duplicate) and the registered operator gets the value; a field set directly rebuilds; OUT closes; Edit Mode add + resize; a real Ctrl+Z with the settings open ends them cleanly |
 | `check_add_from_menu.py` | the real deck A path: IN opens the Add menu (4-Mix window), Mesh › Circle / Cube / Circle picked with IN (the window closes, the object is added, its settings open); crashed in 0.1.54 |
+| `check_all_bindings.py` | validation round: every binding (see above) |
+| `check_all_add_items.py` | validation round: every Add menu item (see above) |
 | `check_delete_and_vertex_pick.py` | through a Session with fake ports: delete expires after 5 s, another key disarms, arm on A / delete on D; CUP vertex pick walks the cube's corners; task 51: the second CUP counts only while CUP is lit (Object Mode), deck A CUP/CUE/PLAY/SHIFT+CUP turn the axis off, SYNC keeps it |
+
+**Validation round** (task 53) — run it before handing a version over:
+
+```bash
+CHECK_TIMEOUT=600 ./run.sh check_all_bindings.py    # ~4 min: every binding of the mapping
+CHECK_TIMEOUT=900 ./run.sh check_all_add_items.py   # ~4 min: every Add menu item, Object + Edit Mode
+```
+
+- `check_all_bindings.py`: for each of the mapping's bindings, resets the
+  scene and the tools, reaches its `when` the way a person would (recipes:
+  controller presses, the API only for Edit Mode and views), checks the
+  states hold, sends the control's bytes and records which binding fired
+  and `last_error`. Result `all_bindings.md`: OK / error / not reached /
+  another binding fired / nothing fired. A new `when` state needs a recipe
+  in `RECIPES` (and its place in `ORDER`).
+- `check_all_add_items.py`: every Add menu item through the real deck A
+  path (the 4-Mix window closes as the item is added), its settings opened,
+  the first number changed (the object rebuilt), OUT. Items with "…" are
+  skipped (dialogs, file browsers). Result `all_add_items.md`.
+- Both write a `*.progress.json` after every step, so a crash shows where.
+- 2026-11-23: 129/129 bindings OK; 80 items OK + 4 skipped (the first run
+  found Quick Fur failing on redo, fixed in 0.1.56; two items once reported
+  "menu closed early" and did not repeat).
 
 They are not collected by pytest (named `check_*`). `run.sh` deletes the
 4-Mix window position they leave in the portable Blender's config.

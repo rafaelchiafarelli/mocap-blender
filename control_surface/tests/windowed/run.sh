@@ -11,7 +11,7 @@ checks=("$@"); [ ${#checks[@]} -eq 0 ] && checks=("$HERE"/check_*.py)
 for c in "${checks[@]}"; do
   c=$(cd "$(dirname "$c")" 2>/dev/null && pwd)/$(basename "$c"); [ -f "$c" ] || c="$HERE/$(basename "$c")"
   echo "== $(basename "$c")"
-  timeout 150 "$B" --factory-startup --python "$(wslpath -w "$c")" -- "$(wslpath -w "$ROOT")" "$(wslpath -w "$OUT")" > "$OUT/$(basename "$c").log" 2>&1 || true
+  timeout "${CHECK_TIMEOUT:-150}" "$B" --factory-startup --python "$(wslpath -w "$c")" -- "$(wslpath -w "$ROOT")" "$(wslpath -w "$OUT")" > "$OUT/$(basename "$c").log" 2>&1 || true
   for j in "$OUT"/*.json; do [ -f "$j" ] && { cat "$j"; echo; rm "$j"; }; done
   rm -f "$CONFIG"   # the checks must not leave a 4-Mix window position behind
 done
