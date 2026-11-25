@@ -1026,7 +1026,11 @@
    "control": "1 L/A",
    "event": "press",
    "action": "cursor_to_mouse",
-   "flash_ms": 1000
+   "flash_ms": 1000,
+   "when": {
+    "add_menu": false,
+    "add_config": false
+   }
   },
   {
    "control": "2 L/A",
@@ -1034,6 +1038,10 @@
    "action": "cursor_axis_toggle",
    "args": {
     "axis": "X"
+   },
+   "when": {
+    "add_menu": false,
+    "add_config": false
    }
   },
   {
@@ -1042,6 +1050,10 @@
    "action": "cursor_axis_toggle",
    "args": {
     "axis": "Y"
+   },
+   "when": {
+    "add_menu": false,
+    "add_config": false
    }
   },
   {
@@ -1050,6 +1062,10 @@
    "action": "cursor_axis_toggle",
    "args": {
     "axis": "Z"
+   },
+   "when": {
+    "add_menu": false,
+    "add_config": false
    }
   },
   {

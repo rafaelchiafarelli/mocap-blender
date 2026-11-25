@@ -71,8 +71,8 @@ All of this comes from [`mappings/blender_modes.json`](mappings/blender_modes.js
 | Left platter (deck A), menu open | moves through the items (~14 pulses per item) | — |
 | OUT (deck A), menu open | short: one level back (at the top, closes); held 0.5 s: closes | blinks while the menu is open |
 | SYNC (deck A), menu open | closes the menu from any level | on while the menu is open |
-| 1 (deck A) | the 3D cursor to the mouse (like Shift + right click: on the surface under it) | lit 1 s after it worked |
-| 2 / 3 / 4 (deck A) | the left platter moves the 3D cursor along X / Y / Z by `step`; the same button again: off | on while that axis is chosen |
+| 1 (deck A) | the 3D cursor to the mouse (like Shift + right click: on the surface under it); nothing while the Add menu or the settings are open | lit 1 s after it worked |
+| 2 / 3 / 4 (deck A) | the left platter moves the 3D cursor along X / Y / Z by `step`; the same button again: off; IN (the Add menu) turns it off, and they do nothing while the Add menu or the settings are open | on while that axis is chosen |
 | SYNC / CUP / CUE / PLAY (deck A) | Blender's Snap menu (Shift+S), the 3D cursor: to Selected / to Active / to Grid / to World Origin (SYNC closes the Add menu first while it is open) | lit 1 s after it worked |
 | CUP (deck A) again while its LED is lit (3 s) | vertex pick: the left platter moves the 3D cursor from vertex to neighbouring vertex of the active mesh (~14 pulses each); CUP again ends, the cursor stays | blinks while picking |
 | SHIFT + SYNC / CUP / CUE / PLAY (deck A) | the selection: to Cursor / to Active / to Grid / to Cursor (Keep Offset) | lit 1 s after it worked |

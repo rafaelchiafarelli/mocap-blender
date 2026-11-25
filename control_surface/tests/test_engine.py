@@ -995,3 +995,18 @@ def test_bundled_deck_a_edits_the_added_objects_settings():
     fb.actions.clear()
     press(e, (0x91, 0x02))
     assert fb.actions == [("add_menu_toggle", {})]       # closed: IN opens the Add menu again
+
+
+def test_bundled_deck_a_cursor_buttons_do_nothing_while_adding():
+    e, fb, _ = make_bundled()
+    for state in ("add_menu", "add_config"):
+        fb.view.update(add_menu=False, add_config=False)
+        fb.view[state] = True
+        fb.actions.clear()
+        for note in (0x06, 0x07, 0x08, 0x09):          # 1, 2, 3, 4 on deck A
+            press(e, (0x91, note))
+        assert [a for a, _ in fb.actions if a.startswith("cursor_")] == [], state
+    fb.view.update(add_menu=False, add_config=False)
+    fb.actions.clear()
+    press(e, (0x91, 0x07))
+    assert fb.actions == [("cursor_axis_toggle", {"axis": "X"})]

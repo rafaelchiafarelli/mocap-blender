@@ -3,7 +3,8 @@ delete ends after 5 s and on another key; armed on deck A and confirmed on deck 
 CUP (deck A): cursor to the object, CUP again = vertex pick, the platter walks the
 vertices, CUP again ends with the cursor kept. Task 51: the second CUP counts only while
 CUP's LED is lit (3 s), in Object Mode; deck A's CUP / CUE / PLAY/PAUSE (SHIFT too) turn
-the cursor axis (2/3/4) off. No mouse. Writes delete_pick.json.
+the cursor axis (2/3/4) off. Task 54: deck A's IN (the Add menu) turns the axis and the
+vertex pick off, and 1-4 do nothing while it is open. No mouse. Writes delete_pick.json.
 
 Run from WSL:
     ./run.sh check_delete_and_vertex_pick.py
@@ -168,8 +169,48 @@ for name, note in (("CUP", 0x0A), ("CUE", 0x0B), ("PLAY/PAUSE", 0x0C), ("SHIFT+C
     f, h = axis_step(name, note)
     axis_seq += [(3.3, arm_x), (0.5, f), (0.5, h)]
 
+def t0():
+    g._cursor_axis, g._pick = "NONE", None
+    press(0x91, 0x07)                                   # 2: axis X
+
+
+def t1():
+    log.append(["axis armed", g.read_state("cursor_axis")])
+    press(0x91, 0x02)                                   # IN: the Add menu
+
+
+def t2():
+    log.append(["after IN: axis (must be NONE)", g.read_state("cursor_axis"), "add menu", g.read_state("add_menu")])
+    press(0x91, 0x08)                                   # 3 with the menu open
+
+
+def t3():
+    log.append(["3 with the Add menu open: axis (must be NONE)", g.read_state("cursor_axis")])
+    press(0x91, 0x05)                                   # SYNC: close the menu
+
+
+def t4():
+    press(0x91, 0x0A)                                   # CUP: to the object
+
+
+def t5():
+    press(0x91, 0x0A)                                   # CUP again: vertex pick
+
+
+def t6():
+    log.append(["pick on", g.cursor_pick()])
+    press(0x91, 0x02)                                   # IN: the Add menu
+
+
+def t7():
+    log.append(["after IN: pick (must be False)", g.cursor_pick(), "add menu", g.read_state("add_menu")])
+    press(0x91, 0x05)
+
+
+seq_task54 = [(3.3, t0), (0.5, t1), (0.5, t2), (0.5, t3), (0.5, t4), (0.5, t5), (0.5, t6), (0.5, t7)]
+
 seq = [(1.0, s0), (0.5, s1), (5.6, s2), (0.5, s3), (0.5, s4), (0.5, s5), (0.5, s6), (0.5, s7), (0.5, s8), (0.5, s9), (0.5, s10),
-       (3.3, s11), (2.5, s12), (0.5, s13), (0.5, s14), (0.5, s15), (3.3, s16), (0.5, s17)] + axis_seq
+       (3.3, s11), (2.5, s12), (0.5, s13), (0.5, s14), (0.5, s15), (3.3, s16), (0.5, s17)] + axis_seq + seq_task54
 
 
 def run():

@@ -492,10 +492,14 @@ AXIS_OFF_KEYS = ("CUP L/A", "CUE L/A", "PLAY/PAUSE L/A")  # with or without SHIF
 def on_event(cid, event):
     """Every decoded event of the owning Blender, before its bindings: any key
     other than an OUT (on any deck, platter touches excepted) disarms the delete;
-    deck A's CUP / CUE / PLAY/PAUSE turn the cursor axis (2/3/4) off (task 51)."""
-    global _cursor_axis
+    deck A's CUP / CUE / PLAY/PAUSE turn the cursor axis (2/3/4) off (task 51);
+    deck A's IN (the Add menu) turns it and the vertex pick off (task 54)."""
+    global _cursor_axis, _pick
     if event == "press" and cid.split("+")[0] in AXIS_OFF_KEYS:
         _cursor_axis = "NONE"
+    if event == "press" and cid == "IN L/A":  # the Add menu interrupts the 3D cursor (task 54)
+        _cursor_axis = "NONE"
+        _pick = None
     if (_delete_armed is not None and event == "press" and not cid.startswith("OUT ")
             and not cid.endswith(" touch")):
         _delete_disarm()

@@ -136,6 +136,12 @@ def reset():
         o.select_set(o == cube)
     bpy.context.view_layer.objects.active = cube
     st["s"].engine.last_error = ""
+    # A hand on the mouse keeps Blender's last known mouse position fresh; here it rests, and
+    # after a 4-Mix window opened and closed that position could be stale (deck A's 1 then
+    # found no 3D View under it, once in 129). Nudge it over the 3D View.
+    x, y = st["mouse"]
+    u.SetCursorPos(x + 1, y); u.mouse_event(1, 1, 0, 0, 0)
+    u.SetCursorPos(x, y); u.mouse_event(1, -1 & 0xFFFFFFFF, 0, 0, 0)
 
 
 def when_holds(when):
@@ -219,7 +225,8 @@ def start():
     u.keybd_event(0x1B, 0, 0, 0); u.keybd_event(0x1B, 0, 2, 0)  # the splash
     pt = wintypes.POINT(0, 0); u.ClientToScreen(st["main"], ctypes.byref(pt))
     win = bpy.context.window_manager.windows[0]
-    u.SetCursorPos(pt.x + win.width // 3, pt.y + win.height // 2)  # over the 3D View
+    st["mouse"] = (pt.x + win.width // 3, pt.y + win.height // 2)  # over the 3D View
+    u.SetCursorPos(*st["mouse"])
     st["keep"] = {o.name for o in bpy.data.objects}
     s = g.connect(midi_in=FakeIn(), midi_out=FakeOut(), intro=False)
     st["s"] = s

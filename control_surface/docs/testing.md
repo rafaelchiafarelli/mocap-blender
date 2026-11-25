@@ -52,7 +52,7 @@ cd control_surface/tests/windowed
 | `check_add_from_menu.py` | the real deck A path: IN opens the Add menu (4-Mix window), Mesh › Circle / Cube / Circle picked with IN (the window closes, the object is added, its settings open); crashed in 0.1.54 |
 | `check_all_bindings.py` | validation round: every binding (see above) |
 | `check_all_add_items.py` | validation round: every Add menu item (see above) |
-| `check_delete_and_vertex_pick.py` | through a Session with fake ports: delete expires after 5 s, another key disarms, arm on A / delete on D; CUP vertex pick walks the cube's corners; task 51: the second CUP counts only while CUP is lit (Object Mode), deck A CUP/CUE/PLAY/SHIFT+CUP turn the axis off, SYNC keeps it |
+| `check_delete_and_vertex_pick.py` | task 54: deck A's IN turns the cursor axis and the vertex pick off, 3 does nothing with the Add menu open; through a Session with fake ports: delete expires after 5 s, another key disarms, arm on A / delete on D; CUP vertex pick walks the cube's corners; task 51: the second CUP counts only while CUP is lit (Object Mode), deck A CUP/CUE/PLAY/SHIFT+CUP turn the axis off, SYNC keeps it |
 
 **Validation round** (task 53) — run it before handing a version over:
 
@@ -74,6 +74,10 @@ CHECK_TIMEOUT=900 ./run.sh check_all_add_items.py   # ~4 min: every Add menu ite
   first number changed (the object rebuilt), OUT. Items with "…" are
   skipped (dialogs, file browsers). Result `all_add_items.md`.
 - Both write a `*.progress.json` after every step, so a crash shows where.
+- `check_all_bindings.py` nudges the mouse 1 px over the 3D View at every
+  reset: a resting mouse left Blender's last known position stale after a
+  4-Mix window opened and closed, and deck A's 1 once found no 3D View
+  under it (2026-11-24; a hand on the mouse keeps it fresh).
 - 2026-11-23: 129/129 bindings OK; 80 items OK + 4 skipped (the first run
   found Quick Fur failing on redo, fixed in 0.1.56; two items once reported
   "menu closed early" and did not repeat). 2026-11-24, 0.1.57: 80 OK, the

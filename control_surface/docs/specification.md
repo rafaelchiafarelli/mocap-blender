@@ -1,6 +1,6 @@
 # control_surface — software specification
 
-State: version 0.1.57, 2026-11-22. This page describes what the add-on does
+State: version 0.1.58, 2026-11-22. This page describes what the add-on does
 and how it is built. What each button does today, in one table, is in
 [`../README.md`](../README.md) and, in Portuguese, in
 [`../acoes-4mix.md`](../acoes-4mix.md). The file-by-file as-built notes are in
@@ -300,7 +300,9 @@ default VERTEX/EDGE/FACE) → off.
   operator gets them too. Closing pushes an undo step if anything changed.
   Ends by itself on a mode change, Ctrl+Z, or the object deleted.
 - **3D cursor**: 1 → the cursor to the mouse (Blender's `view3d.cursor3d`
-  run in the 3D View region under the window's last mouse position); 2/3/4 →
+  run in the 3D View region under the window's last mouse position); 1–4 do
+  nothing while the Add menu or its settings are open, and IN turns the axis
+  and the vertex pick off (task 54); 2/3/4 →
   the platter moves the cursor along X/Y/Z by `step` (same button, or deck
   A's CUP / CUE / PLAY/PAUSE with or without SHIFT: off; `on_event`).
   CUP sends the cursor to the active object; CUP again while its LED is lit

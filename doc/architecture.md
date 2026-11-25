@@ -8,7 +8,7 @@ The repository holds two Blender-side parts of Mocap Studio.
 | Part | Folder | State (2026-11-22) | Documentation |
 |---|---|---|---|
 | P5 capture add-on | [`mocap_blender/`](../mocap_blender/) | planned, no code yet: import `mocap_take.json` (from `mocap-adapt`, contract in `mocap-contracts`) as animated empties, NLA layers (locked capture + correction track), FreeMoCap bridge | [`../README.md`](../README.md), [`../initiatives/baseline/`](../initiatives/baseline/baseline.md) |
-| Control surface | [`control_surface/`](../control_surface/) | working, version 0.1.57: the DJ-Tech 4-Mix MIDI controller as part of Blender's interface | [`../control_surface/docs/`](../control_surface/docs/README.md) |
+| Control surface | [`control_surface/`](../control_surface/) | working, version 0.1.58: the DJ-Tech 4-Mix MIDI controller as part of Blender's interface | [`../control_surface/docs/`](../control_surface/docs/README.md) |
 
 ## Control surface in one paragraph
 
@@ -31,4 +31,4 @@ Details: [`control_surface/docs/specification.md`](../control_surface/docs/speci
 - Tests: `pytest` at the repository root (pure tests + a headless Blender
   smoke test); windowed checks in `control_surface/tests/windowed/`.
 - Planning: [`../initiatives/`](../initiatives/README.md) — `baseline`,
-  `integration`, `control-surface` (epic `dj-tech`, tasks 1–53).
+  `integration`, `control-surface` (epic `dj-tech`, tasks 1–54).

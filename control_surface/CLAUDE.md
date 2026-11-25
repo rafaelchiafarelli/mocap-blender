@@ -7,7 +7,7 @@ actions, and LEDs show Blender's state, whoever changed it. Plan:
 
 **Entry points:**
 - In Blender: the **DJ-Tech** tab in the 3D View sidebar (N panel), with
-  Connect / Disconnect (`blender_glue.py:914`).
+  Connect / Disconnect (`blender_glue.py:918`).
 - `register()` / `unregister()` in `__init__.py`.
 - Pure Python: `Profile.load` (`profile.py:73`), `Mapping.load`
   (`engine.py:66`), `Engine` (`engine.py:137`).
@@ -310,10 +310,10 @@ Blender state → LED messages to the controller.
   callback on a WinMM thread) and `MidiOut` (`winmm.py:125`). Short messages
   only.
 - `blender_glue.py` — the Blender side:
-  - **`Session`** (`blender_glue.py:769`) loads mapping + profile, validates
+  - **`Session`** (`blender_glue.py:773`) loads mapping + profile, validates
     the mapping against `STATES` and `ACTIONS`, finds and opens the ports by
     `port_name_contains`, builds the `Engine`, and starts the intro unless
-    `intro=False` (`blender_glue.py:813`).
+    `intro=False` (`blender_glue.py:817`).
   - **The timer:** a `bpy.app.timers` tick every 20 ms
     (`blender_glue.py:25`) drains the input queue and updates the LEDs.
   - **`STATES`** (`blender_glue.py:75`):
@@ -325,7 +325,7 @@ Blender state → LED messages to the controller.
       (also `NONE` in camera view);
     - `orbit_selection`: Preferences → Navigation → Orbit Around
       Selection (`True`/`False`).
-  - **`ACTIONS`** (`blender_glue.py:627`):
+  - **`ACTIONS`** (`blender_glue.py:631`):
     - `camera_move(x, y, forward)` (`blender_glue.py:103`) moves the scene
       camera in metres along its own right/up axes and its view direction (a
       dolly; the lens is not touched);
@@ -364,7 +364,7 @@ Blender state → LED messages to the controller.
     - `orbit_selection_toggle()` flips Orbit Around Selection. Actions, not
       `wm.context_set_enum`/`wm.context_toggle`: those return
       `{'CANCELLED'}` for non-undo data and would show as an error.
-  - **`run_operator()`** (`blender_glue.py:701`) runs an operator with a
+  - **`run_operator()`** (`blender_glue.py:705`) runs an operator with a
     3D View context override and the `call` execution context; `undo=True`
     passes bpy.ops' undo flag, with the window but no area in the context
     (task 52; a registered operator lays out Blender's Adjust Last Operation
@@ -375,7 +375,7 @@ Blender state → LED messages to the controller.
     the other bindings make no undo step, bug
     `initiatives/bugs/epics/control-surface/tasks/1-controller-operators-make-no-undo-step.md`).
   - **Operators and panel:** the panel also shows the layer states
-    (`blender_glue.py:969`), the scales in cm (`blender_glue.py:975`) and
+    (`blender_glue.py:973`), the scales in cm (`blender_glue.py:979`) and
     the viewport grid.
 - `devices/dj_tech_4mix.json` — DJ-Tech 4-Mix profile: 170 controls
   (125 buttons, 30 absolute CCs, 9 relative controls, 4 lights, 2 meters),
@@ -423,7 +423,10 @@ Blender state → LED messages to the controller.
     OUT → `props_out_down`/`props_out_up` (short: close, long: close),
     SYNC → `props_close`; IN lit (blinking while editing), OUT blinking. The
     deck B controls drive the same level.
-  - **Deck A, 3D cursor** (task 43): 1 → `cursor_to_mouse` (flash 1 s);
+  - **Deck A, 3D cursor** (task 43; task 54: 1–4 have `when` add_menu and
+    add_config false, and deck A's IN — `on_event` — turns the axis and the
+    vertex pick off, so the Add menu interrupts the cursor): 1 →
+    `cursor_to_mouse` (flash 1 s);
     2/3/4 → `cursor_axis_toggle` X/Y/Z (state `cursor_axis`, that button's
     LED on; deck A's CUP, CUE, PLAY/PAUSE, with or without SHIFT, turn it
     off — `blender_glue.on_event`, `AXIS_OFF_KEYS`, task 51); the left platter (after the Add menu's bindings) →
@@ -570,7 +573,7 @@ Blender state → LED messages to the controller.
 
 - **Threads:** WinMM calls `MidiIn`'s callback on its own thread. The callback
   only puts the message on a queue. `bpy` is touched only from the timer, on
-  the main thread (`blender_glue.py:848`).
+  the main thread (`blender_glue.py:852`).
 - **First match wins:** for one control event only one binding runs, so a
   binding with a `when` placed before one without acts as "if … otherwise"
   (e.g. CUE C: in Right view go Left, otherwise go Right).
@@ -606,7 +609,7 @@ Blender state → LED messages to the controller.
   knob gates followed, no binding runs, nothing is sent; on return every LED
   is resent. Injected ports (tests) are always active.
 - **Exclusive ports** (older Windows MIDI stack): a Windows MIDI port opens in one program at a time.
-  Disconnect (or disabling the add-on, `blender_glue.py:990`) releases it.
+  Disconnect (or disabling the add-on, `blender_glue.py:994`) releases it.
   While another program holds it, Connect reports "port in use".
 - **`bpy.ops` from the timer makes no undo step** and does not register the
   operator (no Adjust Last Operation panel) unless called with its undo
