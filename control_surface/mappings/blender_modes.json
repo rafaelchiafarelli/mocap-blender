@@ -175,6 +175,14 @@
   {
    "control": "SYNC L/C",
    "event": "press",
+   "action": "grab_confirm",
+   "when": {
+    "grabbing": true
+   }
+  },
+  {
+   "control": "SYNC L/C",
+   "event": "press",
    "action": "sync_cycle"
   },
   {
@@ -1154,6 +1162,14 @@
   {
    "control": "SYNC L/A",
    "event": "press",
+   "action": "cursor_done",
+   "when": {
+    "cursor_moving": true
+   }
+  },
+  {
+   "control": "SYNC L/A",
+   "event": "press",
    "operator": "view3d.snap_cursor_to_selected",
    "args": {},
    "flash_ms": 1000
@@ -1436,6 +1452,12 @@
   },
   {
    "control": "SYNC L/C",
+   "state": "grabbing",
+   "equals": true,
+   "led": "on"
+  },
+  {
+   "control": "SYNC L/C",
    "state": "sync_mode",
    "equals": "on",
    "led": "on"
@@ -1656,6 +1678,12 @@
   {
    "control": "SYNC L/A",
    "state": "add_menu",
+   "equals": true,
+   "led": "on"
+  },
+  {
+   "control": "SYNC L/A",
+   "state": "cursor_moving",
    "equals": true,
    "led": "on"
   },

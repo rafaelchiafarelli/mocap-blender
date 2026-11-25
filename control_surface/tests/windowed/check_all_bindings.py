@@ -100,10 +100,11 @@ RECIPES = {
     "add_config": {True: [lambda: add_config.run("mesh.primitive_cube_add", {"size": 0.5, "location": (4, 0, 0)})]},
     "delete_armed": {True: [("send", "OUT L/C")]},
     "cursor_pick": {True: [("send", "CUP L/A"), ("send", "CUP L/A")]},
+    "cursor_moving": {True: [("send", "2 L/A")]},
 }
 ORDER = ["object_mode", "view_perspective", "view_axis", "sync_mode", "scale_mode", "rotate_mode", "cage",
          "grabbing", "grab_axis", "grab_snap", "adjusting", "adjust_active", "add_menu", "props_menu",
-         "add_config", "delete_armed", "cursor_pick"]
+         "add_config", "delete_armed", "cursor_pick", "cursor_moving"]
 
 
 def reset():

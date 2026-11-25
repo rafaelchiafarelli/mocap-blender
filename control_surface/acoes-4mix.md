@@ -36,7 +36,8 @@ ação funciona; "—" = sem efeito nesse modo.
 | 17d | 2 / 3 / 4 (deck A) | escolhe o eixo X / Y / Z: o platter esquerdo move o 3D Cursor nesse eixo, pelo `step` do S1 VOL; o mesmo botão de novo desliga; abrir o menu Add (IN) desliga, e com o menu ou a configuração aberta eles não fazem nada; CUP, CUE ou PLAY/PAUSE do deck A (com ou sem SHIFT) também desligam | aceso enquanto o eixo está escolhido | ✔ | ✔ |
 | 17e | Platter esquerdo, menu fechado, eixo escolhido | move o 3D Cursor no eixo escolhido (1–10 cm por pulso, pelo S1 VOL); com o snap de grade, pula de linha em linha da grade do S2 VOL | — | ✔ | ✔ |
 | 17n | VINYL MODE do lado esquerdo (deck A ou C, Object e Edit) | snap (o imã do Blender, Shift+Tab): desligado → **A, grade** → **B, geometria** → desligado. Grade: mover cai na grade do Blender (S2 VOL); escalar em passos de 10 × o passo do S1 VOL (0,1–1,0); o platter do cursor anda na grade. Geometria: o objeto (ou o vértice, no Edit) gruda no vértice/aresta/face de outro objeto embaixo do mouse; o botão 1 leva o cursor ao vértice/aresta/face embaixo do mouse. Vale também para o G/S do teclado. Durante o mover/escalar aparece uma marca laranja: um anel com VERTEX/EDGE/FACE no alvo e um ponto no canto que gruda (o canto mais perto do mouse na tela), ou "snap: grid 50 cm" (o tamanho) embaixo à esquerda | aceso = grade, piscando = geometria | ✔ | ✔ |
-| 17f | SYNC (menu fechado) | Cursor to Selected: o cursor vai para o centro da seleção | aceso 1 s | ✔ | ✔ |
+| 17f0 | SYNC, cursor andando (eixo 2/3/4 ou escolha de vértice do CUP) | encerra o movimento do cursor; o cursor fica onde está | aceso enquanto o cursor anda | ✔ | ✔ |
+| 17f | SYNC (menu fechado, cursor parado) | Cursor to Selected: o cursor vai para o centro da seleção | aceso 1 s | ✔ | ✔ |
 | 17g | CUP | Cursor to Active: o cursor vai para o objeto ativo (Edit: vértice ativo). **CUP de novo enquanto ele está aceso (3 s)**: escolher vértice — o platter esquerdo leva o cursor de um vértice ao vizinho (~14 pulsos cada); **mais um CUP** encerra e o cursor fica | aceso 3 s; piscando escolhendo vértice | ✔ | ✔ |
 | 17h | CUE | Cursor to Grid: o cursor vai para o ponto da grade mais próximo (grade do Blender: o tamanho do S2 VOL, 1 m se não mexido) | aceso 1 s | ✔ | ✔ |
 | 17i | PLAY/PAUSE | Cursor to World Origin: o cursor volta para (0, 0, 0) | aceso 1 s | ✔ | ✔ |
@@ -49,7 +50,8 @@ ação funciona; "—" = sem efeito nesse modo.
 
 | # | Controle | Ação | LED | Object | Edit |
 |---|---|---|---|---|---|
-| 18 | SYNC | apagado → aceso → piscando → apagado; ligar desliga as outras ferramentas | aceso / piscando | ✔ | ✔ |
+| 18a | SYNC, com mover / escalar / girar em andamento | termina a operação: o objeto fica travado onde está (o modo livre, sem passar pelo de 90°); a ferramenta continua armada | aceso durante a operação | ✔ | ✔ |
+| 18 | SYNC, sem operação em andamento | apagado → aceso → piscando → apagado; ligar desliga as outras ferramentas | aceso / piscando | ✔ | ✔ |
 | 19 | Platter esquerdo, SYNC aceso | sobe/desce a vista (na vista da câmera: a câmera) | — | ✔ | ✔ |
 | 20 | Platter esquerdo, SYNC piscando | vista para esquerda/direita (na vista da câmera: a câmera) | — | ✔ | ✔ |
 | 21 | RE (scale) | 1º toque: começa um scale livre (botão 1 aceso); 2º: liga a cage; 3º: desliga | aceso ligado; piscando com cage | ✔ objetos | ✔ vértices |

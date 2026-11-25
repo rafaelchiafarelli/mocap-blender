@@ -50,7 +50,8 @@ All of this comes from [`mappings/blender_modes.json`](mappings/blender_modes.js
 | Encoder, press | nothing (the camera view moved to CUE D) | — |
 | S1 VOL | sets `step`: 1 cm (bottom) to 10 cm (top); 1 cm until moved | — |
 | S2 VOL | the viewport grid (every 3D View's grid scale): 1 mm (bottom) to 10 m (top), 1-2-5 steps; "grid: 50 cm" shows for 1.5 s; untouched until moved. The grid of grid snapping, Shift+S "to grid" and Blender's own snapping | — |
-| SYNC (deck C) | cycles off → on → blinking → off; sets what the left platter does; on turns the other tools off | on / blinking |
+| SYNC (deck C), a move / scale / rotation running | confirms it where it is (task 55: a free rotation can be kept without the 90° mode); the tool stays armed | on while it runs |
+| SYNC (deck C), nothing running | cycles off → on → blinking → off; sets what the left platter does; on turns the other tools off | on / blinking |
 | Left platter, deck C, SYNC on | view up/down by `step`; in camera view: camera up/down | — |
 | Left platter, deck C, SYNC blinking | view right/left by `step`; in camera view: camera right/left | — |
 | RE (deck C) | scale on: the other tools off, a free scale starts at once (button 1 lit); scale off (a running scale is confirmed) | on while scale is on (running or armed); blinking while the cage is on |
@@ -73,6 +74,7 @@ All of this comes from [`mappings/blender_modes.json`](mappings/blender_modes.js
 | SYNC (deck A), menu open | closes the menu from any level | on while the menu is open |
 | 1 (deck A) | the 3D cursor to the mouse (like Shift + right click: on the surface under it); nothing while the Add menu or the settings are open | lit 1 s after it worked |
 | 2 / 3 / 4 (deck A) | the left platter moves the 3D cursor along X / Y / Z by `step`; the same button again: off; IN (the Add menu) turns it off, and they do nothing while the Add menu or the settings are open | on while that axis is chosen |
+| SYNC (deck A), the 3D cursor moving (an axis, 2/3/4, or the vertex pick) | ends it; the cursor stays where it is (task 55) | on while it moves |
 | SYNC / CUP / CUE / PLAY (deck A) | Blender's Snap menu (Shift+S), the 3D cursor: to Selected / to Active / to Grid / to World Origin (SYNC closes the Add menu first while it is open) | lit 1 s after it worked |
 | CUP (deck A) again while its LED is lit (3 s) | vertex pick: the left platter moves the 3D cursor from vertex to neighbouring vertex of the active mesh (~14 pulses each); CUP again ends, the cursor stays | blinks while picking |
 | SHIFT + SYNC / CUP / CUE / PLAY (deck A) | the selection: to Cursor / to Active / to Grid / to Cursor (Keep Offset) | lit 1 s after it worked |

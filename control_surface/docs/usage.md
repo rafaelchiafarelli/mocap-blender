@@ -40,7 +40,9 @@ controller; the other shows "Standby" and does nothing until it is clicked.
   (1–10 cm) for every platter move; S2 VOL sets Blender's grid (1 mm–10 m),
   the grid that grid snapping lands on.
 - **Deck C (left)**: 1–4 move free/X/Y/Z, RE scale, IN rotate, SYNC moves the
-  view; the left platter pushes by `step`; the same number again confirms.
+  view; the left platter pushes by `step`; the same number again confirms
+  (a rotation: the 90° mode first); SYNC confirms any running move, scale or
+  rotation where it is. On deck A, SYNC ends the cursor's movement.
   CUP/CUE/PLAY clear (Object) or extrude/inset/bevel (Edit).
 - **OUT, any deck, no menu open**: twice deletes the selection (the first press
   arms it and every OUT blinks; 5 s or any other key disarms it).

@@ -12,8 +12,8 @@ MODES = ROOT / "mappings" / "blender_modes.json"
 # Test mapping: the bundled bindings plus mode LEDs on CUE A-D (A-D have no LED).
 CUE_LEDS = Path(__file__).resolve().parent / "data" / "modes_cue_leds.json"
 A_LED, B_LED = (0x90, 0x27), (0x90, 0x28)  # CUE A, CUE B
-BUNDLED_ACTIONS = {"add_menu_close", "add_out_down", "add_out_up", "props_close", "props_out_down", "props_out_up", "delete_arm", "delete_confirm", "props_toggle", "props_step", "props_cancel", "extrude_start", "adjust_start", "adjust_change", "adjust_end", "loopcut_start", "select_mode_cycle", "rotate_snap_on", "rotate_tip", "add_menu_toggle", "add_menu_step", "add_menu_back", "add_menu_cancel", "delete_selected", "cage_step", "tool_toggle", "move_start", "sync_cycle", "grab_start", "grab_confirm", "grab_axis", "grab_push", "select_by_knob", "camera_move", "view_move", "view_projection", "orbit_selection_toggle", "cursor_to_mouse", "cursor_axis_toggle", "cursor_move", "snap_cycle", "cursor_cup", "cursor_pick_step", "grid_set"}
-BUNDLED_STATES = {"delete_armed", "props_menu", "props_editing", "adjusting", "adjust_active", "mesh_select_mode", "grab_snap", "add_menu", "cage", "rotate_mode", "sync_mode", "scale_mode", "grabbing", "grab_axis", "object_mode", "view_axis", "view_perspective", "orbit_selection", "cursor_axis", "snap_mode", "cursor_pick", "add_config"}
+BUNDLED_ACTIONS = {"add_menu_close", "add_out_down", "add_out_up", "props_close", "props_out_down", "props_out_up", "delete_arm", "delete_confirm", "props_toggle", "props_step", "props_cancel", "extrude_start", "adjust_start", "adjust_change", "adjust_end", "loopcut_start", "select_mode_cycle", "rotate_snap_on", "rotate_tip", "add_menu_toggle", "add_menu_step", "add_menu_back", "add_menu_cancel", "delete_selected", "cage_step", "tool_toggle", "move_start", "sync_cycle", "grab_start", "grab_confirm", "grab_axis", "grab_push", "select_by_knob", "camera_move", "view_move", "view_projection", "orbit_selection_toggle", "cursor_to_mouse", "cursor_axis_toggle", "cursor_move", "snap_cycle", "cursor_cup", "cursor_pick_step", "grid_set", "cursor_done"}
+BUNDLED_STATES = {"delete_armed", "props_menu", "props_editing", "adjusting", "adjust_active", "mesh_select_mode", "grab_snap", "add_menu", "cage", "rotate_mode", "sync_mode", "scale_mode", "grabbing", "grab_axis", "object_mode", "view_axis", "view_perspective", "orbit_selection", "cursor_axis", "snap_mode", "cursor_pick", "add_config", "cursor_moving"}
 
 
 class FakeBlender:
@@ -25,7 +25,8 @@ class FakeBlender:
                      "add_menu": False, "grab_snap": False,
                      "adjusting": "NONE", "adjust_active": False, "mesh_select_mode": "NONE",
                      "props_menu": False, "props_editing": False, "delete_armed": False,
-                     "cursor_axis": "NONE", "snap_mode": "off", "cursor_pick": False, "add_config": False}
+                     "cursor_axis": "NONE", "snap_mode": "off", "cursor_pick": False, "add_config": False,
+                     "cursor_moving": False}
         self.actions = []
         self.calls = []
         self.contexts = []
@@ -239,11 +240,11 @@ def test_bundled_while_grabbing_same_button_confirms_other_changes_axis_and_plat
     press(e, (0x93, NUM_C["Y"]))
     press(e, (0x93, NUM_C["X"]))
     e.handle(0xB3, 0x0F, 0x3F)
-    press(e, SYNC_C)
+    press(e, SYNC_C)                    # task 55: SYNC confirms a running grab too
     e.handle(0xB3, 0x0F, 0x41)
-    assert [a for a in fb.actions if a[0] != "sync_cycle"] == [
+    assert fb.actions == [
         ("grab_axis", {"axis": "Y"}), ("grab_confirm", {}),
-        ("grab_push", {"amount": -0.01}), ("grab_push", {"amount": 0.01})]
+        ("grab_push", {"amount": -0.01}), ("grab_confirm", {}), ("grab_push", {"amount": 0.01})]
     fb.view.update(grabbing=False, grab_axis="NONE")
     fb.now = 20
     e.update()
@@ -1010,3 +1011,29 @@ def test_bundled_deck_a_cursor_buttons_do_nothing_while_adding():
     fb.actions.clear()
     press(e, (0x91, 0x07))
     assert fb.actions == [("cursor_axis_toggle", {"axis": "X"})]
+
+
+def test_bundled_sync_confirms_a_running_grab_on_deck_c_and_cycles_otherwise():
+    e, fb, sent = make_bundled()
+    fb.view.update(grabbing=True, grab_axis="X", rotate_mode="RUNNING")
+    e.update()
+    assert led_values(sent, (0x93, 0x05))[-1] == LED_ON     # SYNC lit: it can end the grab
+    press(e, (0x93, 0x05))
+    assert fb.actions == [("grab_confirm", {})]
+    fb.view.update(grabbing=False, grab_axis="NONE", rotate_mode="ARMED")
+    fb.actions.clear()
+    press(e, (0x93, 0x05))
+    assert fb.actions == [("sync_cycle", {})]               # no grab: the view's SYNC as before
+
+
+def test_bundled_sync_ends_the_3d_cursor_movement_on_deck_a():
+    e, fb, sent = make_bundled()
+    fb.view["cursor_moving"] = True
+    e.update()
+    assert led_values(sent, (0x91, 0x05))[-1] == LED_ON     # SYNC lit while the cursor moves
+    press(e, (0x91, 0x05))
+    assert fb.actions == [("cursor_done", {})]
+    fb.view["cursor_moving"] = False
+    fb.actions.clear()
+    press(e, (0x91, 0x05))
+    assert fb.calls[-1][0] == "view3d.snap_cursor_to_selected" and fb.actions == []

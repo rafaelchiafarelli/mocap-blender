@@ -90,6 +90,7 @@ STATES = {
     "grab_axis": _grab_axis,
     "cursor_axis": lambda: _cursor_axis,
     "cursor_pick": lambda: cursor_pick(),
+    "cursor_moving": lambda: cursor_moving(),
     "snap_mode": lambda: snap.mode(),
     "object_mode": _object_mode, "view_perspective": _view_perspective,
     "view_axis": _view_axis, "orbit_selection": _orbit_selection,
@@ -253,6 +254,18 @@ def _active_vertices():
 
 def cursor_pick():
     return _pick is not None
+
+
+def cursor_moving():
+    """Deck A moves the 3D cursor: an axis for the platter (2/3/4) or the vertex pick."""
+    return _cursor_axis != "NONE" or _pick is not None
+
+
+def cursor_done():
+    """SYNC (deck A, task 55): end the cursor's movement; the cursor stays where it is."""
+    global _cursor_axis, _pick, _cup_at
+    _cursor_axis, _pick, _cup_at = "NONE", None, None
+    return {"FINISHED"}
 
 
 def _cup_lit(now):
@@ -659,6 +672,7 @@ ACTIONS = {
     "grid_set": grid_set,
     "cursor_cup": cursor_cup,
     "cursor_pick_step": cursor_pick_step,
+    "cursor_done": cursor_done,
     "snap_cycle": lambda: snap.cycle(),
     "sync_cycle": lambda: grab.sync_cycle(),
     "cage_step": lambda delta: grab.cage_step(delta),

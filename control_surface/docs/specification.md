@@ -1,6 +1,6 @@
 # control_surface — software specification
 
-State: version 0.1.58, 2026-11-22. This page describes what the add-on does
+State: version 0.1.59, 2026-11-22. This page describes what the add-on does
 and how it is built. What each button does today, in one table, is in
 [`../README.md`](../README.md) and, in Portuguese, in
 [`../acoes-4mix.md`](../acoes-4mix.md). The file-by-file as-built notes are in
@@ -221,6 +221,12 @@ the camera by `step`. C FILTER selects one object in Outliner order
 One tool at a time (`09-state-machines.drawio`): SYNC (the left platter moves
 the view or the camera), MOVE (1 free / 2 X / 3 Y / 4 Z), SCALE (RE) and
 ROTATE (IN). Turning one on turns the others off and confirms a running grab.
+SYNC with a grab running (move, scale, rotation, the extrusion) confirms it
+where it is and lights while it runs (task 55: the 2nd press of a rotation's
+number enters the 90° mode, so a free angle had no way to be kept); with no
+grab it cycles the view's SYNC as before. On deck A, SYNC ends the 3D
+cursor's movement (an axis or the vertex pick; state `cursor_moving`,
+action `cursor_done`) and lights while it moves.
 
 - **The grab** (`grab.py`) is the add-on's own modal operator, because
   Blender's G/S/R recompute everything from the mouse (a platter push would be
