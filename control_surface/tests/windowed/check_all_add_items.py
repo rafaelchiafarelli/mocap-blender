@@ -6,7 +6,8 @@ For each item (items ending in "…" open a dialog or a file browser and are ski
 2. IN on deck A opens the Add menu (the 4-Mix window opens), each level is entered the way
    the platter + IN would (index set, then IN), and IN on the item adds it — the 4-Mix window
    closes at that moment, where 0.1.54 crashed with the Circle;
-3. if the settings open: change the first number field by one step (the object is rebuilt);
+3. if the settings open: check they show the values the object was built with (a stale
+   group once showed the last add's), then change the first number field (the object is rebuilt);
 4. OUT on deck A closes; record the result, the settings, the error.
 Progress goes to all_add_items.progress.json after every item, so a crash shows where.
 Result: all_add_items.json and all_add_items.md (Portuguese, for Rafael).
@@ -118,6 +119,12 @@ def run_item(mode, path, names, it):
         rec["objects_added"] = len(bpy.data.objects) - before
         rec["error"] = st["s"].engine.last_error
         if add_config.active():
+            grp = add_config.group()
+            reg = add_config._registered(add_config._session["pointer"]).properties
+            rec["settings_match"] = all(add_config._value(getattr(grp, n)) == add_config._value(getattr(reg, n))
+                                        for n in add_config._session["names"])
+            if not rec["settings_match"]:
+                rec["error"] = "the settings show other values than the object was built with"
             rec["changed"] = bump_first_number()
             yield TICK + 0.2
             rec["error_after_change"] = st["s"].engine.last_error

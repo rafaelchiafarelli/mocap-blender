@@ -48,7 +48,7 @@ cd control_surface/tests/windowed
 | `check_snapping_edit_mode.py` | geometry snapping of a vertex in Edit Mode |
 | `check_snap_sweep.py` | geometry snapping while the mouse sweeps a plane and another cube: rests on the plane, grabs vertex/edge, no corner swapping; marker screenshots |
 | `check_grid_s2_vol.py` | S2 VOL values → every 3D View's grid scale; jitter at a boundary keeps it; the grid move lands on it (real mouse); the deck A cursor walk crosses a 50 cm grid with 1 cm steps; screenshot with the note |
-| `check_add_config.py` | task 52: after an add like Shift+A (its panel laid out), deck A's add is Blender's last operator and that panel reads its name; the settings level opens; IN/platter/IN rebuilds the cylinder (not a duplicate) and the registered operator gets the value; a field set directly rebuilds; OUT closes; Edit Mode add + resize; a real Ctrl+Z with the settings open ends them cleanly |
+| `check_add_config.py` | a 2nd add after the 1st was changed opens with its own values and stays where it was added after a change (0.1.57); task 52: after an add like Shift+A (its panel laid out), deck A's add is Blender's last operator and that panel reads its name; the settings level opens; IN/platter/IN rebuilds the cylinder (not a duplicate) and the registered operator gets the value; a field set directly rebuilds; OUT closes; Edit Mode add + resize; a real Ctrl+Z with the settings open ends them cleanly |
 | `check_add_from_menu.py` | the real deck A path: IN opens the Add menu (4-Mix window), Mesh › Circle / Cube / Circle picked with IN (the window closes, the object is added, its settings open); crashed in 0.1.54 |
 | `check_all_bindings.py` | validation round: every binding (see above) |
 | `check_all_add_items.py` | validation round: every Add menu item (see above) |
@@ -70,12 +70,15 @@ CHECK_TIMEOUT=900 ./run.sh check_all_add_items.py   # ~4 min: every Add menu ite
   in `RECIPES` (and its place in `ORDER`).
 - `check_all_add_items.py`: every Add menu item through the real deck A
   path (the 4-Mix window closes as the item is added), its settings opened,
-  the first number changed (the object rebuilt), OUT. Items with "…" are
+  the settings checked against the values the object was built with, the
+  first number changed (the object rebuilt), OUT. Items with "…" are
   skipped (dialogs, file browsers). Result `all_add_items.md`.
 - Both write a `*.progress.json` after every step, so a crash shows where.
 - 2026-11-23: 129/129 bindings OK; 80 items OK + 4 skipped (the first run
   found Quick Fur failing on redo, fixed in 0.1.56; two items once reported
-  "menu closed early" and did not repeat).
+  "menu closed early" and did not repeat). 2026-11-24, 0.1.57: 80 OK, the
+  settings matching the built object in all 80 (they showed the last add's
+  values before).
 
 They are not collected by pytest (named `check_*`). `run.sh` deletes the
 4-Mix window position they leave in the portable Blender's config.

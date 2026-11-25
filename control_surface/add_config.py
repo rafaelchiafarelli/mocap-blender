@@ -108,11 +108,21 @@ def _make_group(props):
     bpy.utils.register_class(cls)
     _group_cls = cls
     setattr(bpy.types.WindowManager, GROUP_ATTR, bpy.props.PointerProperty(type=cls))
+    # The values live in the window manager's ID properties under the field
+    # names and outlive the class: a new group read the last add's edited
+    # values (radius, location…) instead of its defaults, and the next change
+    # rebuilt the new object with them (Rafael, 2026-11-24). Set every value.
+    g = group()
+    for n in names:
+        setattr(g, n, _value(getattr(props, n)))
     return names
 
 
 def _drop_group():
     global _group_cls
+    wm = bpy.context.window_manager
+    if wm is not None and GROUP_ATTR in wm:
+        del wm[GROUP_ATTR]  # the stored values, so nothing carries over
     if _group_cls is not None:
         try:
             delattr(bpy.types.WindowManager, GROUP_ATTR)

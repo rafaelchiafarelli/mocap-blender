@@ -162,7 +162,12 @@ Blender state → LED messages to the controller.
   the controller's object away, Rafael 2026-11-23), then copies the
   registered operator's visible properties into a PropertyGroup made for it
   (`_make_group`/`_prop_def`: same types, limits, subtype/unit, static enum
-  items; `WindowManager.control_surface_add_config`) and opens it as a
+  items; `WindowManager.control_surface_add_config`; every value set from
+  the operator after registering, and the window manager's stored values
+  deleted in `_drop_group` — they are kept under the field names and
+  outlive the class, so a new group showed the last add's edited values and
+  a change rebuilt the new object with them, location included: Rafael
+  2026-11-24) and opens it as a
   Properties menu level (`props_menu.open_level`, `config=True`). Not the
   operator's own properties: Blender frees registered operators (Ctrl+Z,
   another operator, file load) while the window may still draw them; the

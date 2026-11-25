@@ -6,7 +6,9 @@ real Session with fake MIDI ports and the real keyboard (Ctrl+Z):
   and the object is rebuilt, not duplicated; the registered operator gets the value;
 - a field changed directly (as the mouse does) rebuilds it too; OUT closes, keeps it;
 - Edit Mode: an add inside the mesh, resized, keeps its vertex count;
-- Ctrl+Z while the settings are open ends them without a crash.
+- Ctrl+Z while the settings are open ends them without a crash;
+- a 2nd add after the 1st was changed opens with its own values, and a change keeps it
+  where it was added (Rafael 2026-11-24: it took the 1st's values and location).
 Writes add_config.json and screenshots.
 
 Run from WSL (a Blender window opens; do not use the PC meanwhile):
@@ -145,7 +147,34 @@ def s8():
                 "mode", bpy.context.mode, "error", st["s"].engine.last_error])
 
 
-seq = [(1.5, s0), (0.8, s1), (1.0, s2), (1.0, s3), (0.8, s4), (0.8, s5), (0.8, s6), (0.8, s7), (1.0, s8)]
+def s9():                                               # Rafael 2026-11-24: the 2nd add got the 1st's values
+    bpy.context.scene.cursor.location = (3, 3, 0)
+    add_config.run("mesh.primitive_cylinder_add", {})
+    grp = add_config.group()
+    grp.radius, grp.vertices, grp.location = 1.5, 12, (5, 5, 0)
+
+
+def s10():
+    add_config.end()
+    bpy.context.scene.cursor.location = (-4, -2, 0)
+    add_config.run("mesh.primitive_cylinder_add", {})
+    grp = add_config.group()
+    reg = add_config._registered(add_config._session["pointer"]).properties
+    log.append(["2nd add: settings = what was built (must be True)",
+                (grp.radius, grp.vertices, tuple(grp.location)) == (reg.radius, reg.vertices, tuple(reg.location)),
+                "settings", [grp.radius, grp.vertices, list(grp.location)]])
+    grp.depth = 3.0                                     # change one field
+
+
+def s11():
+    o = bpy.data.objects.get(add_config._session["objects"][0])
+    log.append(["2nd add after a change: location (must be -4,-2,0)", [round(c, 3) for c in o.location],
+                "verts", len(o.data.vertices), "width", round(o.dimensions.x, 3), "height", round(o.dimensions.z, 3)])
+    add_config.end()
+
+
+seq = [(1.5, s0), (0.8, s1), (1.0, s2), (1.0, s3), (0.8, s4), (0.8, s5), (0.8, s6), (0.8, s7), (1.0, s8),
+       (0.8, s9), (0.8, s10), (0.8, s11)]
 
 
 def run():

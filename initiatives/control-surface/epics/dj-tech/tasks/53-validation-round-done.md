@@ -24,3 +24,12 @@
   and twice "menu closed early" (Mesh › Cube, Mesh › Cone), not repeated in
   the next run; pytest 172 + 1 skipped; `check_add_config.py`,
   `check_add_from_menu.py` pass.
+- **Fix (0.1.57, 2026-11-24):** Rafael: after changing an added object, the
+  next add's settings had the first one's values, location included. The
+  settings PropertyGroup's values are stored in the window manager under the
+  field names and outlived the class; `add_config._make_group` now sets
+  every value from the operator and `_drop_group` deletes the stored ones.
+  Confirmed by a probe (2nd cylinder: settings radius 2 / 12 vertices, built
+  1 / 32), then fixed; `check_add_config.py` covers Rafael's sequence and
+  `check_all_add_items.py` checks the settings against the built values
+  (80/80 match).
