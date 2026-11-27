@@ -1,0 +1,94 @@
+From 9989e845d6a3fe4d8f10523ed353cb2b3592f2ac Mon Sep 17 00:00:00 2001
+From: Rafael Toschi Chiafarelli <setup@localhost>
+Date: Thu, 26 Nov 2026 08:34:01 -0300
+Subject: [PATCH] sew: cap the sewing force on sleeved garments
+
+Unlimited sewing springs drag the sleeve cap through the shoulder and arm on
+the way to the armhole (more than half of the cap springs start out crossing
+the body) and the collision can not pull it back: on Nora, Theo and an MPFB
+woman the arm ends up outside the sleeve. A sleeved garment now stitches at
+SLEEVE_SEW_FORCE (15) for at least SLEEVE_STITCH_FRAMES (50) when Sew Force is
+left at 0 (unlimited); garments without sleeves keep the unlimited force (a
+capped dress no longer seats on the shoulders). tests/test_fit.py does not
+catch it: nearest-point penetration and sleeve reach both pass with the arm
+outside the sleeve.
+---
+ clothing_design/ops.py |  5 +++--
+ clothing_design/sim.py | 36 +++++++++++++++++++++++++++++++++++-
+ 2 files changed, 38 insertions(+), 3 deletions(-)
+
+diff --git a/clothing_design/ops.py b/clothing_design/ops.py
+index ec684b6..d1ae538 100644
+--- a/clothing_design/ops.py
++++ b/clothing_design/ops.py
+@@ -1021,10 +1021,11 @@ class CD_OT_sew(Operator):
+             # keep only the back collar - the part the garment hangs from - so
+             # the front can draw in to the neck before it is welded
+             pinned = sim.pin_shoulders(context, g)
+-            hold = int(scn.cd.stitch_frames * sim.PIN_HOLD) if pinned else -1
++            stitch = sim.stitch_frames_for(context, g)
++            hold = int(stitch * sim.PIN_HOLD) if pinned else -1
+             sim.set_gravity(g, scn.cd.stitch_gravity)
+             with sim.cages_only(others):
+-                for i in range(scn.cd.stitch_frames):
++                for i in range(stitch):
+                     if i == hold:
+                         sim.pin_shoulders(context, g, torso_anchors=('TORSO_BACK',))
+                     scn.frame_set(scn.frame_current + 1)
+diff --git a/clothing_design/sim.py b/clothing_design/sim.py
+index 07366d9..1db4f13 100644
+--- a/clothing_design/sim.py
++++ b/clothing_design/sim.py
+@@ -97,6 +97,40 @@ def ensure_collider(context, av):
+     return mod
+ 
+ 
++# Sleeved garments: unlimited sewing springs drag the sleeve cap through the
++# shoulder and arm on the way to the armhole (more than half of the cap
++# springs start out crossing the body), and the collision can not pull it
++# back. Capped, the cap closes round the arm; weaker springs take longer to
++# close, so the stitch runs longer. Garments without sleeves keep the
++# unlimited force: capped, a dress no longer seats on the shoulders.
++SLEEVE_SEW_FORCE = 15.0
++SLEEVE_STITCH_FRAMES = 50
++
++
++def has_sleeves(context, ob):
++    from . import build
++    return any(p.cd.anchor in ('ARM_L', 'ARM_R')
++               for p in build.garment_pieces(context, ob.cd.garment))
++
++
++def sew_force_for(context, ob):
++    """The Sew Force setting; 0 (unlimited) becomes SLEEVE_SEW_FORCE on a
++    sleeved garment."""
++    f = context.scene.cd.sew_force
++    if f <= 0.0 and ob.cd.garment and has_sleeves(context, ob):
++        return SLEEVE_SEW_FORCE
++    return f
++
++
++def stitch_frames_for(context, ob):
++    """Stitch Frames, at least SLEEVE_STITCH_FRAMES when the sleeved
++    garment's force was capped by sew_force_for."""
++    n = context.scene.cd.stitch_frames
++    if context.scene.cd.sew_force <= 0.0 and ob.cd.garment and has_sleeves(context, ob):
++        return max(n, SLEEVE_STITCH_FRAMES)
++    return n
++
++
+ def setup_cloth(context, ob):
+     scn = context.scene
+     cd = scn.cd
+@@ -117,7 +151,7 @@ def setup_cloth(context, ob):
+     s.shear_damping = 5.0
+     s.bending_damping = 0.5
+     s.use_sewing_springs = True
+-    s.sewing_force_max = cd.sew_force
++    s.sewing_force_max = sew_force_for(context, ob)
+     # Taking the fabric in while the seams are still open fights the stitching,
+     # so it is applied at the weld instead (see close_seams).
+     s.shrink_min = 0.0
+-- 
+2.43.0
+

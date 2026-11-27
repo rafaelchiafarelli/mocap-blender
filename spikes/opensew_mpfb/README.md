@@ -43,7 +43,9 @@ issues print `WARN` and do not fail the run.
 3. Changing an MPFB macro (weight 0.5 → 0.85) changes the next measurement.
 4. All 9 opensew-2 presets draft onto the body.
 5. `--drape`: T-shirt and trousers sew and drape with < 2 % of the cloth
-   inside the skin.
+   inside the skin, and the T-shirt's sleeves are still round the arms
+   (rays out of the upper-arm axis; nearest-point penetration can not see an
+   arm that left the sleeve).
 
 ## Results on the development machine (bpy 5.2.2, headless)
 
@@ -74,6 +76,33 @@ All in `clothing_design/avatar.py`:
 
 opensew-2's own `tests/test_presets.py` still passes with the patch.
 
+## Patch 0002: sewing force on sleeved garments
+
+opensew-2's Sew runs the stitch with **unlimited** sewing springs. More than
+half of a T-shirt's sleeve-cap springs start out crossing the shoulder and arm
+(sleeve round the arm, armhole on the torso), and they drag the cap through
+the arm faster than the collision can push it back: the arm ends up outside
+the sleeve. It happens on opensew's own Nora and Theo without patch 0001, so
+it is opensew's, not the MPFB link. opensew's `tests/test_fit.py` passes
+anyway (nearest-point penetration and sleeve reach both miss it).
+
+The patch (`sim.sew_force_for`, `sim.stitch_frames_for`): with Sew Force at 0,
+a garment with sleeves stitches at force 15 for at least 50 frames; without
+sleeves it stays unlimited (capped, the dress no longer seats on the
+shoulders). Measured, first 10 cm of each upper arm, points off the arm and
+rays with cloth inside the skin, unlimited -> patched:
+
+| Body | T-shirt | Jacket | Hoodie |
+|---|---|---|---|
+| Nora | 5/10, 14 -> 0/10, 0 | 3/10, 5 -> 0/10, 0 | 6/10, 18 -> 0/10, 0 |
+| MPFB woman (Rigify) | 6/10, 21 -> 0/10, 0 | 6/10, 11 -> 0/10, 0 | 0/10, 8 -> 1/10, 0 |
+| Theo | 3/10, 23 -> 1/10, 6 | 0/10, 0 -> 0/10, 0 | 1/10, 6 -> 0/10, 0 |
+
+**Still open:** the MPFB man (default rig): his left upper arm comes through
+the top of the T-shirt sleeve, cloth 22-34 mm inside the skin 7.5 cm down the
+arm; `run_test.sh --drape` fails on it. No force/frames pair tried (8-15,
+50-100) clears it.
+
 ## Known issue
 
 **Man's neck on the default and Rigify rigs reads 45–47 cm (ref 38.5).** Both
@@ -86,6 +115,9 @@ under opensew's own reference, so it changes drafting for every rig. Left for
 a decision, not patched here.
 
 ## Look at in the GUI
+
+- Necklines climb the neck during the stitch (4-8 cm above the neck base on
+  the women), opensew's own "tops ride up" known issue.
 
 - Women's T-shirt drapes short, hem near the waist rather than the hip.
   Possibly the MPFB A-pose (arms ~45°, opensew's avatars use 60°) pulling the

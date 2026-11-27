@@ -10,7 +10,9 @@
 #   3. a change to an MPFB macro (weight) shows up in the next measurement;
 #   4. every opensew-2 preset drafts onto the body;
 #   5. with --drape: a T-shirt and trousers sew and drape onto the body with
-#      less than 2 % of the cloth inside the skin.
+#      less than 2 % of the cloth inside the skin, and the T-shirt's sleeves
+#      are still round the arms (patch 0002: unlimited sewing springs dragged
+#      the sleeve cap through the arm, which 4 never sees).
 #
 # Run (Blender 5.2.2, MPFB and the patched clothing_design add-on installed;
 # see README.md):
@@ -20,7 +22,9 @@
 #
 # Writes DIR/report.json and, per figure, DIR/<figure>_<rig>.blend to open in
 # the GUI. Exit code 0 = every check passed.
-import bpy, sys, os, json, time, importlib, argparse
+import bpy, sys, os, json, time, importlib, argparse, math
+from mathutils import Vector
+from mathutils.bvhtree import BVHTree
 
 EXPECTED_BLENDER = (5, 2, 2)
 
@@ -152,6 +156,41 @@ def penetration(ctx, g, tol=0.004):
     return inside, len(ev.data.vertices)
 
 
+def sleeves_round_arms(ctx, g, body, m, reach=0.10, rays=8):
+    """Along the first `reach` m of each upper arm, rays out of the limb axis:
+    a point is covered when the garment is hit in at least rays-2 directions
+    and never nearer the axis than the skin. Returns (bad points, points)."""
+    def tree(ob):
+        e = ob.evaluated_get(ctx.evaluated_depsgraph_get())
+        me = e.to_mesh()
+        t = BVHTree.FromPolygons([e.matrix_world @ v.co for v in me.vertices],
+                                 [tuple(p.vertices) for p in me.polygons])
+        e.to_mesh_clear()
+        return t
+    tg, tb = tree(g), tree(body)
+    bad = n = 0
+    for k in ("arm_l", "arm_r"):
+        lp = m["limbs"][k]
+        p0, p1 = Vector(lp["p0"]), Vector(lp["p1"])
+        ax = (p1 - p0).normalized()
+        u = ax.orthogonal().normalized()
+        v = ax.cross(u)
+        for i in range(5):
+            c = p0 + ax * reach * i / 4
+            hits = under = 0
+            for j in range(rays):
+                th = 2 * math.pi * j / rays
+                r = u * math.cos(th) + v * math.sin(th)
+                hg, hb = tg.ray_cast(c, r, 0.25), tb.ray_cast(c, r, 0.25)
+                if hg[0] is not None:
+                    hits += 1
+                    if hb[0] is not None and hg[3] < hb[3] - 0.002:
+                        under += 1
+            n += 1
+            bad += hits < rays - 2 or under > 0
+    return bad, n
+
+
 # ------------------------------------------------------------------ run
 
 figures = ('WOMAN', 'MAN') if args.figure == 'BOTH' else (args.figure,)
@@ -236,6 +275,11 @@ for fig in figures:
             rep["drape"][key] = {"seconds": round(dt), "verts": n, "inside": inside, "late_welds": merged}
             check(inside < n * 0.02, "drape %-8s %3.0fs, %d verts, %.1f%% inside the skin"
                   % (key.lower(), dt, n, 100.0 * inside / max(1, n)))
+            if key == 'TSHIRT':
+                m_now = avatar.measure(ctx, body, force=True)
+                bad, npts = sleeves_round_arms(ctx, g, body, m_now)
+                rep["drape"][key]["sleeve_points_off_arm"] = bad
+                check(bad <= 1, "drape tshirt    sleeves round the arms (%d/%d points off)" % (bad, npts))
             path = os.path.join(args.out, "%s_%s_%s.blend" % (fig.lower(), args.rig, key.lower()))
             bpy.ops.wm.save_as_mainfile(filepath=path)
             print("  saved", path)
